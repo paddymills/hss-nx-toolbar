@@ -25,7 +25,7 @@ int main(int argc, char* argv[])
             throw UgException(errorCode);
 
         /* Initialize the NX Open C++ API environment */
-        string fileName = "Stacked_Haunch.prt";
+        string fileName = "1190181A_G1A-web.prt";
         UgPart *part = UgPart::open(fileName);
     
 
