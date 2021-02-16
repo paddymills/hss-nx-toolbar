@@ -5,6 +5,8 @@ cls
 set cpp_file=%1
 set exe_file=%cpp_file:cpp=exe%
 
+DEL %exe_file%
+
 rem COMPILE
 echo:
 echo ----------------------------
