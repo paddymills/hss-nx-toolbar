@@ -1,34 +1,95 @@
 @echo off
 
-cls
+CLS
 
-set cpp_file=%1
-set exe_file=%cpp_file:cpp=exe%
+SETLOCAL
+SET linktype=exe
 
-DEL %exe_file%
+GOTO main
 
-rem COMPILE
-echo:
-echo ----------------------------
-echo         Compiling...
-echo           %cpp_file%
-echo ----------------------------
-call cl %cpp_file%
+:main
+    IF "%~1"=="/DLL" GOTO set_dll
+    IF "%~1"=="/dll" GOTO set_dll
+    
+    IF "%~1"=="/CLEAN" GOTO clean
+    IF "%~1"=="/clean" GOTO clean
 
-rem LINK
-echo:
-echo ----------------------------
-echo         Linking...
-echo           %exe_file%
-echo ----------------------------
-call uflink UFEXE=%exe_file%
+    IF "%~x1"==".cpp" GOTO ext_matched
+    IF "%~x1"==".cxx" GOTO ext_matched
+    IF "%~x1"==".c" GOTO ext_matched
+    
+    GOTO default
 
-rem Execute
-echo:
-echo ----------------------------
-echo         Executing...
-echo           %exe_file%
-echo ----------------------------
-call %exe_file%
+:clean
+
+    DEL *.dll
+    DEL *.exe
+    DEL *.exp
+    DEL *.lib
+    DEL *.pdb
+    DEL *.obj
+
+    GOTO next
+
+:set_dll
+    
+    SET linktype=dll
+
+    GOTO next
+
+:ext_matched
+    
+    ECHO:
+    ECHO ----------------------------
+    ECHO     Compiling %~1
+    ECHO ----------------------------
+
+    CALL cl %~1
+    GOTO link_%linktype%
+
+:link_dll
+    
+    DEL %~n1.dll
+
+    ECHO:
+    ECHO ----------------------------
+    ECHO     Linking   %~1
+    ECHO ----------------------------
+    CALL uflink UFDLL=%~n1.dll
+
+    GOTO next
+
+:link_exe
+    
+    DEL %~n1.exe
+    
+    ECHO:
+    ECHO ----------------------------
+    ECHO     Linking   %~1
+    ECHO ----------------------------
+    
+    CALL uflink UFEXE=%~n1.exe
+
+    ECHO:
+    ECHO ----------------------------
+    ECHO     Executing %~1
+    ECHO ----------------------------
+
+    CALL %~n1.exe
+
+    GOTO next
+
+:default
+    ECHO unmatched file extension: %~1
+    GOTO end
+
+:next
+    SHIFT
+    IF NOT "%~1"=="" GOTO main
+
+    GOTO end
+
+:end
+    ENDLOCAL
 
 @echo on

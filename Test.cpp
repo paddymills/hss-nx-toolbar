@@ -1,6 +1,4 @@
 
-#define stringify( name ) # name
-
 #include <iostream>
 #include <vector>
 #include <string>
@@ -19,9 +17,11 @@
 
 #include <NXOpen/DexManager.hxx>
 #include <NXOpen/LicenseManager.hxx>
+#include <NXOpen/NXException.hxx>
 
 // UFunc Headers
 #include <uf.h>
+#include <uf_defs.h>
 
 using namespace NXOpen;
 using namespace std;
@@ -141,7 +141,23 @@ void exportDxf(Part *part, Session *session)
     dxfCreator->SetOutputFile(oss.str());
     dxfCreator->SetOutputFileExtension(".dxf");
 
+    // dxfCreator->ExportSelectionBlock()->SelectionComp()->Add();
+
+    cout << "Data set: " << dxfCreator->DatasetName().GetText() << endl;
+
     // generate file
-    cout << "Generating file: " << dxfCreator->OutputFile().GetText() << endl;
-    result = dxfCreator->Commit();
+    if (dxfCreator->Validate())
+    {
+        cout << "Generating file: " << dxfCreator->OutputFile().GetText() << endl;
+        try
+        {
+            result = dxfCreator->Commit();
+        }
+        catch(const NXException &e)
+        {
+            cerr << "(" << e.ErrorCode() << ") " << e.Message() << endl;
+        }
+    }
+    else
+        cout << "Builder validation failed." << endl;
 }
