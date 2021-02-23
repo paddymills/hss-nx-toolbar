@@ -1,7 +1,5 @@
 @echo off
 
-CLS
-
 SETLOCAL
 SET linktype=exe
 
@@ -14,6 +12,8 @@ GOTO main
     IF "%~1"=="/CLEAN" GOTO clean
     IF "%~1"=="/clean" GOTO clean
 
+    CLS
+    
     IF "%~x1"==".cpp" GOTO ext_matched
     IF "%~x1"==".cxx" GOTO ext_matched
     IF "%~x1"==".c" GOTO ext_matched
@@ -22,12 +22,12 @@ GOTO main
 
 :clean
 
-    DEL *.dll
-    DEL *.exe
-    DEL *.exp
-    DEL *.lib
-    DEL *.pdb
-    DEL *.obj
+    IF EXIST *.dll DEL *.dll
+    IF EXIST *.exe DEL *.exe
+    IF EXIST *.exp DEL *.exp
+    IF EXIST *.lib DEL *.lib
+    IF EXIST *.pdb DEL *.pdb
+    IF EXIST *.obj DEL *.obj
 
     GOTO next
 
@@ -49,7 +49,7 @@ GOTO main
 
 :link_dll
     
-    DEL %~n1.dll
+    IF EXIST %~n1.dll DEL %~n1.dll
 
     ECHO:
     ECHO ----------------------------
@@ -61,7 +61,7 @@ GOTO main
 
 :link_exe
     
-    DEL %~n1.exe
+    IF EXIST %~n1.exe DEL %~n1.exe
     
     ECHO:
     ECHO ----------------------------
