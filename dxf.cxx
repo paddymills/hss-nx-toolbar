@@ -34,6 +34,8 @@
 #include <NXOpen/LogFile.hxx>
 #include <NXOpen/Sketch.hxx>
 #include <NXOpen/SketchCollection.hxx>
+#include <NXOpen/Point.hxx>
+#include <NXOpen/Edge.hxx>
 
 using namespace NXOpen;
 using namespace std;
@@ -48,11 +50,9 @@ void run(Session *nx_session)
 
     /* Open part */
     PartLoadStatus *part_load_status;
-    BasePart *part = nx_session->Parts()->OpenActiveDisplay(part_file_name, DisplayPartOptionReplaceExisting, &part_load_status);
+    Part *part = dynamic_cast<Part *>(nx_session->Parts()->OpenActiveDisplay(part_file_name, DisplayPartOptionReplaceExisting, &part_load_status));
     delete part_load_status;
     
-    Part *work_part(nx_session->Parts()->Work());
-    Part *display_part(nx_session->Parts()->Display());
     nx_session->ApplicationSwitchImmediate("UG_APP_MODELING");
     
     /* DWG/DXF exporter */
@@ -71,21 +71,32 @@ void run(Session *nx_session)
     /* Add ZINC sketches */
     vector<NXObject *> sketches;
 
-    for (Sketch *iter: *(work_part->Sketches()))
+    for (Sketch *sketch: *(part->Sketches()))
     {
-
-        if (strstr(iter->Name().GetText(), "ZINC"))
+        /* add ZINC sketches */
+        if (strstr(sketch->Name().GetText(), "ZINC"))
         {
-            log->Write("Adding sketch: ");
-            log->WriteLine(iter->Name().GetText());
-
-            for (auto geo: iter->GetAllGeometry())
+            /* sketch is hidden: skip */
+            if (sketch->IsBlanked())
             {
+                log->Write("Skipping blanked sketch: ");
+                log->WriteLine(sketch->Name().GetText());
+            }
 
-                log->Write(" + ");
-                log->WriteLine(geo->Name().GetText());
+            /* sketch is visible: add to file */
+            else
+            {
+                log->Write("Adding sketch: ");
+                log->WriteLine(sketch->Name().GetText());
 
-                sketches.push_back(geo);
+                /* must add each line separately */
+                for (NXObject *geo: sketch->GetAllGeometry())
+                {
+                    log->Write(" + ");
+                    log->WriteLine(geo->Name().GetText());
+
+                    sketches.push_back(geo);
+                }
             }
         }
     }
@@ -94,16 +105,16 @@ void run(Session *nx_session)
 
 
     /* Add body to dxf export */
-    for (Body *iter: *(work_part->Bodies()))
+    for (Body *body: *(part->Bodies()))
     {
         /* build file name */
         ostringstream output_filename;
         output_filename << dxf_output_dir;
-        output_filename << work_part->GetStringAttribute("JobNo").GetText();
+        output_filename << part->GetStringAttribute("JobNo").GetText();
         output_filename << "_";
-        output_filename << work_part->GetStringAttribute("Mark").GetText();
+        output_filename << part->GetStringAttribute("Mark").GetText();
         output_filename << "-";
-        output_filename << iter->Name().GetText();
+        output_filename << body->Name().GetText();
         output_filename << ".dxf";
         
         /* Set output file name */
@@ -111,16 +122,25 @@ void run(Session *nx_session)
 
         /* export body */
         log->Write("Adding body: ");
-        log->WriteLine(iter->Name().GetText());
+        log->WriteLine(body->Name().GetText());
+
+        for (Features::Feature *ftr: body->GetFeatures())
+        {
+            log->Write(" + Feature: ");
+            log->Write(ftr->GetFeatureName().GetText());
+            log->Write(" (");
+            log->Write(ftr->FeatureType().GetText());
+            log->WriteLine(")");
+        }
 
         /* add body to export */
-        added = dxf_gen->ExportSelectionBlock()->SelectionComp()->Add(iter);
+        added = dxf_gen->ExportSelectionBlock()->SelectionComp()->Add(body);
 
         /* generate DXF file */
-        NXObject *generate_result = dxf_gen->Commit();
+        // NXObject *generate_result = dxf_gen->Commit();
         
         /* delete added body (so that it does not export next time) */
-        dxf_gen->ExportSelectionBlock()->SelectionComp()->Remove(iter);
+        dxf_gen->ExportSelectionBlock()->SelectionComp()->Remove(body);
     }
 
     /* destroy Dxf generator */
@@ -128,11 +148,9 @@ void run(Session *nx_session)
     
     /* close part */
     PartCloseResponses *part_close_res = nx_session->Parts()->NewPartCloseResponses();
-    work_part->Close(BasePart::CloseWholeTreeFalse, BasePart::CloseModifiedUseResponses, part_close_res);
+    part->Close(BasePart::CloseWholeTreeFalse, BasePart::CloseModifiedUseResponses, part_close_res);
     
     /* clean up part objects */
-    work_part = NULL;
-    display_part = NULL;
     delete part_close_res;
 
     nx_session->ApplicationSwitchImmediate("UG_APP_NOPART");
