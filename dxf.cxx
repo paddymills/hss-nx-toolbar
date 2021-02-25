@@ -36,6 +36,7 @@
 #include <NXOpen/SketchCollection.hxx>
 #include <NXOpen/Point.hxx>
 #include <NXOpen/Edge.hxx>
+#include <NXOpen/Face.hxx>
 
 using namespace NXOpen;
 using namespace std;
@@ -70,7 +71,11 @@ void run(Session *nx_session)
     
     /* Add ZINC sketches */
     vector<NXObject *> sketches;
+    vector<NXObject *> sketch_geo;
 
+    log->WriteLine("-----------------------");
+    log->WriteLine("    Adding Sketches");
+    log->WriteLine("-----------------------");
     for (Sketch *sketch: *(part->Sketches()))
     {
         /* add ZINC sketches */
@@ -79,24 +84,23 @@ void run(Session *nx_session)
             /* sketch is hidden: skip */
             if (sketch->IsBlanked())
             {
-                log->Write("Skipping blanked sketch: ");
+                log->Write(" - Skipping blanked sketch: ");
                 log->WriteLine(sketch->Name().GetText());
             }
 
             /* sketch is visible: add to file */
             else
             {
-                log->Write("Adding sketch: ");
-                log->WriteLine(sketch->Name().GetText());
+                log->Write(" + Adding sketch: ");
+                log->Write(sketch->Name().GetText());
 
-                /* must add each line separately */
-                for (NXObject *geo: sketch->GetAllGeometry())
-                {
-                    log->Write(" + ");
-                    log->WriteLine(geo->Name().GetText());
+                /* add sketch lines to sketches */
+                sketch_geo = sketch->GetAllGeometry();
+                sketches.insert(sketches.end(), sketch_geo.begin(), sketch_geo.end());
 
-                    sketches.push_back(geo);
-                }
+                log->Write(" ( Entities: ");
+                log->Write(to_string(sketch_geo.size()));
+                log->WriteLine(" )");
             }
         }
     }
@@ -126,11 +130,57 @@ void run(Session *nx_session)
 
         for (Features::Feature *ftr: body->GetFeatures())
         {
-            log->Write(" + Feature: ");
-            log->Write(ftr->GetFeatureName().GetText());
-            log->Write(" (");
-            log->Write(ftr->FeatureType().GetText());
-            log->WriteLine(")");
+            if (!strstr(ftr->FeatureType().GetText(), "HOLE"))            
+            {
+                log->Write(" + ");
+                log->Write(ftr->FeatureType().GetText());
+                log->Write(": ");
+                log->Write(ftr->GetFeatureName().GetText());
+
+                if (strstr(ftr->FeatureType().GetText(), "EXTRUDE"))
+                {
+                    try
+                    {
+                        log->Write(" at (");
+
+                        Point3d feature_location = ftr->Location();
+                        log->Write(to_string(feature_location.X));
+                        log->Write(", ");
+                        log->Write(to_string(feature_location.Y));
+                        log->Write(", ");
+                        log->Write(to_string(feature_location.Z));
+
+                        log->Write(")");
+                    }
+                    catch(const exception &exc)
+                    {
+                        log->Write("[CANNOT LOCATE ORIGIN]");
+                    }
+                }
+
+                log->WriteLine("");
+
+                for (Expression *exp: ftr->GetExpressions())
+                {
+                    log->Write("   + Expression: ");
+                    log->Write(exp->Description().GetText());
+                    log->Write(" = ");
+                    log->WriteLine(to_string(exp->Value()));
+
+                }
+            }
+        }
+
+        log->WriteLine(" + Faces:");
+        for (Face *f: body->GetFaces())
+        {
+            if (f->GetEdges().size() > 4)
+            {
+                log->Write("   + ");
+                log->Write(f->JournalIdentifier().GetText());
+                log->Write(": Edge Count=");
+                log->WriteLine(to_string(f->GetEdges().size()));
+            }
         }
 
         /* add body to export */

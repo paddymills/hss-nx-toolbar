@@ -1,5 +1,6 @@
 @echo off
 
+
 SETLOCAL
 SET linktype=exe
 
@@ -13,6 +14,10 @@ GOTO main
     IF "%~1"=="/clean" GOTO clean
 
     CLS
+
+    ECHO **************************************
+    ECHO *     %DATE%-%TIME%     *
+    ECHO **************************************
     
     IF "%~x1"==".cpp" GOTO ext_matched
     IF "%~x1"==".cxx" GOTO ext_matched
