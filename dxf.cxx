@@ -37,6 +37,7 @@
 #include <NXOpen/Point.hxx>
 #include <NXOpen/Edge.hxx>
 #include <NXOpen/Face.hxx>
+#include <NXOpen/LicenseManager.hxx>
 
 using namespace NXOpen;
 using namespace std;
@@ -85,7 +86,7 @@ void run(Session *nx_session)
             if (sketch->IsBlanked())
             {
                 log->Write(" - Skipping blanked sketch: ");
-                log->WriteLine(sketch->Name().GetText());
+                log->Write(sketch->Name().GetText());
             }
 
             /* sketch is visible: add to file */
@@ -95,13 +96,16 @@ void run(Session *nx_session)
                 log->Write(sketch->Name().GetText());
 
                 /* add sketch lines to sketches */
-                sketch_geo = sketch->GetAllGeometry();
-                sketches.insert(sketches.end(), sketch_geo.begin(), sketch_geo.end());
+                // sketch_geo = sketch->GetAllGeometry();
+                // sketches.insert(sketches.end(), sketch_geo.begin(), sketch_geo.end());
+                added = dxf_gen->ExportSelectionBlock()->SelectionComp()->Add(sketch->GetAllGeometry());
 
                 log->Write(" ( Entities: ");
                 log->Write(to_string(sketch_geo.size()));
-                log->WriteLine(" )");
+                log->Write(" )");
             }
+
+            log->WriteLine("");
         }
     }
 
@@ -220,7 +224,7 @@ extern "C" DllExport void ufusr(char *param, int *retCode, int paramLen)
     nx_session->LogFile()->WriteLine("*                     NXOpen Dxf Export                     *");
     nx_session->LogFile()->WriteLine("*                                                           *");
     nx_session->LogFile()->WriteLine("*************************************************************");
-    
+
     run(nx_session);
     
     nx_session->LogFile()->WriteLine("*************************************************************");

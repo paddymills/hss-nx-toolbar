@@ -1,1 +1,1 @@
-watchexec.exe -w dxf.cxx run.bat /dll dxf.cxx
+watchexec.exe --exts c,cpp,cxx run.bat /dll %1
