@@ -33,7 +33,7 @@ class Dxf_Export_Worker
         void process_part(const char*);
         void export_bodies();
         void add_sketches();
-        void set_wcs_to_face();
+        void set_wcs_to_face(double);
 
 };
 

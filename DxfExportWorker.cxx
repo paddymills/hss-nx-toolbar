@@ -27,6 +27,7 @@
 #include <NXOpen/Features_DatumCsysBuilder.hxx>
 #include <NXOpen/Features_FeatureCollection.hxx>
 #include <NXOpen/Point.hxx>
+#include <NXOpen/PointCollection.hxx>
 #include <NXOpen/Sketch.hxx>
 #include <NXOpen/SketchCollection.hxx>
 #include <NXOpen/Xform.hxx>
@@ -72,7 +73,8 @@ Dxf_Export_Worker::~Dxf_Export_Worker()
     /* cleanup members */
     // delete nx_session;
     // delete nx_system_log;
-    // delete part;
+    // if (part)
+    //     delete part;
 }
 
 void Dxf_Export_Worker::init_factory() {
@@ -179,8 +181,8 @@ void Dxf_Export_Worker::export_bodies()
     base_save_file_name.append("-");
 
     string body_name;
-    Point3d *v1 = nullptr;
-    Point3d *v2 = nullptr;
+    Point *p = nullptr;
+    double min_z = 0.0;
 
     /* Add body to dxf export */
     for (Body *body: *(part->Bodies()))
@@ -206,8 +208,24 @@ void Dxf_Export_Worker::export_bodies()
                 nx_system_log->Write(f->JournalIdentifier().GetText());
                 nx_system_log->Write(": Edge Count=");
                 nx_system_log->WriteLine(to_string(f->GetEdges().size()));
+
+                for (Edge *e: f->GetEdges())
+                {
+                    try
+                    {
+                        p = part->Points()->CreatePoint(e, SmartObject::UpdateOptionWithinModeling);
+
+                        min_z = min(p->Coordinates().Z, min_z);
+
+                        // part->Points()->DeletePoint(p);
+                    }
+                    catch (const exception &ex){}
+                }
             }
         }
+
+        if (min_z != 0.0)
+            set_wcs_to_face(min_z);
 
         /* add body to export */
         bool added = selected_objects->Add(body);
@@ -221,19 +239,19 @@ void Dxf_Export_Worker::export_bodies()
             remove(dxf_factory->OutputFile().GetText());
             
         /* generate DXF file */
-        // NXObject *generate_result = dxf_factory->Commit();
+        NXObject *generate_result = dxf_factory->Commit();
         
         /* delete added body (so that it does not export next time) */
         selected_objects->Remove(body);
     }
 }
 
-void Dxf_Export_Worker::set_wcs_to_face()
+void Dxf_Export_Worker::set_wcs_to_face(double new_z)
 {
     Features::Feature *nullNXOpen_Features_Feature(NULL);
     Features::DatumCsysBuilder *datum_csys_builder = part->Features()->CreateDatumCsysBuilder(nullNXOpen_Features_Feature);
     
-    Point3d origin(0.0, 0.0, -0.5);
+    Point3d origin(0.0, 0.0, new_z);
     Vector3d x_dir(1.0, 0.0, 0.0);
     Vector3d y_dir(0.0, 1.0, 0.0);
     Xform *xform = part->Xforms()->CreateXform(origin, x_dir, y_dir, SmartObject::UpdateOptionWithinModeling, 1.0);
@@ -274,7 +292,9 @@ extern "C" DllExport void ufusr(char *param, int *retCode, int paramLen)
         Dxf_Export_Worker::nx_system_log->WriteLine(  "\t*                                                           *");
         Dxf_Export_Worker::nx_system_log->WriteLine(  "\t*************************************************************\n");
 
+        Dxf_Export_Worker::nx_session->LicenseManager()->Reserve("solid_modeling", nullptr);
         exporter->process_part(test_part);
+        Dxf_Export_Worker::nx_session->LicenseManager()->Release("solid_modeling", nullptr);
         
         Dxf_Export_Worker::nx_system_log->WriteLine("\n\t*************************************************************");
         Dxf_Export_Worker::nx_system_log->WriteLine(  "\t*                                                           *");
