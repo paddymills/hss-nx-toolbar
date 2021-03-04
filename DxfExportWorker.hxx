@@ -1,6 +1,6 @@
 
-#ifndef DXFEXPORTWORKER
-#define DXFEXPORTWORKER
+#ifndef DXFEXPORTWORKER_H
+#define DXFEXPORTWORKER_H
 
 #include <uf_defs.h>
 #include <NXOpen/Session.hxx>

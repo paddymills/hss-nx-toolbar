@@ -277,28 +277,3 @@ void DxfExportWorker::set_wcs_to_face(double new_z)
     delete csys_commit;
     datum_csys_builder->Destroy();
 }
-
-extern "C" DllExport int ufusr_ask_unload()
-{
-    return (int)Session::LibraryUnloadOptionImmediately;
-}
-
-extern "C" DllExport void ufusr(char *param, int *retCode, int paramLen)
-{
-    DxfExportWorker *exporter;
-
-    try
-    {
-        exporter = new DxfExportWorker();
-        const char *test_part = "C:\\Users\\PMiller1\\git\\nx-dxf\\1190181A_G1A-web_named_bodies.prt";
-
-        exporter->process_part(test_part);
-    }
-
-    catch(const exception &ex)
-    {
-        DxfExportWorker::nx_system_log->WriteLine(ex.what());
-    }
-
-    delete exporter;
-}
