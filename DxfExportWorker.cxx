@@ -39,45 +39,54 @@
 #include <NXOpen/NXException.hxx>
 #include <NXOpen/SelectNXObjectList.hxx>
 
-#include <NXOpen/UI.hxx>
-#include <NXOpen/NXMessageBox.hxx>
-
 using namespace NXOpen;
 using namespace std;
 
 namespace fs = experimental::filesystem;
 
 /* Initialize static variables */
-Session *(Dxf_Export_Worker::nx_session) = NULL;
-LogFile *(Dxf_Export_Worker::nx_system_log) = NULL;
+Session *(DxfExportWorker::nx_session) = NULL;
+LogFile *(DxfExportWorker::nx_system_log) = NULL;
 
-Dxf_Export_Worker::Dxf_Export_Worker()
+DxfExportWorker::DxfExportWorker()
 {
+    DxfExportWorker::nx_system_log->WriteLine("\n\t\t\t*********************************");
+    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*                               *");
+    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*    NXOpen Dxf Export Begin    *");
+    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*                               *");
+    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*********************************\n");
+
     /* init class members */
     nx_session = Session::GetSession();
     nx_system_log = nx_session->LogFile();
+
+    // get solid_modeling license
+    DxfExportWorker::nx_session->LicenseManager()->Reserve("solid_modeling", nullptr);
     
     part = nullptr;
     dxf_factory = nullptr;
     selected_objects = nullptr;
 }
 
-Dxf_Export_Worker::~Dxf_Export_Worker()
+DxfExportWorker::~DxfExportWorker()
 {
+    // release solid_modeling license
+    DxfExportWorker::nx_session->LicenseManager()->Release("solid_modeling", nullptr);
+    
     /* close factory, if not null */
     if (dxf_factory)
         dxf_factory->Destroy();
         delete selected_objects;
         delete dxf_factory;
 
-    /* cleanup members */
-    // delete nx_session;
-    // delete nx_system_log;
-    // if (part)
-    //     delete part;
+    DxfExportWorker::nx_system_log->WriteLine("\n\t\t\t*********************************");
+    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*                               *");
+    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*     NXOpen Dxf Export End     *");
+    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*                               *");
+    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*********************************\n");
 }
 
-void Dxf_Export_Worker::init_factory() {
+void DxfExportWorker::init_factory() {
     /* init dxf/dwg exporter */
     dxf_factory = nx_session->DexManager()->CreateDxfdwgCreator();
 
@@ -89,46 +98,52 @@ void Dxf_Export_Worker::init_factory() {
     dxf_factory->ExportSelectionBlock()->SetSelectionScope(ObjectSelector::ScopeSelectedObjects);
     dxf_factory->SetExportFacesAs(DxfdwgCreator::ExportFacesAsOptionsPolylineMesh);
     dxf_factory->SetProcessHoldFlag(true);
+
+    /* set up dxf/dwg export for file */
+    dxf_factory->SetInputFile(part->FullPath().GetText());
     
     selected_objects = dxf_factory->ExportSelectionBlock()->SelectionComp();
 }
 
-void Dxf_Export_Worker::process_part(const char *part_file_name)
+void DxfExportWorker::process_part(const char *part_file_name)
 {
     /* Open part */
     PartLoadStatus *part_load_status;
-    part = dynamic_cast<Part *>(Dxf_Export_Worker::nx_session->Parts()->OpenActiveDisplay(part_file_name, DisplayPartOptionReplaceExisting, &part_load_status));
+    part = dynamic_cast<Part *>(DxfExportWorker::nx_session->Parts()->OpenActiveDisplay(part_file_name, DisplayPartOptionReplaceExisting, &part_load_status));
     delete part_load_status;
 
-    init_factory();
-
-    /* set up dxf/dwg export for file */
-    dxf_factory->SetInputFile(part_file_name);
-
+    // enter modeling
     nx_session->ApplicationSwitchImmediate("UG_APP_MODELING");
 
-    // ********************
-    // *     DO STUFF     *
-    // ********************
-    add_sketches();
-    export_bodies();
-    
-
-    /* reset dxf/dwg exporter object selection */
-    dxf_factory->Destroy();
-    selected_objects = nullptr;
-    dxf_factory = nullptr;
+    process_part();
 
     /* close part */
     part->Close(BasePart::CloseWholeTreeTrue, BasePart::CloseModifiedCloseModified, nullptr);
-    
     nx_session->ApplicationSwitchImmediate("UG_APP_NOPART");
     
     /* clean up part objects */
     delete part;
 }
 
-void Dxf_Export_Worker::add_sketches()
+void DxfExportWorker::process_part()
+{
+    // create dxf exporter
+    //  this is per part, not per session
+    init_factory();
+
+    // ********************
+    // *     DO STUFF     *
+    // ********************
+    add_sketches();
+    export_bodies(); 
+
+    /* reset dxf/dwg exporter object selection */
+    dxf_factory->Destroy();
+    selected_objects = nullptr;
+    dxf_factory = nullptr;
+}
+
+void DxfExportWorker::add_sketches()
 {
     nx_system_log->WriteLine("\n***********************");
     nx_system_log->WriteLine(  "*   Adding Sketches   *");
@@ -167,7 +182,7 @@ void Dxf_Export_Worker::add_sketches()
 
 }
 
-void Dxf_Export_Worker::export_bodies()
+void DxfExportWorker::export_bodies()
 {
     nx_system_log->WriteLine("\n***********************");
     nx_system_log->WriteLine(  "*    Adding Bodies    *");
@@ -199,31 +214,22 @@ void Dxf_Export_Worker::export_bodies()
         nx_system_log->Write("Adding body: ");
         nx_system_log->WriteLine(body_name);
 
-        nx_system_log->WriteLine(" + Faces:");
-        for (Face *f: body->GetFaces())
+        for (Edge *e: body->GetEdges())
         {
-            if (f->GetEdges().size() > 4)
+            try
             {
-                nx_system_log->Write("   + ");
-                nx_system_log->Write(f->JournalIdentifier().GetText());
-                nx_system_log->Write(": Edge Count=");
-                nx_system_log->WriteLine(to_string(f->GetEdges().size()));
+                // create center point on edge
+                p = part->Points()->CreatePoint(e, SmartObject::UpdateOptionWithinModeling);
 
-                for (Edge *e: f->GetEdges())
-                {
-                    try
-                    {
-                        p = part->Points()->CreatePoint(e, SmartObject::UpdateOptionWithinModeling);
+                min_z = min(p->Coordinates().Z, min_z);
 
-                        min_z = min(p->Coordinates().Z, min_z);
-
-                        // part->Points()->DeletePoint(p);
-                    }
-                    catch (const exception &ex){}
-                }
+                part->Points()->DeletePoint(p);
             }
+            // some points will error out, don't care
+            catch (const exception &ex){}
         }
 
+        // change WCS if origin Z is below 0
         if (min_z != 0.0)
             set_wcs_to_face(min_z);
 
@@ -246,7 +252,7 @@ void Dxf_Export_Worker::export_bodies()
     }
 }
 
-void Dxf_Export_Worker::set_wcs_to_face(double new_z)
+void DxfExportWorker::set_wcs_to_face(double new_z)
 {
     Features::Feature *nullNXOpen_Features_Feature(NULL);
     Features::DatumCsysBuilder *datum_csys_builder = part->Features()->CreateDatumCsysBuilder(nullNXOpen_Features_Feature);
@@ -279,37 +285,19 @@ extern "C" DllExport int ufusr_ask_unload()
 
 extern "C" DllExport void ufusr(char *param, int *retCode, int paramLen)
 {
-    Dxf_Export_Worker *exporter;
+    DxfExportWorker *exporter;
 
     try
     {
-        exporter = new Dxf_Export_Worker();
+        exporter = new DxfExportWorker();
         const char *test_part = "C:\\Users\\PMiller1\\git\\nx-dxf\\1190181A_G1A-web_named_bodies.prt";
-        
-        Dxf_Export_Worker::nx_system_log->WriteLine("\n\t*************************************************************");
-        Dxf_Export_Worker::nx_system_log->WriteLine(  "\t*                                                           *");
-        Dxf_Export_Worker::nx_system_log->WriteLine(  "\t*                     NXOpen Dxf Export                     *");
-        Dxf_Export_Worker::nx_system_log->WriteLine(  "\t*                                                           *");
-        Dxf_Export_Worker::nx_system_log->WriteLine(  "\t*************************************************************\n");
 
-        Dxf_Export_Worker::nx_session->LicenseManager()->Reserve("solid_modeling", nullptr);
         exporter->process_part(test_part);
-        Dxf_Export_Worker::nx_session->LicenseManager()->Release("solid_modeling", nullptr);
-        
-        Dxf_Export_Worker::nx_system_log->WriteLine("\n\t*************************************************************");
-        Dxf_Export_Worker::nx_system_log->WriteLine(  "\t*                                                           *");
-        Dxf_Export_Worker::nx_system_log->WriteLine(  "\t*                            End                            *");
-        Dxf_Export_Worker::nx_system_log->WriteLine(  "\t*                                                           *");
-        Dxf_Export_Worker::nx_system_log->WriteLine(  "\t*************************************************************\n");
     }
 
     catch(const exception &ex)
     {
-        Dxf_Export_Worker::nx_system_log->WriteLine(ex.what());
-        
-        // UI *user_interface = UI::GetUI();
-        // user_interface->NXMessageBox()->Show("Block Styler", NXMessageBox::DialogTypeError, ex.what());
-        // delete user_interface;
+        DxfExportWorker::nx_system_log->WriteLine(ex.what());
     }
 
     delete exporter;

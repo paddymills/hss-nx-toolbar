@@ -95,6 +95,11 @@ GOTO main
     GOTO end
 
 :end
+    ECHO:
+    ECHO ----------------------------
+    ECHO     Done
+    ECHO ----------------------------
+
     ENDLOCAL
 
 @echo on

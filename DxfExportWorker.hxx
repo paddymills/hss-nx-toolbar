@@ -14,7 +14,7 @@ using namespace NXOpen;
 static const char *DXF_EXPORT_CONFIG = "C:\\Users\\PMiller1\\git\\nx-dxf\\config\\export.def";
 static const char *DXF_OUTPUT_DIR = "\\\\hssieng\\SNDataPrd\\DXF\\";
 
-class Dxf_Export_Worker
+class DxfExportWorker
 {
     private:
 
@@ -26,10 +26,11 @@ class Dxf_Export_Worker
 
         static Session *nx_session;
         static LogFile *nx_system_log;
-        Dxf_Export_Worker();
-        ~Dxf_Export_Worker();
+        DxfExportWorker();
+        ~DxfExportWorker();
 
         void init_factory();
+        void process_part();
         void process_part(const char*);
         void export_bodies();
         void add_sketches();
