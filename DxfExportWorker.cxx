@@ -226,6 +226,8 @@ void DxfExportWorker::export_bodies()
         /* add body to export */
         bool added = selected_objects->Add(body);
 
+        handle_thickness(body);
+
         /* 
             delete part file if it exists
             this seems to speed up export compared to overwriting files
@@ -242,8 +244,9 @@ void DxfExportWorker::export_bodies()
     }
 }
 
-void DxfExportWorker::add_annotation()
+NXObject *DxfExportWorker::add_annotation(double thickness)
 {
+    // swithc to drafting
     nx_session->ApplicationSwitchImmediate("UG_APP_DRAFTING");
     
     part->Drafting()->EnterDraftingApplication();
@@ -252,152 +255,76 @@ void DxfExportWorker::add_annotation()
     
     // turn off drawing layout (allows drafting tools in modeling)
     part->Drafting()->SetDrawingLayout(false);
+    
+    Annotations::DraftingNoteBuilder *note_factory;
+    Annotations::SimpleDraftingAid *drafting_aid(NULL);
+    note_factory = part->Annotations()->CreateDraftingNoteBuilder(drafting_aid);
+    
+    note_factory->Origin()->SetAnchor(Annotations::OriginBuilder::AlignmentPositionTopLeft);
+    
+    vector<NXString> annotations(1);
+    annotations[0] = "THICKNESS: " + to_string(thickness);
 
-    // ----------------------------------------------
-    //   Menu: Insert->Annotation->Note...
-    // ----------------------------------------------
+    note_factory->Text()->TextBlock()->SetText(annotations);
+    note_factory->Origin()->Plane()->SetPlaneMethod(Annotations::PlaneBuilder::PlaneMethodTypeXyPlane);
     
-    NXOpen::Annotations::SimpleDraftingAid *nullNXOpen_Annotations_SimpleDraftingAid(NULL);
-    NXOpen::Annotations::DraftingNoteBuilder *draftingNoteBuilder1;
-    draftingNoteBuilder1 = part->Annotations()->CreateDraftingNoteBuilder(nullNXOpen_Annotations_SimpleDraftingAid);
-    
-    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
-    
-    draftingNoteBuilder1->Origin()->SetAnchor(NXOpen::Annotations::OriginBuilder::AlignmentPositionBottomRight);
-    
-    std::vector<NXOpen::NXString> text1(1);
-    text1[0] = "THICKNESS: 0.875";
-    draftingNoteBuilder1->Text()->TextBlock()->SetText(text1);
-    
-    draftingNoteBuilder1->Origin()->Plane()->SetPlaneMethod(NXOpen::Annotations::PlaneBuilder::PlaneMethodTypeXyPlane);
-    
-    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
-    
-    NXOpen::Annotations::LeaderData *leaderData1;
-    leaderData1 = part->Annotations()->CreateLeaderData();
-    
-    leaderData1->SetArrowhead(NXOpen::Annotations::LeaderData::ArrowheadTypeFilledArrow);
-    
-    leaderData1->SetVerticalAttachment(NXOpen::Annotations::LeaderVerticalAttachmentCenter);
-    
-    draftingNoteBuilder1->Leader()->Leaders()->Append(leaderData1);
-    
-    leaderData1->SetStubSide(NXOpen::Annotations::LeaderSideInferred);
-    
-    double symbolscale1;
-    symbolscale1 = draftingNoteBuilder1->Text()->TextBlock()->SymbolScale();
-    
-    double symbolaspectratio1;
-    symbolaspectratio1 = draftingNoteBuilder1->Text()->TextBlock()->SymbolAspectRatio();
-    
-    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
-    
-    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
-    
-    std::vector<NXOpen::NXString> text2(1);
-    text2[0] = "THICKNESS: 0.875";
-    draftingNoteBuilder1->Text()->TextBlock()->SetText(text2);
-    
-    // ----------------------------------------------
-    //   Dialog Begin Note Settings
-    // ----------------------------------------------
-    
-    draftingNoteBuilder1->Style()->LetteringStyle()->SetGeneralTextSize(5.0);
-    
-    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
-    
-    NXOpen::Annotations::Annotation::AssociativeOriginData assocOrigin1;
-    assocOrigin1.OriginType = NXOpen::Annotations::AssociativeOriginTypeDrag;
-    NXOpen::View *nullNXOpen_View(NULL);
-    assocOrigin1.View = nullNXOpen_View;
-    assocOrigin1.ViewOfGeometry = nullNXOpen_View;
-    NXOpen::Point *nullNXOpen_Point(NULL);
-    assocOrigin1.PointOnGeometry = nullNXOpen_Point;
-    NXOpen::Annotations::Annotation *nullNXOpen_Annotations_Annotation(NULL);
-    assocOrigin1.VertAnnotation = nullNXOpen_Annotations_Annotation;
-    assocOrigin1.VertAlignmentPosition = NXOpen::Annotations::AlignmentPositionTopLeft;
-    assocOrigin1.HorizAnnotation = nullNXOpen_Annotations_Annotation;
-    assocOrigin1.HorizAlignmentPosition = NXOpen::Annotations::AlignmentPositionTopLeft;
-    assocOrigin1.AlignedAnnotation = nullNXOpen_Annotations_Annotation;
-    assocOrigin1.DimensionLine = 0;
-    assocOrigin1.AssociatedView = nullNXOpen_View;
-    assocOrigin1.AssociatedPoint = nullNXOpen_Point;
-    assocOrigin1.OffsetAnnotation = nullNXOpen_Annotations_Annotation;
-    assocOrigin1.OffsetAlignmentPosition = NXOpen::Annotations::AlignmentPositionTopLeft;
-    assocOrigin1.XOffsetFactor = 0.0;
-    assocOrigin1.YOffsetFactor = 0.0;
-    assocOrigin1.StackAlignmentPosition = NXOpen::Annotations::StackAlignmentPositionAbove;
-    draftingNoteBuilder1->Origin()->SetAssociativeOrigin(assocOrigin1);
-    
-    NXOpen::Point3d point1(76.175419441132306, -22.518209459594686, 0.0);
-    draftingNoteBuilder1->Origin()->Origin()->SetValue(NULL, nullNXOpen_View, point1);
-    
-    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
-    
-    NXOpen::Session::UndoMarkId markId8;
-    markId8 = nx_session->SetUndoMark(NXOpen::Session::MarkVisibilityInvisible, "Note");
-    
-    NXOpen::NXObject *nXObject1;
-    nXObject1 = draftingNoteBuilder1->Commit();
-    
-    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
-    
-    draftingNoteBuilder1->Destroy();
+    // set leader settings
+    Annotations::LeaderData *leader_data = part->Annotations()->CreateLeaderData();
+    leader_data->SetArrowhead(Annotations::LeaderData::ArrowheadTypeFilledArrow);
+    leader_data->SetVerticalAttachment(Annotations::LeaderVerticalAttachmentCenter);
+    leader_data->SetStubSide(Annotations::LeaderSideInferred);
+    note_factory->Leader()->Leaders()->Append(leader_data);
 
-    NXOpen::Annotations::DraftingNoteBuilder *draftingNoteBuilder2;
-    draftingNoteBuilder2 = part->Annotations()->CreateDraftingNoteBuilder(nullNXOpen_Annotations_SimpleDraftingAid);
+    // text size
+    note_factory->Style()->LetteringStyle()->SetGeneralTextSize(5.0);
     
-    draftingNoteBuilder2->Origin()->SetInferRelativeToGeometry(true);
-    
-    draftingNoteBuilder2->Origin()->SetInferRelativeToGeometry(true);
-    
-    draftingNoteBuilder2->Origin()->SetAnchor(NXOpen::Annotations::OriginBuilder::AlignmentPositionBottomRight);
-    
-    std::vector<NXOpen::NXString> text3(1);
-    text3[0] = "THICKNESS: 0.875";
-    draftingNoteBuilder2->Text()->TextBlock()->SetText(text3);
-    
-    draftingNoteBuilder2->Style()->DimensionStyle()->SetLimitFitDeviation("H");
-    
-    draftingNoteBuilder2->Style()->DimensionStyle()->SetLimitFitShaftDeviation("g");
-    
-    draftingNoteBuilder2->Style()->LetteringStyle()->SetGeneralTextSize(5.0);
-    
-    draftingNoteBuilder2->Origin()->Plane()->SetPlaneMethod(NXOpen::Annotations::PlaneBuilder::PlaneMethodTypeXyPlane);
-    
-    draftingNoteBuilder2->Origin()->SetInferRelativeToGeometry(true);
-    
-    NXOpen::Annotations::LeaderData *leaderData2;
-    leaderData2 = part->Annotations()->CreateLeaderData();
-    
-    leaderData2->SetArrowhead(NXOpen::Annotations::LeaderData::ArrowheadTypeFilledArrow);
-    
-    leaderData2->SetVerticalAttachment(NXOpen::Annotations::LeaderVerticalAttachmentCenter);
-    
-    draftingNoteBuilder2->Leader()->Leaders()->Append(leaderData2);
-    
-    leaderData2->SetStubSide(NXOpen::Annotations::LeaderSideInferred);
-    
-    double symbolscale2;
-    symbolscale2 = draftingNoteBuilder2->Text()->TextBlock()->SymbolScale();
-    
-    double symbolaspectratio2;
-    symbolaspectratio2 = draftingNoteBuilder2->Text()->TextBlock()->SymbolAspectRatio();
-    
-    draftingNoteBuilder2->Origin()->SetInferRelativeToGeometry(true);
-    
-    draftingNoteBuilder2->Origin()->SetInferRelativeToGeometry(true);
-    
-    draftingNoteBuilder2->Destroy();
+    Annotations::Annotation::AssociativeOriginData note_origin;
+    Annotations::Annotation *note_annotation(NULL);
+    View *note_view(NULL);
+    Point *note_point(NULL);
 
+    // set origin settings
+    note_origin.OriginType = Annotations::AssociativeOriginTypeDrag;
+    note_origin.View = note_view;
+    note_origin.ViewOfGeometry = note_view;
+    note_origin.PointOnGeometry = note_point;
+    note_origin.VertAnnotation = note_annotation;
+    note_origin.VertAlignmentPosition = Annotations::AlignmentPositionTopLeft;
+    note_origin.HorizAnnotation = note_annotation;
+    note_origin.HorizAlignmentPosition = Annotations::AlignmentPositionTopLeft;
+    note_origin.AlignedAnnotation = note_annotation;
+    note_origin.DimensionLine = 0;
+    note_origin.AssociatedView = note_view;
+    note_origin.AssociatedPoint = note_point;
+    note_origin.OffsetAnnotation = note_annotation;
+    note_origin.OffsetAlignmentPosition = Annotations::AlignmentPositionTopLeft;
+    note_origin.XOffsetFactor = 0.0;
+    note_origin.YOffsetFactor = 0.0;
+    note_origin.StackAlignmentPosition = Annotations::StackAlignmentPositionAbove;
+
+    note_factory->Origin()->SetAssociativeOrigin(note_origin);
     
+    // set note location
+    Point3d note_location(0.0, -20.0, 0.0);
+    note_factory->Origin()->Origin()->SetValue(NULL, note_view, note_location);
+
+    // create note
+    NXObject *commit_result = note_factory->Commit();
+    note_factory->Destroy();
+    
+    // switch back to modeling
     nx_session->ApplicationSwitchImmediate("UG_APP_MODELING");
+
+    return commit_result;
 }
 
 void DxfExportWorker::handle_thickness(Body *body)
 {
     Point *p = nullptr;
     double min_z = 0.0;
+    double max_z = 0.0;
+    double thk;
+    NXObject *note;
 
     for (Edge *e: body->GetEdges())
     {
@@ -407,6 +334,7 @@ void DxfExportWorker::handle_thickness(Body *body)
             p = part->Points()->CreatePoint(e, SmartObject::UpdateOptionWithinModeling);
 
             min_z = min(p->Coordinates().Z, min_z);
+            max_z = max(p->Coordinates().Z, max_z);
 
             // part->Points()->DeletePoint(p);
         }
@@ -415,8 +343,12 @@ void DxfExportWorker::handle_thickness(Body *body)
     }
 
     // change WCS if origin Z is below 0
-    if (min_z != 0.0)
-        set_wcs_to_face(min_z);
+    if (min_z != 0.0) {
+        thk = abs(max_z - min_z);
+        note = add_annotation(thk);
+
+        bool added = selected_objects->Add(note);
+    }
 
 }
 

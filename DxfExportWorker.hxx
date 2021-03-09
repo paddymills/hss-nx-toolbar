@@ -36,8 +36,9 @@ class DxfExportWorker
         void process_part(const char*);
 
         void add_sketches();
-        void add_annotation();
         void export_bodies();
+        NXObject *add_annotation(double);
+
         void handle_thickness(Body*);
         void set_wcs_to_face(double);
 
