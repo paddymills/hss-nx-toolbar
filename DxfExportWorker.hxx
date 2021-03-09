@@ -26,14 +26,18 @@ class DxfExportWorker
 
         static Session *nx_session;
         static LogFile *nx_system_log;
+        
         DxfExportWorker();
         ~DxfExportWorker();
 
         void init_factory();
+
         void process_part();
         void process_part(const char*);
-        void export_bodies();
+
         void add_sketches();
+        void add_annotation();
+        void export_bodies();
         void handle_thickness(Body*);
         void set_wcs_to_face(double);
 

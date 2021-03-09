@@ -30,8 +30,19 @@
 #include <NXOpen/PointCollection.hxx>
 #include <NXOpen/Sketch.hxx>
 #include <NXOpen/SketchCollection.hxx>
+#include <NXOpen/View.hxx>
+#include <NXOpen/ViewCollection.hxx>
 #include <NXOpen/Xform.hxx>
 #include <NXOpen/XformCollection.hxx>
+
+#include <NXOpen/DraftingManager.hxx>
+#include <NXOpen/SelectDisplayableObject.hxx>
+#include <NXOpen/Annotations_Annotation.hxx>
+#include <NXOpen/Annotations_AnnotationManager.hxx>
+#include <NXOpen/Annotations_LeaderBuilder.hxx>
+#include <NXOpen/Annotations_LeaderData.hxx>
+#include <NXOpen/Annotations_LeaderDataList.hxx>
+#include <NXOpen/Annotations_OriginBuilder.hxx>
 
 #include <NXOpen/LogFile.hxx>
 #include <NXOpen/LicenseManager.hxx>
@@ -198,7 +209,7 @@ void DxfExportWorker::export_bodies()
     string body_name;
 
     /* Add body to dxf export */
-    for (Body *body: *(part->Bodies()))
+    for ( Body *body: *( part->Bodies() ) )
     {
         // TODO: Body name inference if empty
         /* build file name */
@@ -209,7 +220,7 @@ void DxfExportWorker::export_bodies()
         dxf_factory->SetOutputFile(base_save_file_name + body_name + ".dxf");
 
         /* export body */
-        nx_system_log->Write(" + Adding body: ");
+        nx_system_log->Write("\nExporting body: ");
         nx_system_log->WriteLine(body_name);
 
         /* add body to export */
@@ -229,6 +240,158 @@ void DxfExportWorker::export_bodies()
         /* delete added body (so that it does not export next time) */
         selected_objects->Remove(body);
     }
+}
+
+void DxfExportWorker::add_annotation()
+{
+    nx_session->ApplicationSwitchImmediate("UG_APP_DRAFTING");
+    
+    part->Drafting()->EnterDraftingApplication();
+    part->Views()->WorkView()->UpdateCustomSymbols();
+    part->Drafting()->SetTemplateInstantiationIsComplete(true);
+    
+    // turn off drawing layout (allows drafting tools in modeling)
+    part->Drafting()->SetDrawingLayout(false);
+
+    // ----------------------------------------------
+    //   Menu: Insert->Annotation->Note...
+    // ----------------------------------------------
+    
+    NXOpen::Annotations::SimpleDraftingAid *nullNXOpen_Annotations_SimpleDraftingAid(NULL);
+    NXOpen::Annotations::DraftingNoteBuilder *draftingNoteBuilder1;
+    draftingNoteBuilder1 = part->Annotations()->CreateDraftingNoteBuilder(nullNXOpen_Annotations_SimpleDraftingAid);
+    
+    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
+    
+    draftingNoteBuilder1->Origin()->SetAnchor(NXOpen::Annotations::OriginBuilder::AlignmentPositionBottomRight);
+    
+    std::vector<NXOpen::NXString> text1(1);
+    text1[0] = "THICKNESS: 0.875";
+    draftingNoteBuilder1->Text()->TextBlock()->SetText(text1);
+    
+    draftingNoteBuilder1->Origin()->Plane()->SetPlaneMethod(NXOpen::Annotations::PlaneBuilder::PlaneMethodTypeXyPlane);
+    
+    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
+    
+    NXOpen::Annotations::LeaderData *leaderData1;
+    leaderData1 = part->Annotations()->CreateLeaderData();
+    
+    leaderData1->SetArrowhead(NXOpen::Annotations::LeaderData::ArrowheadTypeFilledArrow);
+    
+    leaderData1->SetVerticalAttachment(NXOpen::Annotations::LeaderVerticalAttachmentCenter);
+    
+    draftingNoteBuilder1->Leader()->Leaders()->Append(leaderData1);
+    
+    leaderData1->SetStubSide(NXOpen::Annotations::LeaderSideInferred);
+    
+    double symbolscale1;
+    symbolscale1 = draftingNoteBuilder1->Text()->TextBlock()->SymbolScale();
+    
+    double symbolaspectratio1;
+    symbolaspectratio1 = draftingNoteBuilder1->Text()->TextBlock()->SymbolAspectRatio();
+    
+    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
+    
+    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
+    
+    std::vector<NXOpen::NXString> text2(1);
+    text2[0] = "THICKNESS: 0.875";
+    draftingNoteBuilder1->Text()->TextBlock()->SetText(text2);
+    
+    // ----------------------------------------------
+    //   Dialog Begin Note Settings
+    // ----------------------------------------------
+    
+    draftingNoteBuilder1->Style()->LetteringStyle()->SetGeneralTextSize(5.0);
+    
+    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
+    
+    NXOpen::Annotations::Annotation::AssociativeOriginData assocOrigin1;
+    assocOrigin1.OriginType = NXOpen::Annotations::AssociativeOriginTypeDrag;
+    NXOpen::View *nullNXOpen_View(NULL);
+    assocOrigin1.View = nullNXOpen_View;
+    assocOrigin1.ViewOfGeometry = nullNXOpen_View;
+    NXOpen::Point *nullNXOpen_Point(NULL);
+    assocOrigin1.PointOnGeometry = nullNXOpen_Point;
+    NXOpen::Annotations::Annotation *nullNXOpen_Annotations_Annotation(NULL);
+    assocOrigin1.VertAnnotation = nullNXOpen_Annotations_Annotation;
+    assocOrigin1.VertAlignmentPosition = NXOpen::Annotations::AlignmentPositionTopLeft;
+    assocOrigin1.HorizAnnotation = nullNXOpen_Annotations_Annotation;
+    assocOrigin1.HorizAlignmentPosition = NXOpen::Annotations::AlignmentPositionTopLeft;
+    assocOrigin1.AlignedAnnotation = nullNXOpen_Annotations_Annotation;
+    assocOrigin1.DimensionLine = 0;
+    assocOrigin1.AssociatedView = nullNXOpen_View;
+    assocOrigin1.AssociatedPoint = nullNXOpen_Point;
+    assocOrigin1.OffsetAnnotation = nullNXOpen_Annotations_Annotation;
+    assocOrigin1.OffsetAlignmentPosition = NXOpen::Annotations::AlignmentPositionTopLeft;
+    assocOrigin1.XOffsetFactor = 0.0;
+    assocOrigin1.YOffsetFactor = 0.0;
+    assocOrigin1.StackAlignmentPosition = NXOpen::Annotations::StackAlignmentPositionAbove;
+    draftingNoteBuilder1->Origin()->SetAssociativeOrigin(assocOrigin1);
+    
+    NXOpen::Point3d point1(76.175419441132306, -22.518209459594686, 0.0);
+    draftingNoteBuilder1->Origin()->Origin()->SetValue(NULL, nullNXOpen_View, point1);
+    
+    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
+    
+    NXOpen::Session::UndoMarkId markId8;
+    markId8 = nx_session->SetUndoMark(NXOpen::Session::MarkVisibilityInvisible, "Note");
+    
+    NXOpen::NXObject *nXObject1;
+    nXObject1 = draftingNoteBuilder1->Commit();
+    
+    draftingNoteBuilder1->Origin()->SetInferRelativeToGeometry(true);
+    
+    draftingNoteBuilder1->Destroy();
+
+    NXOpen::Annotations::DraftingNoteBuilder *draftingNoteBuilder2;
+    draftingNoteBuilder2 = part->Annotations()->CreateDraftingNoteBuilder(nullNXOpen_Annotations_SimpleDraftingAid);
+    
+    draftingNoteBuilder2->Origin()->SetInferRelativeToGeometry(true);
+    
+    draftingNoteBuilder2->Origin()->SetInferRelativeToGeometry(true);
+    
+    draftingNoteBuilder2->Origin()->SetAnchor(NXOpen::Annotations::OriginBuilder::AlignmentPositionBottomRight);
+    
+    std::vector<NXOpen::NXString> text3(1);
+    text3[0] = "THICKNESS: 0.875";
+    draftingNoteBuilder2->Text()->TextBlock()->SetText(text3);
+    
+    draftingNoteBuilder2->Style()->DimensionStyle()->SetLimitFitDeviation("H");
+    
+    draftingNoteBuilder2->Style()->DimensionStyle()->SetLimitFitShaftDeviation("g");
+    
+    draftingNoteBuilder2->Style()->LetteringStyle()->SetGeneralTextSize(5.0);
+    
+    draftingNoteBuilder2->Origin()->Plane()->SetPlaneMethod(NXOpen::Annotations::PlaneBuilder::PlaneMethodTypeXyPlane);
+    
+    draftingNoteBuilder2->Origin()->SetInferRelativeToGeometry(true);
+    
+    NXOpen::Annotations::LeaderData *leaderData2;
+    leaderData2 = part->Annotations()->CreateLeaderData();
+    
+    leaderData2->SetArrowhead(NXOpen::Annotations::LeaderData::ArrowheadTypeFilledArrow);
+    
+    leaderData2->SetVerticalAttachment(NXOpen::Annotations::LeaderVerticalAttachmentCenter);
+    
+    draftingNoteBuilder2->Leader()->Leaders()->Append(leaderData2);
+    
+    leaderData2->SetStubSide(NXOpen::Annotations::LeaderSideInferred);
+    
+    double symbolscale2;
+    symbolscale2 = draftingNoteBuilder2->Text()->TextBlock()->SymbolScale();
+    
+    double symbolaspectratio2;
+    symbolaspectratio2 = draftingNoteBuilder2->Text()->TextBlock()->SymbolAspectRatio();
+    
+    draftingNoteBuilder2->Origin()->SetInferRelativeToGeometry(true);
+    
+    draftingNoteBuilder2->Origin()->SetInferRelativeToGeometry(true);
+    
+    draftingNoteBuilder2->Destroy();
+
+    
+    nx_session->ApplicationSwitchImmediate("UG_APP_MODELING");
 }
 
 void DxfExportWorker::handle_thickness(Body *body)
