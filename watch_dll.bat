@@ -1,1 +1,1 @@
-watchexec.exe --exts c,cpp,cxx pmake_all.bat /dll %1
+watchexec.exe --exts c,cpp,cxx pmake_all.bat %1

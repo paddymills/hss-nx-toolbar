@@ -145,9 +145,9 @@ void DxfExportWorker::process_part()
 
 void DxfExportWorker::add_sketches()
 {
-    nx_system_log->WriteLine("\n***********************");
-    nx_system_log->WriteLine(  "*   Adding Sketches   *");
-    nx_system_log->WriteLine(  "***********************\n");
+    nx_system_log->WriteLine("\n\t***********************");
+    nx_system_log->WriteLine(  "\t*   Adding Sketches   *");
+    nx_system_log->WriteLine(  "\t***********************\n");
 
     /* Add ZINC sketches */
     for (Sketch *sketch: *(part->Sketches()))
@@ -184,9 +184,9 @@ void DxfExportWorker::add_sketches()
 
 void DxfExportWorker::export_bodies()
 {
-    nx_system_log->WriteLine("\n***********************");
-    nx_system_log->WriteLine(  "*    Adding Bodies    *");
-    nx_system_log->WriteLine(  "***********************\n");
+    nx_system_log->WriteLine("\n\t***********************");
+    nx_system_log->WriteLine(  "\t*    Adding Bodies    *");
+    nx_system_log->WriteLine(  "\t***********************\n");
 
     /* build base part file name */
     string base_save_file_name(DXF_OUTPUT_DIR);
@@ -196,8 +196,6 @@ void DxfExportWorker::export_bodies()
     base_save_file_name.append("-");
 
     string body_name;
-    Point *p = nullptr;
-    double min_z = 0.0;
 
     /* Add body to dxf export */
     for (Body *body: *(part->Bodies()))
@@ -211,27 +209,8 @@ void DxfExportWorker::export_bodies()
         dxf_factory->SetOutputFile(base_save_file_name + body_name + ".dxf");
 
         /* export body */
-        nx_system_log->Write("Adding body: ");
+        nx_system_log->Write(" + Adding body: ");
         nx_system_log->WriteLine(body_name);
-
-        for (Edge *e: body->GetEdges())
-        {
-            try
-            {
-                // create center point on edge
-                p = part->Points()->CreatePoint(e, SmartObject::UpdateOptionWithinModeling);
-
-                min_z = min(p->Coordinates().Z, min_z);
-
-                part->Points()->DeletePoint(p);
-            }
-            // some points will error out, don't care
-            catch (const exception &ex){}
-        }
-
-        // change WCS if origin Z is below 0
-        if (min_z != 0.0)
-            set_wcs_to_face(min_z);
 
         /* add body to export */
         bool added = selected_objects->Add(body);
@@ -252,6 +231,32 @@ void DxfExportWorker::export_bodies()
     }
 }
 
+void DxfExportWorker::handle_thickness(Body *body)
+{
+    Point *p = nullptr;
+    double min_z = 0.0;
+
+    for (Edge *e: body->GetEdges())
+    {
+        try
+        {
+            // create center point on edge
+            p = part->Points()->CreatePoint(e, SmartObject::UpdateOptionWithinModeling);
+
+            min_z = min(p->Coordinates().Z, min_z);
+
+            // part->Points()->DeletePoint(p);
+        }
+        // some points will error out, don't care
+        catch (const exception &ex){}
+    }
+
+    // change WCS if origin Z is below 0
+    if (min_z != 0.0)
+        set_wcs_to_face(min_z);
+
+}
+
 void DxfExportWorker::set_wcs_to_face(double new_z)
 {
     Features::Feature *nullNXOpen_Features_Feature(NULL);
@@ -265,10 +270,13 @@ void DxfExportWorker::set_wcs_to_face(double new_z)
     CartesianCoordinateSystem *ccord_sys = part->CoordinateSystems()->CreateCoordinateSystem(xform, SmartObject::UpdateOptionWithinModeling);
 
     /* create datum CSYS */
+    nx_system_log->Write("Creating new datum csys at z-level: ");
+    nx_system_log->WriteLine(to_string(new_z));
+
     datum_csys_builder->SetCsys(ccord_sys);
     NXObject *csys_commit = datum_csys_builder->Commit();
 
-    Features::DatumCsys *datum_csys(dynamic_cast<NXOpen::Features::DatumCsys *>(csys_commit));
+    Features::DatumCsys *datum_csys(dynamic_cast<Features::DatumCsys *>(csys_commit));
     datum_csys->SetWcsAtCsys();
 
     /* clean up pointers and builder */

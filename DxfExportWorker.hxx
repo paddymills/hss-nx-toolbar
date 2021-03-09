@@ -34,6 +34,7 @@ class DxfExportWorker
         void process_part(const char*);
         void export_bodies();
         void add_sketches();
+        void handle_thickness(Body*);
         void set_wcs_to_face(double);
 
 };
