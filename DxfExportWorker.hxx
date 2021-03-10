@@ -2,6 +2,8 @@
 #ifndef DXFEXPORTWORKER_H
 #define DXFEXPORTWORKER_H
 
+#include <vector>
+
 #include <uf_defs.h>
 #include <NXOpen/Session.hxx>
 #include <NXOpen/DxfdwgCreator.hxx>
@@ -21,6 +23,8 @@ class DxfExportWorker
         DxfdwgCreator *dxf_factory;
         SelectNXObjectList *selected_objects;
         Part *part;
+
+        vector<NXString> annotations;
 
     public:
 
