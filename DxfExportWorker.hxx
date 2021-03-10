@@ -16,15 +16,29 @@ using namespace NXOpen;
 static const char *DXF_EXPORT_CONFIG = "C:\\Users\\PMiller1\\git\\nx-dxf\\config\\export.def";
 static const char *DXF_OUTPUT_DIR = "\\\\hssieng\\SNDataPrd\\DXF\\";
 
+static const double NOTE_SIZE = 5.0;
+
+struct Annotation
+{
+    NXObject *object;
+    char *text;
+    bool this_body_only;
+};
+
 class DxfExportWorker
 {
     private:
 
         DxfdwgCreator *dxf_factory;
-        SelectNXObjectList *selected_objects;
         Part *part;
 
-        vector<NXString> annotations;
+        vector<NXObject*> purgeable_objects;
+        vector<Annotation> annotations;
+
+        bool add_object_to_export(NXObject*);
+        bool add_object_to_export(vector<NXObject*>);
+        bool add_purgeable_object_to_export(NXObject*);
+        void purge_objects();
 
     public:
 

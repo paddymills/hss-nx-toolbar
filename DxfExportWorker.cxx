@@ -2,6 +2,7 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING 1
 
 #include "DxfExportWorker.hxx"
+#include "BodyBoundary.hxx"
 
 #include <experimental/filesystem>
 
@@ -69,7 +70,9 @@ DxfExportWorker::DxfExportWorker()
     
     part = nullptr;
     dxf_factory = nullptr;
-    selected_objects = nullptr;
+
+    purgeable_objects = vector<NXObject*>();
+    annotations = vector<Annotation>();
 }
 
 DxfExportWorker::~DxfExportWorker()
@@ -80,7 +83,6 @@ DxfExportWorker::~DxfExportWorker()
     /* close factory, if not null */
     if (dxf_factory)
         dxf_factory->Destroy();
-        delete selected_objects;
         delete dxf_factory;
 
     DxfExportWorker::nx_system_log->WriteLine("\n\t\t\t*********************************");
@@ -105,8 +107,6 @@ void DxfExportWorker::init_factory() {
 
     /* set up dxf/dwg export for file */
     dxf_factory->SetInputFile(part->FullPath().GetText());
-    
-    selected_objects = dxf_factory->ExportSelectionBlock()->SelectionComp();
 }
 
 void DxfExportWorker::process_part(const char *part_file_name)
@@ -143,8 +143,32 @@ void DxfExportWorker::process_part()
 
     /* reset dxf/dwg exporter object selection */
     dxf_factory->Destroy();
-    selected_objects = nullptr;
     dxf_factory = nullptr;
+}
+
+bool DxfExportWorker::add_object_to_export(vector<NXObject *> objects)
+{
+    return dxf_factory->ExportSelectionBlock()->SelectionComp()->Add(objects);
+}
+
+bool DxfExportWorker::add_object_to_export(NXObject *object)
+{
+    return dxf_factory->ExportSelectionBlock()->SelectionComp()->Add(object);
+}
+
+bool DxfExportWorker::add_purgeable_object_to_export(NXObject *object)
+{
+    purgeable_objects.push_back(object);
+
+    return dxf_factory->ExportSelectionBlock()->SelectionComp()->Add(object);
+}
+
+void DxfExportWorker::purge_objects()
+{
+    for (NXObject *object : purgeable_objects)
+    {
+        dxf_factory->ExportSelectionBlock()->SelectionComp()->Remove(object);
+    }
 }
 
 void DxfExportWorker::add_sketches()
@@ -174,7 +198,7 @@ void DxfExportWorker::add_sketches()
                 nx_system_log->Write(" -> ");
 
                 /* add sketch lines to sketches */
-                if (selected_objects->Add(sketch->GetAllGeometry()))
+                if (add_object_to_export(sketch->GetAllGeometry()))
                     nx_system_log->Write("OK");
                 else
                     nx_system_log->Write("FAILED");
@@ -217,7 +241,7 @@ void DxfExportWorker::export_bodies()
         nx_system_log->WriteLine(body_name);
 
         /* add body to export */
-        bool added = selected_objects->Add(body);
+        bool added = add_purgeable_object_to_export(body);
 
         handle_thickness(body);
 
@@ -233,7 +257,22 @@ void DxfExportWorker::export_bodies()
         NXObject *generate_result = dxf_factory->Commit();
         
         /* delete added body (so that it does not export next time) */
-        selected_objects->Remove(body);
+        purge_objects();
+    }
+}
+
+void DxfExportWorker::handle_thickness(Body *body)
+{
+    NXObject *note;
+
+    BodyBoundary *bound = new BodyBoundary();
+    bound->get_points(body);
+
+    // add thickness annotation if origin Z is below 0
+    if (bound->min(BodyBoundary::Z) != 0.0) {
+        note = add_annotation(bound->thickness());
+
+        bool added = add_purgeable_object_to_export(note);
     }
 }
 
@@ -269,7 +308,7 @@ NXObject *DxfExportWorker::add_annotation(double thickness)
     note_factory->Leader()->Leaders()->Append(leader_data);
 
     // text size
-    note_factory->Style()->LetteringStyle()->SetGeneralTextSize(5.0);
+    note_factory->Style()->LetteringStyle()->SetGeneralTextSize(NOTE_SIZE);
     
     Annotations::Annotation::AssociativeOriginData note_origin;
     Annotations::Annotation *note_annotation(NULL);
@@ -310,39 +349,3 @@ NXObject *DxfExportWorker::add_annotation(double thickness)
 
     return commit_result;
 }
-
-void DxfExportWorker::handle_thickness(Body *body)
-{
-    Point *p = nullptr;
-    double min_z = 0.0;
-    double max_z = 0.0;
-    double thk;
-    NXObject *note;
-
-    for (Edge *e: body->GetEdges())
-    {
-        try
-        {
-            // create center point on edge
-            p = part->Points()->CreatePoint(e, SmartObject::UpdateOptionWithinModeling);
-
-            min_z = min(p->Coordinates().Z, min_z);
-            max_z = max(p->Coordinates().Z, max_z);
-
-            // part->Points()->DeletePoint(p);
-        }
-        // some points will error out, don't care
-        catch (const exception &ex){}
-    }
-
-    // add thickness annotation if origin Z is below 0
-    if (min_z != 0.0) {
-        thk = abs(max_z - min_z);
-        note = add_annotation(thk);
-
-        bool added = selected_objects->Add(note);
-    }
-
-}
-
-
