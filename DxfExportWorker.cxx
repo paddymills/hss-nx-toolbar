@@ -269,9 +269,8 @@ void DxfExportWorker::handle_thickness(Body *body)
     bound->get_points(body);
 
     // add thickness annotation if minimum Z is not on XY plane
-    if (bound->minimum(BodyBoundary::Z) != 0.0) {
+    if (bound->minimum(BodyBoundary::Z) != 0.0)
         annotations["THICKNESS"] = to_string(bound->thickness());
-    }
 
     // else -> remove thickness annotation
     else
