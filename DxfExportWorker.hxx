@@ -4,6 +4,7 @@
 
 #include <vector>
 
+#include <uf.h>
 #include <uf_defs.h>
 #include <NXOpen/Session.hxx>
 #include <NXOpen/DxfdwgCreator.hxx>
@@ -12,6 +13,7 @@
 #include <NXOpen/SelectNXObjectList.hxx>
 
 using namespace NXOpen;
+using namespace std;
 
 static const char *DXF_EXPORT_CONFIG = "C:\\Users\\PMiller1\\git\\nx-dxf\\config\\export.def";
 static const char *DXF_OUTPUT_DIR = "\\\\hssieng\\SNDataPrd\\DXF\\";

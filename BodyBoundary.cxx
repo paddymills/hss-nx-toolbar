@@ -1,6 +1,8 @@
 
 #include "BodyBoundary.hxx"
 
+#include <functional>
+
 #include <uf_defs.h>
 #include <NXOpen/Part.hxx>
 #include <NXOpen/Body.hxx>
@@ -11,17 +13,17 @@
 using namespace NXOpen;
 using namespace std;
 
-Boundary::Boundary()
+BodyBoundary::BodyBoundary()
 {
-    points = new PointLinkedList();
+    head = nullptr;
 }
 
-Boundary::~Boundary()
+BodyBoundary::~BodyBoundary()
 {
     delete_tail(head);
 }
 
-PointListNode *PointLinkedList::find_end(PointListNode *node)
+PointListNode *BodyBoundary::find_end(PointListNode *node)
 {
     if (node->next)
         return find_end(node->next);
@@ -29,31 +31,28 @@ PointListNode *PointLinkedList::find_end(PointListNode *node)
     return node;
 }
 
-void Boundary::delete_tail(PointListNode *node){
+void BodyBoundary::delete_tail(PointListNode *node){
     if (node->next)
         delete_tail(node->next);
 
     delete node;
 }
 
-void Boundary::add_point(Point *point)
+void BodyBoundary::add_point(Point *point)
 {
     add_point(point->Coordinates());
 }
 
-void Boundary::add_point(Point3d p)
+void BodyBoundary::add_point(Point3d p)
 {
     PointListNode *newNode = new PointListNode();
     newNode->point = p;
     newNode->next = nullptr;
 
-    if (!head) // head == nullptr
-        head = newNode;
-    else
-        find_end(head)->next = newNode;
+    find_end(head)->next = newNode;
 }
 
-void get_points(Body *body)
+void BodyBoundary::get_points(Body *body)
 {
     Point *p = nullptr;
 
@@ -63,7 +62,7 @@ void get_points(Body *body)
         {
             // create center point on edge
             p = body->OwningPart()->Points()->CreatePoint(e, SmartObject::UpdateOptionWithinModeling);
-            points.add_point(p->Coordinates());
+            add_point(p->Coordinates());
         }
 
         // some points will error out, don't care
@@ -71,42 +70,42 @@ void get_points(Body *body)
     }  
 }
 
-double min_max(MinMax min_max_func, Axis axis)
+double BodyBoundary::minimum(Axis axis)
 {
-    // set min or max function
-    function<double (double, double)> min_max_func;
-    switch (min_max_func)
-        case MIN:
-            min_max_func = min;
-        case MAX:
-            min_max_func = max;
-            break;
-
-    PointListNode *node = points.head;
-    double val = get_point_value(points.head, axis);
+    struct PointListNode *node = head->next;
+    double val = get_point_value(head, axis);
 
     while (node)
     {
-        val = min_max_func(val, get_point_value(node, axis));
+        val = min(val, get_point_value(node, axis));
 
         node = node->next;
     }
     
+    return val;
+}
+
+double BodyBoundary::maximum(Axis axis)
+{
+    struct PointListNode *node = head->next;
+    double val = get_point_value(head, axis);
+
+    while (node)
+    {
+        val = max(val, get_point_value(node, axis));
+
+        node = node->next;
+    }
     
     return val;
 }
 
-double min(Axis axis)
+double BodyBoundary::get_point_value(PointListNode *pt, Axis axis)
 {
-    return min_max(min, axis);
+    return get_point_value(pt->point, axis);
 }
 
-double max(Axis axis)
-{
-    return min_max(max, axis);
-}
-
-static double BodyBoundary::get_point_value(Point3d *pt, Axis axis)
+double BodyBoundary::get_point_value(Point3d pt, Axis axis)
 {
     switch (axis)
     {
@@ -118,11 +117,13 @@ static double BodyBoundary::get_point_value(Point3d *pt, Axis axis)
             
         case Z:
             return pt.Z;
-            
+        default:
+            // UNREACHABLE
+            return 0.0;
     }
 }
 
-double thickness()
+double BodyBoundary::thickness()
 {
-    return min_max(MAX, Z) = min_max(MIN, Z);
+    return maximum(Z) - minimum(Z);
 }

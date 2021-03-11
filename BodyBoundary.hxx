@@ -21,13 +21,12 @@ class BodyBoundary
 
         PointListNode *head;
 
-        PointListNode find_end(PointListNode*);
+        PointListNode *find_end(PointListNode*);
         void delete_tail(PointListNode*);
 
         
     public:
 
-        enum MinMax{MIN, MAX};
         enum Axis{X, Y, Z};
 
         BodyBoundary();
@@ -37,13 +36,13 @@ class BodyBoundary
         void add_point(Point3d);
         void get_points(Body*);
 
-        double min_max(MinMax, Axis);
-        double min(Axis);
-        double max(Axis);
+        double minimum(Axis);
+        double maximum(Axis);
         double thickness();
         double coverage(BodyBoundary*);
 
-        static double get_point_val(Point3d*, Axis);
+        double get_point_value(PointListNode*, Axis);
+        double get_point_value(Point3d, Axis);
 };
 
 

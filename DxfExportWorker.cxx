@@ -269,7 +269,7 @@ void DxfExportWorker::handle_thickness(Body *body)
     bound->get_points(body);
 
     // add thickness annotation if origin Z is below 0
-    if (bound->min(BodyBoundary::Z) != 0.0) {
+    if (bound->minimum(BodyBoundary::Z) != 0.0) {
         note = add_annotation(bound->thickness());
 
         bool added = add_purgeable_object_to_export(note);
