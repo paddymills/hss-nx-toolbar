@@ -169,6 +169,36 @@ void DxfExportWorker::purge_objects()
     }
 }
 
+bool DxfExportWorker::is_empty_property(string &value)
+{
+    for (char &c: value)
+    {
+        switch (c)
+        {
+            case ' ':
+            case 'X':
+            case 'x':
+                break;
+            default:
+                return false;
+        }
+    }
+
+
+    return true;
+}
+
+void DxfExportWorker::handle_part_properties()
+{
+    string text;
+
+    // drawing
+    text = part->GetStringAttribute("DWG_NUMBER").GetText();
+    if (!is_empty_property(text))
+        annotations["DRAWING"] = text;
+
+}
+
 void DxfExportWorker::add_sketches()
 {
     nx_system_log->WriteLine("\n\t***********************");
@@ -239,9 +269,9 @@ void DxfExportWorker::export_bodies()
         nx_system_log->WriteLine(body_name);
 
         /* add body to export */
-        bool added = add_purgeable_object_to_export(body);
+        add_purgeable_object_to_export(body);
 
-        handle_thickness(body);
+        handle_body(body);
 
         /* 
             delete part file if it exists
@@ -259,7 +289,7 @@ void DxfExportWorker::export_bodies()
     }
 }
 
-void DxfExportWorker::handle_thickness(Body *body)
+void DxfExportWorker::handle_body(Body *body)
 {
     NXObject *note;
     string note_text;
@@ -283,7 +313,7 @@ void DxfExportWorker::handle_thickness(Body *body)
         y = bound->minimum(BodyBoundary::Y) - NOTE_OFFSET;
 
         note = add_annotations(x, y);
-        bool added = add_purgeable_object_to_export(note);
+        add_purgeable_object_to_export(note);
     }
 }
 
@@ -320,8 +350,9 @@ NXObject *DxfExportWorker::add_annotations(double x_loc, double y_loc)
     leader_data->SetStubSide(Annotations::LeaderSideInferred);
     note_factory->Leader()->Leaders()->Append(leader_data);
 
-    // text size
+    // text size and justification
     note_factory->Style()->LetteringStyle()->SetGeneralTextSize(NOTE_SIZE);
+    note_factory->Style()->LetteringStyle()->SetHorizontalTextJustification(Annotations::TextJustificationLeft);
     
     Annotations::Annotation::AssociativeOriginData note_origin;
     Annotations::Annotation *note_annotation(NULL);

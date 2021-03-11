@@ -36,6 +36,8 @@ class DxfExportWorker
         bool add_purgeable_object_to_export(NXObject*);
         void purge_objects();
 
+        bool is_empty_property(string&);
+
     public:
 
         static Session *nx_session;
@@ -49,11 +51,12 @@ class DxfExportWorker
         void process_part();
         void process_part(const char*);
 
+        void handle_part_properties();
         void add_sketches();
         void export_bodies();
         NXObject *add_annotations(double, double);
 
-        void handle_thickness(Body*);
+        void handle_body(Body*);
         void set_wcs_to_face(double);
 
 };
