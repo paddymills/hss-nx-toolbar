@@ -37,6 +37,7 @@ class DxfExportWorker
         void purge_objects();
 
         bool is_empty_property(string&);
+        string get_body_name_by_inference(Body*);
 
     public:
 

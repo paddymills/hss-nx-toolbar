@@ -20,6 +20,7 @@ extern "C" DllExport void ufusr(char *param, int *retCode, int paramLen)
     {
         exporter = new DxfExportWorker();
         const char *test_part = "C:\\Users\\PMiller1\\git\\nx-dxf\\1190181A_G1A-web_named_bodies.prt";
+        // const char *test_part = "C:\\Users\\PMiller1\\git\\nx-dxf\\1190181A_G1A-web.prt";
 
         exporter->process_part(test_part);
     }

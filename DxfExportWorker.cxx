@@ -50,7 +50,7 @@ using namespace std;
 
 namespace fs = experimental::filesystem;
 
-/* Initialize static variables */
+// Initialize static variables
 Session *(DxfExportWorker::nx_session) = NULL;
 LogFile *(DxfExportWorker::nx_system_log) = NULL;
 
@@ -62,7 +62,7 @@ DxfExportWorker::DxfExportWorker()
     DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*                               *");
     DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*********************************\n");
 
-    /* init class members */
+    // init class members
     nx_session = Session::GetSession();
     nx_system_log = nx_session->LogFile();
 
@@ -78,7 +78,7 @@ DxfExportWorker::~DxfExportWorker()
     // release solid_modeling license
     DxfExportWorker::nx_session->LicenseManager()->Release("solid_modeling", nullptr);
     
-    /* close factory, if not null */
+    // close factory, if not null
     if (dxf_factory)
         dxf_factory->Destroy();
         delete dxf_factory;
@@ -91,7 +91,7 @@ DxfExportWorker::~DxfExportWorker()
 }
 
 void DxfExportWorker::init_factory() {
-    /* init dxf/dwg exporter */
+    // init dxf/dwg exporter
     dxf_factory = nx_session->DexManager()->CreateDxfdwgCreator();
 
     dxf_factory->SetSettingsFile(DXF_EXPORT_CONFIG);
@@ -103,13 +103,13 @@ void DxfExportWorker::init_factory() {
     dxf_factory->SetExportFacesAs(DxfdwgCreator::ExportFacesAsOptionsPolylineMesh);
     dxf_factory->SetProcessHoldFlag(true);
 
-    /* set up dxf/dwg export for file */
+    // set up dxf/dwg export for file
     dxf_factory->SetInputFile(part->FullPath().GetText());
 }
 
 void DxfExportWorker::process_part(const char *part_file_name)
 {
-    /* Open part */
+    // Open part
     PartLoadStatus *part_load_status;
     part = dynamic_cast<Part *>(DxfExportWorker::nx_session->Parts()->OpenActiveDisplay(part_file_name, DisplayPartOptionReplaceExisting, &part_load_status));
     delete part_load_status;
@@ -119,11 +119,11 @@ void DxfExportWorker::process_part(const char *part_file_name)
 
     process_part();
 
-    /* close part */
+    // close part
     part->Close(BasePart::CloseWholeTreeTrue, BasePart::CloseModifiedCloseModified, nullptr);
     nx_session->ApplicationSwitchImmediate("UG_APP_NOPART");
     
-    /* clean up part objects */
+    // clean up part objects
     delete part;
 }
 
@@ -140,9 +140,160 @@ void DxfExportWorker::process_part()
     add_sketches();
     export_bodies(); 
 
-    /* reset dxf/dwg exporter object selection */
+    // reset dxf/dwg exporter object selection
     dxf_factory->Destroy();
     dxf_factory = nullptr;
+}
+
+void DxfExportWorker::handle_part_properties()
+{
+    string text;
+
+    // drawing
+    text = part->GetStringAttribute("DWG_NUMBER").GetText();
+    if (!is_empty_property(text))
+        annotations["DRAWING"] = text;
+
+}
+
+void DxfExportWorker::add_sketches()
+{
+    nx_system_log->WriteLine("\n\t***********************");
+    nx_system_log->WriteLine(  "\t*   Adding Sketches   *");
+    nx_system_log->WriteLine(  "\t***********************\n");
+
+    // Add ZINC sketches
+    for (Sketch *sketch: *(part->Sketches()))
+    {
+        // add ZINC sketches
+        if (strstr(sketch->Name().GetText(), "ZINC"))
+        {
+            /* sketch is hidden: skip */
+            if (sketch->IsBlanked())
+            {
+                nx_system_log->Write(" - Skipping blanked sketch: ");
+                nx_system_log->Write(sketch->Name().GetText());
+            }
+
+            /* sketch is visible: add to file */
+            else
+            {
+                nx_system_log->Write(" + Adding sketch: ");
+                nx_system_log->Write(sketch->Name().GetText());
+                nx_system_log->Write(" -> ");
+
+                // add sketch lines to sketches
+                if (add_object_to_export(sketch->GetAllGeometry()))
+                    nx_system_log->Write("OK");
+                else
+                    nx_system_log->Write("FAILED");
+            }
+
+            nx_system_log->WriteLine("");
+        }
+    }
+
+}
+
+void DxfExportWorker::export_bodies()
+{
+    nx_system_log->WriteLine("\n\t***********************");
+    nx_system_log->WriteLine(  "\t*    Adding Bodies    *");
+    nx_system_log->WriteLine(  "\t***********************\n");
+
+    // get filename (no directories or extensions)
+    fs::path *part_path = new fs::path(part->FullPath().GetText());
+    string part_filename(part_path->filename().stem().string());
+    nx_system_log->Write("!! FILE NAME !!  ");
+    nx_system_log->WriteLine(part_filename);
+
+    // build base part file name
+    string part_name;
+    part_name.append(part->GetStringAttribute("JobNo").GetText());
+    part_name.append("_");
+    part_name.append(part->GetStringAttribute("Mark").GetText());
+
+    // make sure part filename starts with build part_name
+    // could be stale data
+    if (part_filename.rfind(part_name, 0) != 0)
+        part_name = part_filename;
+
+    string body_name;
+    int body_name_counter = 1;
+
+    // Add body to dxf export 
+    bool has_multiple_bodies = (part->Bodies()->begin() == part->Bodies()->end());
+    for ( Body *body: *( part->Bodies() ) )
+    {
+        // get name of body
+        body_name.assign(body->Name().GetText());
+        
+        // Set output file name
+        // single body part
+        if (has_multiple_bodies)
+            dxf_factory->SetOutputFile(DXF_OUTPUT_DIR + part_name + ".dxf");
+        
+        // multiple body part, but body is not named
+        // {DXF_OUTPUT_DIR}\{Job}_{Girder}-web_1.dxf
+        else if (body_name.empty())
+            dxf_factory->SetOutputFile(DXF_OUTPUT_DIR + part_filename + "_" + to_string(body_name_counter++) + ".dxf");
+
+        // multiple body part, named body
+        // {DXF_OUTPUT_DIR}\{Job}_{Girder}-{BodyName}.dxf
+        else
+            dxf_factory->SetOutputFile(DXF_OUTPUT_DIR + part_name + "-" + body_name + ".dxf");
+        
+
+        // export body
+        nx_system_log->Write("\nExporting body: ");
+        nx_system_log->WriteLine(body_name);
+
+        // add body to export
+        add_purgeable_object_to_export(body);
+
+        handle_body(body);
+
+        /* 
+            delete part file if it exists
+            this seems to speed up export compared to overwriting files
+            also, it keeps from accumulating *_bk.dxf files
+        */
+        if (fs::exists(fs::path(dxf_factory->OutputFile().GetText())))
+            remove(dxf_factory->OutputFile().GetText());
+            
+        // generate DXF file
+        NXObject *generate_result = dxf_factory->Commit();
+        
+        /* delete added purgeable objects (body, annotations, etc) */
+        purge_objects();
+    }
+}
+
+void DxfExportWorker::handle_body(Body *body)
+{
+    NXObject *note;
+    string note_text;
+    double x, y;
+
+    BodyBoundary *bound = new BodyBoundary(body);
+
+    // add thickness annotation if minimum Z is not on XY plane
+    if (bound->minimum(BodyBoundary::Z) != 0.0)
+        annotations["THICKNESS"] = to_string(bound->thickness());
+
+    // else -> remove thickness annotation
+    else
+        annotations.erase("THICKNESS");
+
+    // add annotations, if any
+    if (annotations.size() > 0)
+    {
+        x = bound->minimum(BodyBoundary::X) + NOTE_OFFSET;
+        y = bound->minimum(BodyBoundary::Y) - NOTE_OFFSET;
+
+        note = add_annotations(x, y);
+        add_purgeable_object_to_export(note);
+    }
 }
 
 bool DxfExportWorker::add_object_to_export(vector<NXObject *> objects)
@@ -184,135 +335,6 @@ bool DxfExportWorker::is_empty_property(string &value)
     }
 
     return true;
-}
-
-void DxfExportWorker::handle_part_properties()
-{
-    string text;
-
-    // drawing
-    text = part->GetStringAttribute("DWG_NUMBER").GetText();
-    if (!is_empty_property(text))
-        annotations["DRAWING"] = text;
-
-}
-
-void DxfExportWorker::add_sketches()
-{
-    nx_system_log->WriteLine("\n\t***********************");
-    nx_system_log->WriteLine(  "\t*   Adding Sketches   *");
-    nx_system_log->WriteLine(  "\t***********************\n");
-
-    /* Add ZINC sketches */
-    for (Sketch *sketch: *(part->Sketches()))
-    {
-        /* add ZINC sketches */
-        if (strstr(sketch->Name().GetText(), "ZINC"))
-        {
-            /* sketch is hidden: skip */
-            if (sketch->IsBlanked())
-            {
-                nx_system_log->Write(" - Skipping blanked sketch: ");
-                nx_system_log->Write(sketch->Name().GetText());
-            }
-
-            /* sketch is visible: add to file */
-            else
-            {
-                nx_system_log->Write(" + Adding sketch: ");
-                nx_system_log->Write(sketch->Name().GetText());
-                nx_system_log->Write(" -> ");
-
-                /* add sketch lines to sketches */
-                if (add_object_to_export(sketch->GetAllGeometry()))
-                    nx_system_log->Write("OK");
-                else
-                    nx_system_log->Write("FAILED");
-            }
-
-            nx_system_log->WriteLine("");
-        }
-    }
-
-}
-
-void DxfExportWorker::export_bodies()
-{
-    nx_system_log->WriteLine("\n\t***********************");
-    nx_system_log->WriteLine(  "\t*    Adding Bodies    *");
-    nx_system_log->WriteLine(  "\t***********************\n");
-
-    /* build base part file name */
-    string base_save_file_name(DXF_OUTPUT_DIR);
-    base_save_file_name.append(part->GetStringAttribute("JobNo").GetText());
-    base_save_file_name.append("_");
-    base_save_file_name.append(part->GetStringAttribute("Mark").GetText());
-    base_save_file_name.append("-");
-
-    string body_name;
-
-    /* Add body to dxf export */
-    for ( Body *body: *( part->Bodies() ) )
-    {
-        // TODO: Body name inference if empty
-        /* build file name */
-        body_name.assign(body->Name().GetText());
-        
-        /* Set output file name */
-        /* {DXF_OUTPUT_DIR}\{Job}_{Girder}-{BodyName}.dxf */
-        dxf_factory->SetOutputFile(base_save_file_name + body_name + ".dxf");
-
-        /* export body */
-        nx_system_log->Write("\nExporting body: ");
-        nx_system_log->WriteLine(body_name);
-
-        /* add body to export */
-        add_purgeable_object_to_export(body);
-
-        handle_body(body);
-
-        /* 
-            delete part file if it exists
-            this seems to speed up export compared to overwriting files
-            also, it keeps from accumulating *_bk.dxf files
-        */
-        if (fs::exists(fs::path(dxf_factory->OutputFile().GetText())))
-            remove(dxf_factory->OutputFile().GetText());
-            
-        /* generate DXF file */
-        NXObject *generate_result = dxf_factory->Commit();
-        
-        /* delete added purgeable objects (body, annotations, etc) */
-        purge_objects();
-    }
-}
-
-void DxfExportWorker::handle_body(Body *body)
-{
-    NXObject *note;
-    string note_text;
-    double x, y;
-
-    BodyBoundary *bound = new BodyBoundary();
-    bound->get_points(body);
-
-    // add thickness annotation if minimum Z is not on XY plane
-    if (bound->minimum(BodyBoundary::Z) != 0.0)
-        annotations["THICKNESS"] = to_string(bound->thickness());
-
-    // else -> remove thickness annotation
-    else
-        annotations.erase("THICKNESS");
-
-    // add annotations, if any
-    if (annotations.size() > 0)
-    {
-        x = bound->minimum(BodyBoundary::X) + NOTE_OFFSET;
-        y = bound->minimum(BodyBoundary::Y) - NOTE_OFFSET;
-
-        note = add_annotations(x, y);
-        add_purgeable_object_to_export(note);
-    }
 }
 
 NXObject *DxfExportWorker::add_annotations(double x_loc, double y_loc)
@@ -390,4 +412,25 @@ NXObject *DxfExportWorker::add_annotations(double x_loc, double y_loc)
     nx_session->ApplicationSwitchImmediate("UG_APP_MODELING");
 
     return commit_result;
+}
+
+string DxfExportWorker::get_body_name_by_inference(Body *body)
+{
+    string body_name;
+    vector<Body*> other_bodies;
+
+    BodyBoundary *this_body_bound = new BodyBoundary(body);
+    BodyBoundary *other_body_bound;
+
+    for ( Body *other_body: *(part->Bodies()) )
+    {
+        if (other_body == body)
+            continue;
+
+        other_body_bound = new BodyBoundary(other_body);
+
+        other_bodies.push_back(other_body);
+    }
+
+    return body_name;
 }

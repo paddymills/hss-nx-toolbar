@@ -30,6 +30,7 @@ class BodyBoundary
         enum Axis{X, Y, Z};
 
         BodyBoundary();
+        BodyBoundary(Body*);
         ~BodyBoundary();
 
         void add_point(Point*);

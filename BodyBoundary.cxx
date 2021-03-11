@@ -18,6 +18,13 @@ BodyBoundary::BodyBoundary()
     head = nullptr;
 }
 
+BodyBoundary::BodyBoundary(Body *body)
+{
+    head = nullptr;
+
+    get_points(body);
+}
+
 BodyBoundary::~BodyBoundary()
 {
     if (head)
