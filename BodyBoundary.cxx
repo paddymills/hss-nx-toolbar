@@ -20,10 +20,11 @@ BodyBoundary::BodyBoundary()
 
 BodyBoundary::~BodyBoundary()
 {
-    delete_tail(head);
+    if (head)
+        delete_tail(head);
 }
 
-PointListNode *BodyBoundary::find_end(PointListNode *node)
+PointNode *BodyBoundary::find_end(PointNode *node)
 {
     if (node->next)
         return find_end(node->next);
@@ -31,7 +32,8 @@ PointListNode *BodyBoundary::find_end(PointListNode *node)
     return node;
 }
 
-void BodyBoundary::delete_tail(PointListNode *node){
+void BodyBoundary::delete_tail(PointNode *node)
+{
     if (node->next)
         delete_tail(node->next);
 
@@ -40,16 +42,15 @@ void BodyBoundary::delete_tail(PointListNode *node){
 
 void BodyBoundary::add_point(Point *point)
 {
-    add_point(point->Coordinates());
-}
-
-void BodyBoundary::add_point(Point3d p)
-{
-    PointListNode *newNode = new PointListNode();
-    newNode->point = p;
+    PointNode *newNode = new PointNode();
+    
+    newNode->point = point->Coordinates();
     newNode->next = nullptr;
 
-    find_end(head)->next = newNode;
+    if (!head)
+        head = newNode;
+    else
+        find_end(head)->next = newNode;
 }
 
 void BodyBoundary::get_points(Body *body)
@@ -62,7 +63,7 @@ void BodyBoundary::get_points(Body *body)
         {
             // create center point on edge
             p = body->OwningPart()->Points()->CreatePoint(e, SmartObject::UpdateOptionWithinModeling);
-            add_point(p->Coordinates());
+            add_point(p);
         }
 
         // some points will error out, don't care
@@ -72,7 +73,7 @@ void BodyBoundary::get_points(Body *body)
 
 double BodyBoundary::minimum(Axis axis)
 {
-    struct PointListNode *node = head->next;
+    struct PointNode *node = head->next;
     double val = get_point_value(head, axis);
 
     while (node)
@@ -87,7 +88,7 @@ double BodyBoundary::minimum(Axis axis)
 
 double BodyBoundary::maximum(Axis axis)
 {
-    struct PointListNode *node = head->next;
+    struct PointNode *node = head->next;
     double val = get_point_value(head, axis);
 
     while (node)
@@ -100,23 +101,18 @@ double BodyBoundary::maximum(Axis axis)
     return val;
 }
 
-double BodyBoundary::get_point_value(PointListNode *pt, Axis axis)
-{
-    return get_point_value(pt->point, axis);
-}
-
-double BodyBoundary::get_point_value(Point3d pt, Axis axis)
+double BodyBoundary::get_point_value(PointNode *node, Axis axis)
 {
     switch (axis)
     {
         case X:
-            return pt.X;
+            return node->point.X;
             
         case Y:
-            return pt.Y;
+            return node->point.Y;
             
         case Z:
-            return pt.Z;
+            return node->point.Z;
         default:
             // UNREACHABLE
             return 0.0;

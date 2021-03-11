@@ -256,7 +256,7 @@ void DxfExportWorker::export_bodies()
         /* generate DXF file */
         NXObject *generate_result = dxf_factory->Commit();
         
-        /* delete added body (so that it does not export next time) */
+        /* delete added purgeable objects (body, annotations, etc) */
         purge_objects();
     }
 }
@@ -264,21 +264,37 @@ void DxfExportWorker::export_bodies()
 void DxfExportWorker::handle_thickness(Body *body)
 {
     NXObject *note;
+    string note_text;
+    double x, y;
 
     BodyBoundary *bound = new BodyBoundary();
     bound->get_points(body);
 
-    // add thickness annotation if origin Z is below 0
+    // add thickness annotation if minimum Z is not on XY plane
     if (bound->minimum(BodyBoundary::Z) != 0.0) {
-        note = add_annotation(bound->thickness());
+        x = bound->minimum(BodyBoundary::X) + 20.0;
+        y = bound->minimum(BodyBoundary::Y) - 20.0;
+
+        note = add_annotation("THICKNESS", to_string(bound->thickness()), x, y);
 
         bool added = add_purgeable_object_to_export(note);
     }
 }
 
-NXObject *DxfExportWorker::add_annotation(double thickness)
+NXObject *DxfExportWorker::add_annotation(NXString tag, NXString value, double x_loc, double y_loc)
 {
-    // swithc to drafting
+    // create annotation
+    Annotation *anno = new Annotation();
+    anno->text = tag + ": " + value;
+    anno->X = x_loc;
+    anno->Y = y_loc;
+
+    return add_annotation(anno);
+}
+
+NXObject *DxfExportWorker::add_annotation(Annotation *anno)
+{
+    // switch to drafting
     nx_session->ApplicationSwitchImmediate("UG_APP_DRAFTING");
     
     part->Drafting()->EnterDraftingApplication();
@@ -295,7 +311,7 @@ NXObject *DxfExportWorker::add_annotation(double thickness)
     note_factory->Origin()->SetAnchor(Annotations::OriginBuilder::AlignmentPositionTopLeft);
     
     vector<NXString> annotations(1);
-    annotations[0] = "THICKNESS: " + to_string(thickness);
+    annotations[0] = anno->text;
 
     note_factory->Text()->TextBlock()->SetText(annotations);
     note_factory->Origin()->Plane()->SetPlaneMethod(Annotations::PlaneBuilder::PlaneMethodTypeXyPlane);
@@ -337,7 +353,7 @@ NXObject *DxfExportWorker::add_annotation(double thickness)
     note_factory->Origin()->SetAssociativeOrigin(note_origin);
     
     // set note location
-    Point3d note_location(0.0, -20.0, 0.0);
+    Point3d note_location(anno->X, anno->Y, 0.0);
     note_factory->Origin()->Origin()->SetValue(NULL, note_view, note_location);
 
     // create note

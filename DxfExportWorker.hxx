@@ -23,8 +23,9 @@ static const double NOTE_SIZE = 5.0;
 struct Annotation
 {
     NXObject *object;
-    char *text;
-    bool this_body_only;
+    NXString text;
+    double X;
+    double Y;
 };
 
 class DxfExportWorker
@@ -57,7 +58,8 @@ class DxfExportWorker
 
         void add_sketches();
         void export_bodies();
-        NXObject *add_annotation(double);
+        NXObject *add_annotation(NXString, NXString, double, double);
+        NXObject *add_annotation(Annotation*);
 
         void handle_thickness(Body*);
         void set_wcs_to_face(double);
