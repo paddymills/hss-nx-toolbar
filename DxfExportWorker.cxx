@@ -5,6 +5,7 @@
 #include "BodyBoundary.hxx"
 
 #include <experimental/filesystem>
+#include <map>
 
 #include <uf.h>
 #include <uf_defs.h>
@@ -70,9 +71,6 @@ DxfExportWorker::DxfExportWorker()
     
     part = nullptr;
     dxf_factory = nullptr;
-
-    purgeable_objects = vector<NXObject*>();
-    annotations = vector<Annotation>();
 }
 
 DxfExportWorker::~DxfExportWorker()
@@ -272,27 +270,25 @@ void DxfExportWorker::handle_thickness(Body *body)
 
     // add thickness annotation if minimum Z is not on XY plane
     if (bound->minimum(BodyBoundary::Z) != 0.0) {
-        x = bound->minimum(BodyBoundary::X) + 20.0;
-        y = bound->minimum(BodyBoundary::Y) - 20.0;
+        annotations["THICKNESS"] = to_string(bound->thickness());
+    }
 
-        note = add_annotation("THICKNESS", to_string(bound->thickness()), x, y);
+    // else -> remove thickness annotation
+    else
+        annotations.erase("THICKNESS");
 
+    // add annotations, if any
+    if (annotations.size() > 0)
+    {
+        x = bound->minimum(BodyBoundary::X) + NOTE_OFFSET;
+        y = bound->minimum(BodyBoundary::Y) - NOTE_OFFSET;
+
+        note = add_annotations(x, y);
         bool added = add_purgeable_object_to_export(note);
     }
 }
 
-NXObject *DxfExportWorker::add_annotation(NXString tag, NXString value, double x_loc, double y_loc)
-{
-    // create annotation
-    Annotation *anno = new Annotation();
-    anno->text = tag + ": " + value;
-    anno->X = x_loc;
-    anno->Y = y_loc;
-
-    return add_annotation(anno);
-}
-
-NXObject *DxfExportWorker::add_annotation(Annotation *anno)
+NXObject *DxfExportWorker::add_annotations(double x_loc, double y_loc)
 {
     // switch to drafting
     nx_session->ApplicationSwitchImmediate("UG_APP_DRAFTING");
@@ -309,11 +305,13 @@ NXObject *DxfExportWorker::add_annotation(Annotation *anno)
     note_factory = part->Annotations()->CreateDraftingNoteBuilder(drafting_aid);
     
     note_factory->Origin()->SetAnchor(Annotations::OriginBuilder::AlignmentPositionTopLeft);
-    
-    vector<NXString> annotations(1);
-    annotations[0] = anno->text;
 
-    note_factory->Text()->TextBlock()->SetText(annotations);
+    vector<NXString> anno_strings(annotations.size());
+    map<string, string>::iterator itr;
+    for (itr = annotations.begin(); itr != annotations.end(); ++itr)
+        anno_strings.push_back(itr->first + ": " + itr->second);
+
+    note_factory->Text()->TextBlock()->SetText(anno_strings);
     note_factory->Origin()->Plane()->SetPlaneMethod(Annotations::PlaneBuilder::PlaneMethodTypeXyPlane);
     
     // set leader settings
@@ -353,7 +351,7 @@ NXObject *DxfExportWorker::add_annotation(Annotation *anno)
     note_factory->Origin()->SetAssociativeOrigin(note_origin);
     
     // set note location
-    Point3d note_location(anno->X, anno->Y, 0.0);
+    Point3d note_location(x_loc, y_loc, 0.0);
     note_factory->Origin()->Origin()->SetValue(NULL, note_view, note_location);
 
     // create note

@@ -2,7 +2,7 @@
 #ifndef DXFEXPORTWORKER_H
 #define DXFEXPORTWORKER_H
 
-#include <vector>
+#include <map>
 
 #include <uf.h>
 #include <uf_defs.h>
@@ -19,14 +19,7 @@ static const char *DXF_EXPORT_CONFIG = "C:\\Users\\PMiller1\\git\\nx-dxf\\config
 static const char *DXF_OUTPUT_DIR = "\\\\hssieng\\SNDataPrd\\DXF\\";
 
 static const double NOTE_SIZE = 5.0;
-
-struct Annotation
-{
-    NXObject *object;
-    NXString text;
-    double X;
-    double Y;
-};
+static const double NOTE_OFFSET = 10.0;
 
 class DxfExportWorker
 {
@@ -36,7 +29,7 @@ class DxfExportWorker
         Part *part;
 
         vector<NXObject*> purgeable_objects;
-        vector<Annotation> annotations;
+        map<string, string> annotations;
 
         bool add_object_to_export(NXObject*);
         bool add_object_to_export(vector<NXObject*>);
@@ -58,8 +51,7 @@ class DxfExportWorker
 
         void add_sketches();
         void export_bodies();
-        NXObject *add_annotation(NXString, NXString, double, double);
-        NXObject *add_annotation(Annotation*);
+        NXObject *add_annotations(double, double);
 
         void handle_thickness(Body*);
         void set_wcs_to_face(double);
