@@ -136,6 +136,7 @@ void DxfExportWorker::process_part()
     // ********************
     // *     DO STUFF     *
     // ********************
+    handle_part_properties();
     add_sketches();
     export_bodies(); 
 
@@ -164,9 +165,7 @@ bool DxfExportWorker::add_purgeable_object_to_export(NXObject *object)
 void DxfExportWorker::purge_objects()
 {
     for (NXObject *object : purgeable_objects)
-    {
         dxf_factory->ExportSelectionBlock()->SelectionComp()->Remove(object);
-    }
 }
 
 bool DxfExportWorker::is_empty_property(string &value)
@@ -183,7 +182,6 @@ bool DxfExportWorker::is_empty_property(string &value)
                 return false;
         }
     }
-
 
     return true;
 }
