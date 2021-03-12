@@ -35,6 +35,7 @@ class BodyBoundary
 
         void add_point(Point*);
         void get_points(Body*);
+        PointNode *get_head();
 
         double minimum(Axis);
         double maximum(Axis);
@@ -42,7 +43,8 @@ class BodyBoundary
         double thickness();
         double coverage(BodyBoundary*);
 
-        double get_point_value(PointNode*, Axis);
+        static double get_point_value(PointNode*, Axis);
+        static bool point_equals(PointNode*, PointNode*);
 };
 
 

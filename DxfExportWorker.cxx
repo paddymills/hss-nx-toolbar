@@ -441,9 +441,10 @@ string DxfExportWorker::get_export_name(Body *body)
 
         other_body_bound = new BodyBoundary(other_body);
 
-        // test for parent based on length and height
+        // test for parent based on length
         if (this_body_bound->distance(BodyBoundary::X) < other_body_bound->distance(BodyBoundary::X))
             is_parent = false;
+        // test for parent based on height
         else if (this_body_bound->distance(BodyBoundary::Y) < other_body_bound->distance(BodyBoundary::Y))
             is_parent = false;
     }

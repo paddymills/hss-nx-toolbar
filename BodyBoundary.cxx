@@ -78,6 +78,11 @@ void BodyBoundary::get_points(Body *body)
     }  
 }
 
+PointNode *BodyBoundary::get_head()
+{
+    return head;
+}
+
 double BodyBoundary::minimum(Axis axis)
 {
     struct PointNode *node = head->next;
@@ -131,7 +136,46 @@ double BodyBoundary::get_point_value(PointNode *node, Axis axis)
     }
 }
 
+bool BodyBoundary::point_equals(PointNode *node1, PointNode *node2)
+{
+    if (node1->point.X == node2->point.X)
+        if (node1->point.Y == node2->point.Y)
+            if (node1->point.Z == node2->point.Z)
+                return true;
+
+    return false;
+}
+
 double BodyBoundary::thickness()
 {
     return maximum(Z) - minimum(Z);
+}
+
+double BodyBoundary::coverage(BodyBoundary *other)
+{
+    int coincident_points, number_of_points;
+
+    PointNode *this_node, *other_node;
+    this_node = head;
+
+    while(this_node)
+    {
+        number_of_points++;
+
+        other_node = other->get_head();
+        while (other_node)
+        {
+            if (point_equals(this_node, other_node))
+            {
+                coincident_points++;
+                break;
+            }
+
+            other_node = other_node->next;
+        }
+
+        this_node = this_node->next;
+    }
+
+    return static_cast<double>(coincident_points / number_of_points);
 }
