@@ -201,57 +201,15 @@ void DxfExportWorker::export_bodies()
     nx_system_log->WriteLine(  "\t*    Adding Bodies    *");
     nx_system_log->WriteLine(  "\t***********************\n");
 
-    // get filename (no directories or extensions)
-    fs::path *part_path = new fs::path(part->FullPath().GetText());
-    string part_filename(part_path->filename().stem().string());
-    nx_system_log->Write("!! FILE NAME !!  ");
-    nx_system_log->WriteLine(part_filename);
-
-    // build base part file name
-    string part_name;
-    part_name.append(part->GetStringAttribute("JobNo").GetText());
-    part_name.append("_");
-    part_name.append(part->GetStringAttribute("Mark").GetText());
-
-    // make sure part filename starts with build part_name
-    // could be stale data
-    if (part_filename.rfind(part_name, 0) != 0)
-        part_name = part_filename;
-
     string body_name;
-    int body_name_counter = 1;
 
     // Add body to dxf export 
-    bool has_multiple_bodies = (part->Bodies()->begin() == part->Bodies()->end());
     for ( Body *body: *( part->Bodies() ) )
     {
-        // get name of body
-        body_name.assign(body->Name().GetText());
-        
+        body_name = get_export_name(body);
+
         // Set output file name
-        // single body part
-        if (has_multiple_bodies)
-            dxf_factory->SetOutputFile(DXF_OUTPUT_DIR + part_name + ".dxf");
-        
-        // multiple body part, but body is not named
-        // {DXF_OUTPUT_DIR}\{Job}_{Girder}-web_1.dxf
-        else if (body_name.empty())
-            dxf_factory->SetOutputFile(DXF_OUTPUT_DIR + part_filename + "_" + to_string(body_name_counter++) + ".dxf");
-
-        // multiple body part, named body
-        // {DXF_OUTPUT_DIR}\{Job}_{Girder}-{BodyName}.dxf
-        else
-            dxf_factory->SetOutputFile(DXF_OUTPUT_DIR + part_name + "-" + body_name + ".dxf");
-        
-
-        // export body
-        nx_system_log->Write("\nExporting body: ");
-        nx_system_log->WriteLine(body_name);
-
-        // add body to export
-        add_purgeable_object_to_export(body);
-
-        handle_body(body);
+        dxf_factory->SetOutputFile(DXF_OUTPUT_DIR + body_name + ".dxf");
 
         /* 
             delete part file if it exists
@@ -260,11 +218,20 @@ void DxfExportWorker::export_bodies()
         */
         if (fs::exists(fs::path(dxf_factory->OutputFile().GetText())))
             remove(dxf_factory->OutputFile().GetText());
+
+        // export body
+        nx_system_log->WriteLine("\nExporting body: " + body_name);
+
+        // add body to export
+        add_purgeable_object_to_export(body);
+
+        // handle body attributes (i.e. thickness)
+        handle_body(body);
             
         // generate DXF file
         NXObject *generate_result = dxf_factory->Commit();
         
-        /* delete added purgeable objects (body, annotations, etc) */
+        // delete added purgeable objects (body, annotations, etc)
         purge_objects();
     }
 }
@@ -414,23 +381,94 @@ NXObject *DxfExportWorker::add_annotations(double x_loc, double y_loc)
     return commit_result;
 }
 
-string DxfExportWorker::get_body_name_by_inference(Body *body)
+string DxfExportWorker::get_export_name(Body *body)
 {
-    string body_name;
-    vector<Body*> other_bodies;
+    // TODO: determine body type (web, flange?, other?)
+    BodyCollection *bodies = part->Bodies();
+    int number_of_bodies = distance(bodies->begin(), bodies->end());
 
+    // get filename (no directories or extensions)
+    fs::path *part_path = new fs::path(part->FullPath().GetText());
+    string part_filename(part_path->filename().stem().string());
+
+    // build base part file name
+    string part_name;
+    part_name.append(part->GetStringAttribute("JobNo").GetText());
+    part_name.append("_");
+    part_name.append(part->GetStringAttribute("Mark").GetText());
+
+    // make sure part filename starts with build part_name
+    // could be stale data
+    if ( part_filename.rfind(part_name, 0) != 0 )
+        part_name = part_filename;
+
+    /* 
+        ****************************************************************
+        *                       single body part                       *
+        ****************************************************************
+    */
+    if ( number_of_bodies == 1 )
+        return part_name;
+
+    /* 
+        ****************************************************************
+        *                          named body                          *
+        ****************************************************************
+    */
+    if ( body->Name().GetText() )
+        return part_name + "-" + part->Name().GetText();
+
+    /* 
+        ****************************************************************
+        *            attempt to infer from body boundaries             *
+        ****************************************************************
+    */
     BodyBoundary *this_body_bound = new BodyBoundary(body);
     BodyBoundary *other_body_bound;
 
-    for ( Body *other_body: *(part->Bodies()) )
+    double this_body_length = this_body_bound->maximum(BodyBoundary::X) - this_body_bound->minimum(BodyBoundary::X);
+
+    bool is_parent = true;
+    int i, body_index; // for indexing body name if all else fails
+    for ( Body *other_body: *bodies )
     {
-        if (other_body == body)
+        i++;
+        if ( other_body == body )
+        {
+            body_index = i;
             continue;
+        }
 
         other_body_bound = new BodyBoundary(other_body);
 
-        other_bodies.push_back(other_body);
+        // test for parent based on length and height
+        if (this_body_bound->distance(BodyBoundary::X) < other_body_bound->distance(BodyBoundary::X))
+            is_parent = false;
+        else if (this_body_bound->distance(BodyBoundary::Y) < other_body_bound->distance(BodyBoundary::Y))
+            is_parent = false;
     }
 
-    return body_name;
+    /* 
+        ****************************************************************
+        *                    parent body: W1W2{etc}                    *
+        ****************************************************************
+    */
+    if (is_parent)
+    {
+        string body_name = "-";
+
+        for (int i = 1; i < number_of_bodies; i++)
+            // build body name as if this body is the parent (i.e. W1W2)
+            body_name.append("W" + to_string(i));
+
+        return body_name;
+    }
+
+    /* 
+        ****************************************************************
+        *                 default: return as body index                *
+        ****************************************************************
+    */
+    // cannot infer so return "_{index}" (i.e. "_1")
+    return part_filename + "_" + to_string(body_index);
 }

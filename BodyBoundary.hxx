@@ -38,6 +38,7 @@ class BodyBoundary
 
         double minimum(Axis);
         double maximum(Axis);
+        double distance(Axis);
         double thickness();
         double coverage(BodyBoundary*);
 

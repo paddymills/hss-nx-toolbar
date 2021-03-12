@@ -108,6 +108,11 @@ double BodyBoundary::maximum(Axis axis)
     return val;
 }
 
+double BodyBoundary::distance(Axis axis)
+{
+    return maximum(axis) - minimum(axis);
+}
+
 double BodyBoundary::get_point_value(PointNode *node, Axis axis)
 {
     switch (axis)
