@@ -16,13 +16,15 @@ extern "C" DllExport void ufusr(char *param, int *retCode, int paramLen)
 {
     DxfExportWorker *exporter;
 
+    string PATH = "C:\\Users\\PMiller1\\git\\nx-dxf\\test_files\\";
+    vector<string> part_files{ "1190181A_G1A-web_named.prt", "1190181A_G1A-web.prt" };
+
     try
     {
         exporter = new DxfExportWorker();
-        const char *test_part = "C:\\Users\\PMiller1\\git\\nx-dxf\\1190181A_G1A-web_named_bodies.prt";
-        // const char *test_part = "C:\\Users\\PMiller1\\git\\nx-dxf\\1190181A_G1A-web.prt";
 
-        exporter->process_part(test_part);
+        for (string p: part_files)
+            exporter->process_part((PATH + p).c_str());
     }
 
     catch(const exception &ex)
