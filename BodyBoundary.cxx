@@ -50,8 +50,9 @@ void BodyBoundary::delete_tail(PointNode *node)
 void BodyBoundary::add_point(Point *point)
 {
     PointNode *newNode = new PointNode();
+    Point3d *coord = &(point->Coordinates());
     
-    newNode->point = point->Coordinates();
+    newNode->point = Point3d(coord->X, coord->Y, coord->Z);
     newNode->next = nullptr;
 
     if (!head)
@@ -76,11 +77,6 @@ void BodyBoundary::get_points(Body *body)
         // some points will error out, don't care
         catch (const exception &ex) {}
     }  
-}
-
-PointNode *BodyBoundary::get_head()
-{
-    return head;
 }
 
 double BodyBoundary::minimum(Axis axis)
@@ -138,10 +134,40 @@ double BodyBoundary::get_point_value(PointNode *node, Axis axis)
 
 bool BodyBoundary::point_equals(PointNode *node1, PointNode *node2)
 {
-    if (node1->point.X == node2->point.X)
-        if (node1->point.Y == node2->point.Y)
-            if (node1->point.Z == node2->point.Z)
+    return point_equals(node1->point, node2->point);
+}
+
+bool BodyBoundary::point_equals(PointNode *node1, Point3d point2)
+{
+    return point_equals(node1->point, point2);
+}
+
+bool BodyBoundary::point_equals(Point3d point1, Point3d point2)
+{
+    if (point1.X == point2.X)
+        if (point1.Y == point2.Y)
+            if (point1.Z == point2.Z)
                 return true;
+
+    return false;
+}
+
+bool BodyBoundary::point_exists(PointNode *node)
+{
+    return point_exists(node->point);
+}
+
+bool BodyBoundary::point_exists(Point3d point)
+{
+    PointNode *node = head;
+
+    while (node)
+    {
+        if (point_equals(node->point, point))
+            return true;
+
+        node = node->next;
+    }
 
     return false;
 }
@@ -153,29 +179,19 @@ double BodyBoundary::thickness()
 
 double BodyBoundary::coverage(BodyBoundary *other)
 {
-    int coincident_points, number_of_points;
+    int coincident_points = 0;
+    int number_of_points = 0;
 
-    PointNode *this_node, *other_node;
-    this_node = head;
+    PointNode *node = head;
 
-    while(this_node)
+    while(node)
     {
+        if (other->point_exists(node->point))
+            coincident_points++;
+
         number_of_points++;
-
-        other_node = other->get_head();
-        while (other_node)
-        {
-            if (point_equals(this_node, other_node))
-            {
-                coincident_points++;
-                break;
-            }
-
-            other_node = other_node->next;
-        }
-
-        this_node = this_node->next;
+        node = node->next;
     }
 
-    return static_cast<double>(coincident_points / number_of_points);
+    return static_cast<double>(coincident_points) / number_of_points;
 }

@@ -429,7 +429,7 @@ string DxfExportWorker::get_export_name(Body *body)
     double this_body_length = this_body_bound->maximum(BodyBoundary::X) - this_body_bound->minimum(BodyBoundary::X);
 
     bool is_parent = true;
-    int i, body_index; // for indexing body name if all else fails
+    int i=0, body_index; // for indexing body name if all else fails
     for ( Body *other_body: *bodies )
     {
         i++;
@@ -447,6 +447,12 @@ string DxfExportWorker::get_export_name(Body *body)
         // test for parent based on height
         else if (this_body_bound->distance(BodyBoundary::Y) < other_body_bound->distance(BodyBoundary::Y))
             is_parent = false;
+
+        if (this_body_bound->coverage(other_body_bound) < 0.5)
+        {
+
+        }
+
     }
 
     /* 

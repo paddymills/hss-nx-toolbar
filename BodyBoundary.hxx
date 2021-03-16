@@ -35,16 +35,19 @@ class BodyBoundary
 
         void add_point(Point*);
         void get_points(Body*);
-        PointNode *get_head();
 
         double minimum(Axis);
         double maximum(Axis);
         double distance(Axis);
         double thickness();
         double coverage(BodyBoundary*);
+        bool point_exists(Point3d);
+        bool point_exists(PointNode*);
 
         static double get_point_value(PointNode*, Axis);
         static bool point_equals(PointNode*, PointNode*);
+        static bool point_equals(PointNode*, Point3d);
+        static bool point_equals(Point3d, Point3d);
 };
 
 
