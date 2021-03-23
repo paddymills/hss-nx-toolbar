@@ -94,7 +94,7 @@ double BodyBoundary::minimum(char axis)
         return minimum(Z);
     
     default:
-        throw invalid_argument("invalid axis");
+        throw "invalid axis";
     }
 }
 
@@ -128,7 +128,7 @@ double BodyBoundary::maximum(char axis)
         return maximum(Z);
     
     default:
-        throw invalid_argument("invalid axis");
+        throw "invalid axis";
     }
 }
 
