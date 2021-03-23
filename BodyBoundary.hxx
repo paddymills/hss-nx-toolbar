@@ -37,7 +37,9 @@ class BodyBoundary
         void get_points(Body*);
 
         double minimum(Axis);
+        double minimum(char);
         double maximum(Axis);
+        double maximum(char);
         double distance(Axis);
         double thickness();
         double coverage(BodyBoundary*);

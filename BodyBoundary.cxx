@@ -79,6 +79,25 @@ void BodyBoundary::get_points(Body *body)
     }  
 }
 
+double BodyBoundary::minimum(char axis)
+{
+    switch (axis)
+    {
+    case 'x':
+    case 'X':
+        return minimum(X);
+    case 'y':
+    case 'Y':
+        return minimum(Y);
+    case 'z':
+    case 'Z':
+        return minimum(Z);
+    
+    default:
+        throw invalid_argument("invalid axis");
+    }
+}
+
 double BodyBoundary::minimum(Axis axis)
 {
     struct PointNode *node = head->next;
@@ -92,6 +111,25 @@ double BodyBoundary::minimum(Axis axis)
     }
     
     return val;
+}
+
+double BodyBoundary::maximum(char axis)
+{
+    switch (axis)
+    {
+    case 'x':
+    case 'X':
+        return maximum(X);
+    case 'y':
+    case 'Y':
+        return maximum(Y);
+    case 'z':
+    case 'Z':
+        return maximum(Z);
+    
+    default:
+        throw invalid_argument("invalid axis");
+    }
 }
 
 double BodyBoundary::maximum(Axis axis)
