@@ -72,7 +72,7 @@ DxfExportWorker::DxfExportWorker()
     
     part = nullptr;
     dxf_factory = nullptr;
-    body_names = nullptr;
+    body_names = map<string, string>();
     body_index = 1;
 }
 
@@ -80,14 +80,13 @@ DxfExportWorker::~DxfExportWorker()
 {
     // release solid_modeling license
     DxfExportWorker::nx_session->LicenseManager()->Release("solid_modeling", nullptr);
-
-    if (body_names)
-        delete body_names;
     
     // close factory, if not null
     if (dxf_factory)
+    {
         dxf_factory->Destroy();
         delete dxf_factory;
+    }
 
     DxfExportWorker::nx_system_log->WriteLine("\n\t\t\t*********************************");
     DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*                               *");
@@ -149,6 +148,9 @@ void DxfExportWorker::process_part()
     // reset dxf/dwg exporter object selection
     dxf_factory->Destroy();
     dxf_factory = nullptr;
+
+    body_names.clear();
+    body_index = 1;
 }
 
 void DxfExportWorker::handle_part_properties()
@@ -421,22 +423,22 @@ string DxfExportWorker::get_export_name(Body *body)
         *                          named body                          *
         ****************************************************************
     */
-    if ( body->Name().GetText() )
-        return part_name + "-" + part->Name().GetText();
+    if ( strlen(body->Name().GetText()) > 0 )
+        return part_name + "-" + body->Name().GetText();
 
     /* 
         ****************************************************************
         *            attempt to infer from body boundaries             *
         ****************************************************************
     */
-    if ( !body_names )
-        body_names = &get_web_names(part);
+    if ( body_names.empty() )
+        body_names = get_web_names(part);
 
     try
     {
-        return body_names->at(body->JournalIdentifier().GetText());
+        return part_name + "-" + body_names[ body->JournalIdentifier().GetText() ];
     }
-    catch (out_of_range) {}
+    catch (exception &e) {}
 
     /* 
         ****************************************************************

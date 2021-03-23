@@ -25,7 +25,7 @@ void test1()
     DxfExportWorker *exporter;
 
     string PATH = "C:\\Users\\PMiller1\\git\\nx-dxf\\test_files\\";
-    vector<string> part_files{ "1190181A_G1A-web_named.prt", "1190181A_G1A-web.prt" };
+    vector<string> part_files{ "1190181A_G1A-web_named.prt", "1190181A_G2A-web.prt" };
 
     try
     {
@@ -83,6 +83,6 @@ extern "C" DllExport int ufusr_ask_unload()
 
 extern "C" DllExport void ufusr(char *param, int *retCode, int paramLen)
 {
-    // test1();
-    test2();
+    test1();
+    // test2();
 }
