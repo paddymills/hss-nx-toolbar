@@ -1,10 +1,10 @@
 
 #include "DxfExportWorker.hxx"
 #include "BodyBoundary.hxx"
+#include "WebBodyNames.hxx"
 
-#include <iostream>
 #include <fstream>
-#include <iomanip>
+#include <map>
 
 #include <uf_defs.h>
 #include <NXOpen/Session.hxx>
@@ -48,87 +48,24 @@ void test2()
     DxfExportWorker *exporter;
 
     string PATH = "C:\\Users\\PMiller1\\git\\nx-dxf\\test_files\\1190181A_G1A-web_named.prt";
+
     ofstream log;
+    log.open("C:\\Users\\PMiller1\\git\\nx-dxf\\test.log");
 
-
-    log.open("C:\\Users\\PMiller1\\git\\nx-dxf\\log.txt");
     try
     {
         exporter = new DxfExportWorker();
 
+        map<string, string> names = get_web_names(exporter->nx_session->Parts()->Work());
+
+        
+        log << "reading body map" << endl;
         for (Body *body: *(exporter->nx_session->Parts()->Work()->Bodies()))
         {
-            log << "got Body: ";
-            log << body->Name().GetText();
-            log << endl;
-
-
-            // Point *p = nullptr;
-            // for (Edge *e: body->GetEdges())
-            // {
-            //     try
-            //     {
-            //         // create center point on edge
-            //         p = body->OwningPart()->Points()->CreatePoint(e, SmartObject::UpdateOptionWithinModeling);
-
-            //         log << " * ( ";
-            //         log << to_string(p->Coordinates().X);
-            //         log << ", ";
-            //         log << to_string(p->Coordinates().Y);
-            //         log << ", ";
-            //         log << to_string(p->Coordinates().Z);
-            //         log << " ) --- [ ";
-            //         log << e->JournalIdentifier().GetText();
-            //         log << " ]" << endl;
-            //     }
-
-            //     // some points will error out, don't care
-            //     catch (const exception &ex) {}
-            // }
-
-            for (Features::Feature *f: body->GetFeatures())
-            {
-                if ( string(f->FeatureType().GetText()).find("HOLE", 0) != string::npos )
-                    continue;
-
-                log << " + ";
-                log << f->FeatureType().GetText();
-                log << " : ";
-                log << f->GetFeatureName().GetText();
-                log << endl;
-
-                log << "\tParents:" << endl;
-                for (Features::Feature *pf: f->GetParents())
-                {
-                    log << "\t + ";
-                    log << pf->GetFeatureName().GetText();
-                    log << " | ";
-                    log << pf->Name().GetText();
-                    log << endl;
-                }
-
-                log << "\tChildren:" << endl;
-                for (Features::Feature *pf: f->GetChildren())
-                {
-                    log << "\t + ";
-                    log << pf->GetFeatureName().GetText();
-                    log << " | ";
-                    log << pf->Name().GetText();
-                    log << endl;
-                }
-
-                log << "\tBodies:" << endl;
-                for (Body *fb: f->GetBodies())
-                {
-                    log << "\t + ";
-                    log << fb->Name().GetText();
-                    log << " (" << fb->JournalIdentifier().GetText() << ")";
-                    log << endl;
-                }
-            }
-
-            log << "\n  ----------------------------------  \n" << endl;
+            log << " + " << body->JournalIdentifier().GetText();
+            log << ": " << names[body->JournalIdentifier().GetText()] << endl;
         }
+        log.close();
     }
 
     catch(const exception &ex)
@@ -136,7 +73,6 @@ void test2()
         DxfExportWorker::nx_system_log->WriteLine(ex.what());
     }
 
-    log.close();
     delete exporter;
 }
 
