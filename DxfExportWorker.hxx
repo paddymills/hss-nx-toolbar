@@ -27,6 +27,8 @@ class DxfExportWorker
 
         DxfdwgCreator *dxf_factory;
         Part *part;
+        map<string, string> *body_names;
+        int body_index;
 
         vector<NXObject*> purgeable_objects;
         map<string, string> annotations;

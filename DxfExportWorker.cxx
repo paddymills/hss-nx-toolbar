@@ -3,6 +3,7 @@
 
 #include "DxfExportWorker.hxx"
 #include "BodyBoundary.hxx"
+#include "WebBodyNames.hxx"
 
 #include <experimental/filesystem>
 #include <map>
@@ -71,12 +72,17 @@ DxfExportWorker::DxfExportWorker()
     
     part = nullptr;
     dxf_factory = nullptr;
+    body_names = nullptr;
+    body_index = 1;
 }
 
 DxfExportWorker::~DxfExportWorker()
 {
     // release solid_modeling license
     DxfExportWorker::nx_session->LicenseManager()->Release("solid_modeling", nullptr);
+
+    if (body_names)
+        delete body_names;
     
     // close factory, if not null
     if (dxf_factory)
@@ -423,53 +429,14 @@ string DxfExportWorker::get_export_name(Body *body)
         *            attempt to infer from body boundaries             *
         ****************************************************************
     */
-    BodyBoundary *this_body_bound = new BodyBoundary(body);
-    BodyBoundary *other_body_bound;
+    if ( !body_names )
+        body_names = &get_web_names(part);
 
-    double this_body_length = this_body_bound->maximum(BodyBoundary::X) - this_body_bound->minimum(BodyBoundary::X);
-
-    bool is_parent = true;
-    int i=0, body_index; // for indexing body name if all else fails
-    for ( Body *other_body: *bodies )
+    try
     {
-        i++;
-        if ( other_body == body )
-        {
-            body_index = i;
-            continue;
-        }
-
-        other_body_bound = new BodyBoundary(other_body);
-
-        // test for parent based on length
-        if (this_body_bound->distance(BodyBoundary::X) < other_body_bound->distance(BodyBoundary::X))
-            is_parent = false;
-        // test for parent based on height
-        else if (this_body_bound->distance(BodyBoundary::Y) < other_body_bound->distance(BodyBoundary::Y))
-            is_parent = false;
-
-        if (this_body_bound->coverage(other_body_bound) < 0.5)
-        {
-
-        }
-
+        return body_names->at(body->JournalIdentifier().GetText());
     }
-
-    /* 
-        ****************************************************************
-        *                    parent body: W1W2{etc}                    *
-        ****************************************************************
-    */
-    if (is_parent)
-    {
-        string body_name = "-";
-
-        for (int i = 1; i < number_of_bodies; i++)
-            // build body name as if this body is the parent (i.e. W1W2)
-            body_name.append("W" + to_string(i));
-
-        return body_name;
-    }
+    catch (out_of_range) {}
 
     /* 
         ****************************************************************
@@ -477,5 +444,5 @@ string DxfExportWorker::get_export_name(Body *body)
         ****************************************************************
     */
     // cannot infer so return "_{index}" (i.e. "_1")
-    return part_filename + "_" + to_string(body_index);
+    return part_filename + "_" + to_string(body_index++);
 }
