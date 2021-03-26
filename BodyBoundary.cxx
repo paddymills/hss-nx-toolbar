@@ -65,6 +65,10 @@ void BodyBoundary::get_points(Body *body)
 {
     Point *p = nullptr;
 
+    // save initial part state to revert to at end
+    Session *session = Session::GetSession();
+    Session::UndoMarkId initial_state = session->SetUndoMark(Session::MarkVisibilityVisible, "dxf_initial");
+
     for (Edge *e: body->GetEdges())
     {
         try
@@ -76,7 +80,10 @@ void BodyBoundary::get_points(Body *body)
 
         // some points will error out, don't care
         catch (const exception &ex) {}
-    }  
+    }
+
+    // revert part to initial state
+    session->UndoToMark(initial_state, "dxf_initial");
 }
 
 double BodyBoundary::minimum(char axis)

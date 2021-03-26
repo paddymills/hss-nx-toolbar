@@ -2,6 +2,7 @@
 #ifndef DXFEXPORTWORKER_H
 #define DXFEXPORTWORKER_H
 
+#include <fstream>
 #include <map>
 
 #include <uf.h>
@@ -17,6 +18,7 @@ using namespace std;
 
 static const char *DXF_EXPORT_CONFIG = "C:\\Users\\PMiller1\\git\\nx-dxf\\config\\export.def";
 static const char *DXF_OUTPUT_DIR = "\\\\hssieng\\SNDataPrd\\DXF\\";
+static const char *LOG_DIR = "C:\\Users\\PMiller1\\git\\nx-dxf\\logs\\";
 
 static const double NOTE_SIZE = 5.0;
 static const double NOTE_OFFSET = 10.0;
@@ -40,11 +42,16 @@ class DxfExportWorker
 
         bool is_empty_property(string&);
         string get_export_name(Body*);
+        string get_part_property(string);
+        string get_part_property(vector<string>);
 
     public:
 
         static Session *nx_session;
         static LogFile *nx_system_log;
+        
+        bool dry_run;
+        ofstream log;
         
         DxfExportWorker();
         ~DxfExportWorker();

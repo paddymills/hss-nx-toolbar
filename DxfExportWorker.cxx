@@ -7,6 +7,7 @@
 
 #include <experimental/filesystem>
 #include <map>
+#include <iomanip>
 
 #include <uf.h>
 #include <uf_defs.h>
@@ -57,11 +58,15 @@ LogFile *(DxfExportWorker::nx_system_log) = NULL;
 
 DxfExportWorker::DxfExportWorker()
 {
-    DxfExportWorker::nx_system_log->WriteLine("\n\t\t\t*********************************");
-    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*                               *");
-    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*    NXOpen Dxf Export Begin    *");
-    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*                               *");
-    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*********************************\n");
+    string log_filename = string(LOG_DIR).append("test.log");
+    log.open(log_filename);
+
+    log << endl;
+    log << "****************************************************************" << endl;
+    log << "*                                                              *" << endl;
+    log << "*                    Begin file processing                     *" << endl;
+    log << "*                                                              *" << endl;
+    log << "****************************************************************" << endl;
 
     // init class members
     nx_session = Session::GetSession();
@@ -74,6 +79,8 @@ DxfExportWorker::DxfExportWorker()
     dxf_factory = nullptr;
     body_names = map<string, string>();
     body_index = 1;
+
+    dry_run = false;
 }
 
 DxfExportWorker::~DxfExportWorker()
@@ -88,11 +95,14 @@ DxfExportWorker::~DxfExportWorker()
         delete dxf_factory;
     }
 
-    DxfExportWorker::nx_system_log->WriteLine("\n\t\t\t*********************************");
-    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*                               *");
-    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*     NXOpen Dxf Export End     *");
-    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*                               *");
-    DxfExportWorker::nx_system_log->WriteLine(  "\t\t\t*********************************\n");
+    log << endl;
+    log << "****************************************************************" << endl;
+    log << "*                                                              *" << endl;
+    log << "*                 Files successfully processed                 *" << endl;
+    log << "*                                                              *" << endl;
+    log << "****************************************************************" << endl;
+
+    log.close();
 }
 
 void DxfExportWorker::init_factory() {
@@ -119,15 +129,31 @@ void DxfExportWorker::process_part(const char *part_file_name)
     part = dynamic_cast<Part *>(DxfExportWorker::nx_session->Parts()->OpenActiveDisplay(part_file_name, DisplayPartOptionReplaceExisting, &part_load_status));
     delete part_load_status;
 
+    // save initial part state to revert to at end
+    // for some reason, certain parts throw exceptions to being closed with modifcations
+    Session::UndoMarkId initial_state = nx_session->SetUndoMark(Session::MarkVisibilityVisible, "dxf_initial");
+
     // enter modeling
     nx_session->ApplicationSwitchImmediate("UG_APP_MODELING");
 
+    fs::path *part_path = new fs::path(part->FullPath().GetText());
+    string filename(part_path->filename().stem().string());
+
+    log << endl;
+    log << "" << setfill('-') << setw(filename.size() + 28) << "-" << endl;
+    log << "\tProcessing file: " << filename << endl;
+    log << "" << setfill('-') << setw(filename.size() + 28) << "-" << endl;
+    log << setfill(' ');
+
     process_part();
+
+    // revert part to initial state
+    nx_session->UndoToMark(initial_state, "dxf_initial");
 
     // close part
     part->Close(BasePart::CloseWholeTreeTrue, BasePart::CloseModifiedCloseModified, nullptr);
     nx_session->ApplicationSwitchImmediate("UG_APP_NOPART");
-    
+
     // clean up part objects
     delete part;
 }
@@ -158,7 +184,7 @@ void DxfExportWorker::handle_part_properties()
     string text;
 
     // drawing
-    text = part->GetStringAttribute("DWG_NUMBER").GetText();
+    text = get_part_property("DWG_NUMBER");
     if (!is_empty_property(text))
         annotations["DRAWING"] = text;
 
@@ -166,9 +192,9 @@ void DxfExportWorker::handle_part_properties()
 
 void DxfExportWorker::add_sketches()
 {
-    nx_system_log->WriteLine("\n\t***********************");
-    nx_system_log->WriteLine(  "\t*   Adding Sketches   *");
-    nx_system_log->WriteLine(  "\t***********************\n");
+    log << endl;
+    log << "\t+  Adding Sketches" << endl;
+    log << "\t  -----------------" << endl;
 
     // Add ZINC sketches
     for (Sketch *sketch: *(part->Sketches()))
@@ -179,25 +205,23 @@ void DxfExportWorker::add_sketches()
             /* sketch is hidden: skip */
             if (sketch->IsBlanked())
             {
-                nx_system_log->Write(" - Skipping blanked sketch: ");
-                nx_system_log->Write(sketch->Name().GetText());
+                log << " - Skipping blanked sketch: ";
+                log << sketch->Name().GetText() << endl;
             }
 
             /* sketch is visible: add to file */
             else
             {
-                nx_system_log->Write(" + Adding sketch: ");
-                nx_system_log->Write(sketch->Name().GetText());
-                nx_system_log->Write(" -> ");
+                log << "\t\t+ Adding sketch: ";
+                log << sketch->Name().GetText();
+                log << " -> ";
 
                 // add sketch lines to sketches
                 if (add_object_to_export(sketch->GetAllGeometry()))
-                    nx_system_log->Write("OK");
+                    log << "OK" << endl;
                 else
-                    nx_system_log->Write("FAILED");
+                    log << "FAILED" << endl;
             }
-
-            nx_system_log->WriteLine("");
         }
     }
 
@@ -205,9 +229,9 @@ void DxfExportWorker::add_sketches()
 
 void DxfExportWorker::export_bodies()
 {
-    nx_system_log->WriteLine("\n\t***********************");
-    nx_system_log->WriteLine(  "\t*    Adding Bodies    *");
-    nx_system_log->WriteLine(  "\t***********************\n");
+    log << endl;
+    log << "\t+ Adding Bodies" << endl;
+    log << "\t ---------------" << endl;
 
     string body_name;
 
@@ -227,9 +251,6 @@ void DxfExportWorker::export_bodies()
         if (fs::exists(fs::path(dxf_factory->OutputFile().GetText())))
             remove(dxf_factory->OutputFile().GetText());
 
-        // export body
-        nx_system_log->WriteLine("\nExporting body: " + body_name);
-
         // add body to export
         add_purgeable_object_to_export(body);
 
@@ -237,7 +258,9 @@ void DxfExportWorker::export_bodies()
         handle_body(body);
             
         // generate DXF file
-        NXObject *generate_result = dxf_factory->Commit();
+        if ( !DxfExportWorker::dry_run )
+            NXObject *generate_result = dxf_factory->Commit();
+        log << "\t\t+ Exported body: " << body_name << endl;
         
         // delete added purgeable objects (body, annotations, etc)
         purge_objects();
@@ -271,52 +294,8 @@ void DxfExportWorker::handle_body(Body *body)
     }
 }
 
-bool DxfExportWorker::add_object_to_export(vector<NXObject *> objects)
-{
-    return dxf_factory->ExportSelectionBlock()->SelectionComp()->Add(objects);
-}
-
-bool DxfExportWorker::add_object_to_export(NXObject *object)
-{
-    return dxf_factory->ExportSelectionBlock()->SelectionComp()->Add(object);
-}
-
-bool DxfExportWorker::add_purgeable_object_to_export(NXObject *object)
-{
-    purgeable_objects.push_back(object);
-
-    return dxf_factory->ExportSelectionBlock()->SelectionComp()->Add(object);
-}
-
-void DxfExportWorker::purge_objects()
-{
-    for (NXObject *object : purgeable_objects)
-        dxf_factory->ExportSelectionBlock()->SelectionComp()->Remove(object);
-}
-
-bool DxfExportWorker::is_empty_property(string &value)
-{
-    for (char &c: value)
-    {
-        switch (c)
-        {
-            case ' ':
-            case 'X':
-            case 'x':
-                break;
-            default:
-                return false;
-        }
-    }
-
-    return true;
-}
-
 NXObject *DxfExportWorker::add_annotations(double x_loc, double y_loc)
 {
-    // switch to drafting
-    nx_session->ApplicationSwitchImmediate("UG_APP_DRAFTING");
-    
     part->Drafting()->EnterDraftingApplication();
     part->Views()->WorkView()->UpdateCustomSymbols();
     part->Drafting()->SetTemplateInstantiationIsComplete(true);
@@ -384,10 +363,83 @@ NXObject *DxfExportWorker::add_annotations(double x_loc, double y_loc)
     note_factory->Destroy();
     
     // switch back to modeling
-    nx_session->ApplicationSwitchImmediate("UG_APP_MODELING");
+    part->Drafting()->ExitDraftingApplication();
+
+    log << "\t\t+ Annotations added" << endl;
 
     return commit_result;
 }
+
+bool DxfExportWorker::add_object_to_export(vector<NXObject *> objects)
+{
+    return dxf_factory->ExportSelectionBlock()->SelectionComp()->Add(objects);
+}
+
+bool DxfExportWorker::add_object_to_export(NXObject *object)
+{
+    return dxf_factory->ExportSelectionBlock()->SelectionComp()->Add(object);
+}
+
+bool DxfExportWorker::add_purgeable_object_to_export(NXObject *object)
+{
+    purgeable_objects.push_back(object);
+
+    return add_object_to_export(object);
+}
+
+void DxfExportWorker::purge_objects()
+{
+    for (NXObject *object : purgeable_objects)
+        dxf_factory->ExportSelectionBlock()->SelectionComp()->Remove(object);
+}
+
+string DxfExportWorker::get_part_property(string property_name)
+{
+    NXObject::AttributeInformation info_query;
+    
+    try
+    {
+        info_query = part->GetUserAttribute(property_name, NXObject::AttributeTypeString, -1);
+    }
+    catch (const exception &ex)
+    {
+        return "";
+    }
+
+    return info_query.StringValue.GetText();
+}
+
+string DxfExportWorker::get_part_property(vector<string> property_names)
+{
+    string result;
+    for (string property_name : property_names)
+    {
+        result = get_part_property(property_name);
+        if ( !is_empty_property(result) )
+            return result;
+    }
+
+    return "";
+}
+
+bool DxfExportWorker::is_empty_property(string &value)
+{
+    for (char &c: value)
+    {
+        switch (c)
+        {
+            case ' ':
+            case 'X':
+            case 'x':
+                break;
+            default:
+                return false;
+        }
+    }
+
+    return true;
+}
+
 
 string DxfExportWorker::get_export_name(Body *body)
 {
@@ -401,13 +453,14 @@ string DxfExportWorker::get_export_name(Body *body)
 
     // build base part file name
     string part_name;
-    part_name.append(part->GetStringAttribute("JobNo").GetText());
+    part_name.append(get_part_property( vector<string> { "JobNo", "JOB_NUMBER" } ));
     part_name.append("_");
-    part_name.append(part->GetStringAttribute("Mark").GetText());
+    part_name.append(get_part_property( vector<string> { "Mark", "PIECE_MARK" } ));
 
     // make sure part filename starts with build part_name
+    // or part_name is more than just job_
     // could be stale data
-    if ( part_filename.rfind(part_name, 0) != 0 )
+    if ( part_filename.rfind(part_name, 0) || part_name.length() < 10 )
         part_name = part_filename;
 
     /* 
@@ -432,11 +485,15 @@ string DxfExportWorker::get_export_name(Body *body)
         ****************************************************************
     */
     if ( body_names.empty() )
-        body_names = get_web_names(part);
+    {
+        if ( part_filename.find("web") != string::npos )
+            body_names = get_web_names(part);
+    }
 
     try
     {
-        return part_name + "-" + body_names[ body->JournalIdentifier().GetText() ];
+        if ( body_names.find( body->JournalIdentifier().GetText() ) != body_names.end() )
+            return part_name + "-" + body_names[ body->JournalIdentifier().GetText() ];
     }
     catch (exception &e) {}
 

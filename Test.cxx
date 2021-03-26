@@ -3,7 +3,6 @@
 #include "BodyBoundary.hxx"
 #include "WebBodyNames.hxx"
 
-#include <fstream>
 #include <map>
 
 #include <uf_defs.h>
@@ -25,11 +24,18 @@ void test1()
     DxfExportWorker *exporter;
 
     string PATH = "C:\\Users\\PMiller1\\git\\nx-dxf\\test_files\\";
-    vector<string> part_files{ "1190181A_G1A-web_named.prt", "1190181A_G2A-web.prt" };
+    vector<string> part_files{
+        // "1190181A_G1A-web_named.prt",
+        // "1190181A_G2A-web.prt",
+        "1190259A_m3g.prt",
+        // "1190259A_SP2-c.prt",
+        "1190259A_x1b.prt"
+    };
 
     try
     {
         exporter = new DxfExportWorker();
+        exporter->dry_run = true;
 
         for (string p: part_files)
             exporter->process_part((PATH + p).c_str());
@@ -37,7 +43,7 @@ void test1()
 
     catch(const exception &ex)
     {
-        DxfExportWorker::nx_system_log->WriteLine(ex.what());
+        exporter->log << "Exception caught: " << ex.what() << endl;
     }
 
     delete exporter;
@@ -49,9 +55,6 @@ void test2()
 
     string PATH = "C:\\Users\\PMiller1\\git\\nx-dxf\\test_files\\1190181A_G1A-web_named.prt";
 
-    ofstream log;
-    log.open("C:\\Users\\PMiller1\\git\\nx-dxf\\test.log");
-
     try
     {
         exporter = new DxfExportWorker();
@@ -59,18 +62,17 @@ void test2()
         map<string, string> names = get_web_names(exporter->nx_session->Parts()->Work());
 
         
-        log << "reading body map" << endl;
+        exporter->log << "reading body map" << endl;
         for (Body *body: *(exporter->nx_session->Parts()->Work()->Bodies()))
         {
-            log << " + " << body->JournalIdentifier().GetText();
-            log << ": " << names[body->JournalIdentifier().GetText()] << endl;
+            exporter->log << " + " << body->JournalIdentifier().GetText();
+            exporter->log << ": " << names[body->JournalIdentifier().GetText()] << endl;
         }
-        log.close();
     }
 
     catch(const exception &ex)
     {
-        DxfExportWorker::nx_system_log->WriteLine(ex.what());
+        exporter->log << "Exception caught: " << ex.what() << endl;
     }
 
     delete exporter;
