@@ -10,8 +10,11 @@ GOTO clean
 
 :clean
 
-    IF EXIST *.dll DEL *.dll
-    IF EXIST *.exe DEL *.exe
+    @REM IF EXIST *.dll DEL *.dll
+    @REM IF EXIST *.exe DEL *.exe
+
+    IF EXIST *.dll DEL %~n1.dll
+    IF EXIST *.exe DEL %~n1.exe
     IF EXIST *.exp DEL *.exp
     IF EXIST *.lib DEL *.lib
     IF EXIST *.pdb DEL *.pdb
