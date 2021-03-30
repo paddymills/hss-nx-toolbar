@@ -3,7 +3,7 @@
 
 #include "DxfExportWorker.hxx"
 #include "BodyBoundary.hxx"
-#include "WebBodyNames.hxx"
+#include "HssDriverUtils.hxx"
 
 #include <experimental/filesystem>
 #include <map>
@@ -21,6 +21,7 @@
 #include <NXOpen/DexManager.hxx>
 #include <NXOpen/DxfdwgCreator.hxx>
 
+#include <NXOpen/Features_Feature.hxx>
 #include <NXOpen/Body.hxx>
 #include <NXOpen/BodyCollection.hxx>
 #include <NXOpen/Edge.hxx>
@@ -199,30 +200,32 @@ void DxfExportWorker::add_sketches()
     // Add ZINC sketches
     for (Sketch *sketch: *(part->Sketches()))
     {
-        // add ZINC sketches
-        if (strstr(sketch->Name().GetText(), "ZINC"))
+        // sketch is hidden: skip
+        if ( sketch->IsBlanked() )
         {
-            /* sketch is hidden: skip */
-            if (sketch->IsBlanked())
-            {
-                log << " - Skipping blanked sketch: ";
-                log << sketch->Name().GetText() << endl;
-            }
-
-            /* sketch is visible: add to file */
-            else
-            {
-                log << "\t\t+ Adding sketch: ";
-                log << sketch->Name().GetText();
-                log << " -> ";
-
-                // add sketch lines to sketches
-                if (add_object_to_export(sketch->GetAllGeometry()))
-                    log << "OK" << endl;
-                else
-                    log << "FAILED" << endl;
-            }
+            log << "\t\t- Skipping blanked sketch: ";
+            log << sketch->Name().GetText() << endl;
+            continue;
         }
+
+        // skip if blacklisted
+        if ( blacklist(sketch) )
+        {
+            log << "\t\t- Skipping blacklisted sketch: ";
+            log << sketch->Name().GetText() << endl;
+            continue;
+        }
+
+        // sketch is visible: add to file
+        log << "\t\t+ Adding sketch: ";
+        log << sketch->Name().GetText();
+        log << " -> ";
+
+        // add sketch lines to sketches
+        if (add_object_to_export(sketch->GetAllGeometry()))
+            log << "OK" << endl;
+        else
+            log << "FAILED" << endl;
     }
 
 }
@@ -238,29 +241,54 @@ void DxfExportWorker::export_bodies()
     // Add body to dxf export 
     for ( Body *body: *( part->Bodies() ) )
     {
+        // skip if blacklisted
+        if ( blacklist(body) )
+        {
+            log << "\t\t- Skipping blacklisted body: ";
+            log << body_name << endl;
+            continue;
+        }
+
         body_name = get_export_name(body);
+
+        for ( Features::Feature *feature : body->GetFeatures() )
+        {
+            for ( Features::Feature *parent : feature->GetParents() )
+            {
+                log << "FeatureName: " << parent->GetFeatureName().GetText() << endl;
+            }
+        }
 
         // Set output file name
         dxf_factory->SetOutputFile(DXF_OUTPUT_DIR + body_name + ".dxf");
-
-        /* 
-            delete part file if it exists
-            this seems to speed up export compared to overwriting files
-            also, it keeps from accumulating *_bk.dxf files
-        */
-        if (fs::exists(fs::path(dxf_factory->OutputFile().GetText())))
-            remove(dxf_factory->OutputFile().GetText());
 
         // add body to export
         add_purgeable_object_to_export(body);
 
         // handle body attributes (i.e. thickness)
-        handle_body(body);
+        try
+        {
+            handle_body(body);
             
-        // generate DXF file
-        if ( !DxfExportWorker::dry_run )
-            NXObject *generate_result = dxf_factory->Commit();
-        log << "\t\t+ Exported body: " << body_name << endl;
+            // generate DXF file
+            if ( !DxfExportWorker::dry_run )
+            {
+                /* 
+                    delete part file if it exists
+                    this seems to speed up export compared to overwriting files
+                    also, it keeps from accumulating *_bk.dxf files
+                */
+                if (fs::exists(fs::path(dxf_factory->OutputFile().GetText())))
+                    remove(dxf_factory->OutputFile().GetText());
+
+                NXObject *generate_result = dxf_factory->Commit();
+            }
+            log << "\t\t+ Exported body: " << body_name << endl;
+        }
+        catch (const exception &ex)
+        {
+            log << "\t\t* Error processing body: " << body_name << endl;
+        }
         
         // delete added purgeable objects (body, annotations, etc)
         purge_objects();
@@ -445,7 +473,7 @@ string DxfExportWorker::get_export_name(Body *body)
 {
     // TODO: determine body type (web, flange?, other?)
     BodyCollection *bodies = part->Bodies();
-    int number_of_bodies = distance(bodies->begin(), bodies->end());
+    int number_of_bodies = get_number_of_body_exports(part);
 
     // get filename (no directories or extensions)
     fs::path *part_path = new fs::path(part->FullPath().GetText());
@@ -460,7 +488,7 @@ string DxfExportWorker::get_export_name(Body *body)
     // make sure part filename starts with build part_name
     // or part_name is more than just job_
     // could be stale data
-    if ( part_filename.rfind(part_name, 0) || part_name.length() < 10 )
+    if ( startswith(part_name, part_filename) || part_name.length() < 10 )
         part_name = part_filename;
 
     /* 

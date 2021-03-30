@@ -1,7 +1,7 @@
 
 #include "DxfExportWorker.hxx"
 #include "BodyBoundary.hxx"
-#include "WebBodyNames.hxx"
+#include "HssDriverUtils.hxx"
 
 #include <map>
 
@@ -28,23 +28,25 @@ void test1()
         // "1190181A_G1A-web_named.prt",
         // "1190181A_G2A-web.prt",
         "1190259A_m3g.prt",
-        // "1190259A_SP2-c.prt",
+        "1190259A_SP2-c.prt",
         "1190259A_x1b.prt"
     };
 
-    try
-    {
         exporter = new DxfExportWorker();
-        exporter->dry_run = true;
+        // exporter->dry_run = true;
 
         for (string p: part_files)
-            exporter->process_part((PATH + p).c_str());
-    }
+        {
+            try
+            {
+                exporter->process_part((PATH + p).c_str());
+            }
 
-    catch(const exception &ex)
-    {
-        exporter->log << "Exception caught: " << ex.what() << endl;
-    }
+            catch(const exception &ex)
+            {
+                exporter->log << "Exception caught: " << ex.what() << endl;
+            }
+        }
 
     delete exporter;
 }
