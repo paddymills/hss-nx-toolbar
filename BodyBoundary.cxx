@@ -9,6 +9,7 @@
 #include <NXOpen/Edge.hxx>
 #include <NXOpen/Point.hxx>
 #include <NXOpen/PointCollection.hxx>
+#include <NXOpen/LogFile.hxx>
 
 using namespace NXOpen;
 using namespace std;
@@ -67,7 +68,7 @@ void BodyBoundary::get_points(Body *body)
 
     // save initial part state to revert to at end
     Session *session = Session::GetSession();
-    Session::UndoMarkId initial_state = session->SetUndoMark(Session::MarkVisibilityVisible, "dxf_initial");
+    Session::UndoMarkId initial_state = session->SetUndoMark(Session::MarkVisibilityVisible, "get_point_coord");
 
     for (Edge *e: body->GetEdges())
     {
@@ -79,34 +80,39 @@ void BodyBoundary::get_points(Body *body)
         }
 
         // some points will error out, don't care
-        catch (const exception &ex) {}
+        catch (const exception &ex) {
+            session->LogFile()->Write("\n");
+        }
     }
 
     // revert part to initial state
-    session->UndoToMark(initial_state, "dxf_initial");
+    session->UndoToMark(initial_state, "get_point_coord");
 }
 
 double BodyBoundary::minimum(char axis)
 {
     switch (axis)
     {
-    case 'x':
-    case 'X':
-        return minimum(X);
-    case 'y':
-    case 'Y':
-        return minimum(Y);
-    case 'z':
-    case 'Z':
-        return minimum(Z);
-    
-    default:
-        throw "invalid axis";
+        case 'x':
+        case 'X':
+            return minimum(X);
+        case 'y':
+        case 'Y':
+            return minimum(Y);
+        case 'z':
+        case 'Z':
+            return minimum(Z);
+        
+        default:
+            throw "invalid axis";
     }
 }
 
 double BodyBoundary::minimum(Axis axis)
 {
+    if ( !head )
+        return 0.0;
+
     struct PointNode *node = head->next;
     double val = get_point_value(head, axis);
 
@@ -124,23 +130,26 @@ double BodyBoundary::maximum(char axis)
 {
     switch (axis)
     {
-    case 'x':
-    case 'X':
-        return maximum(X);
-    case 'y':
-    case 'Y':
-        return maximum(Y);
-    case 'z':
-    case 'Z':
-        return maximum(Z);
-    
-    default:
-        throw "invalid axis";
+        case 'x':
+        case 'X':
+            return maximum(X);
+        case 'y':
+        case 'Y':
+            return maximum(Y);
+        case 'z':
+        case 'Z':
+            return maximum(Z);
+        
+        default:
+            throw "invalid axis";
     }
 }
 
 double BodyBoundary::maximum(Axis axis)
 {
+    if ( !head )
+        return 0.0;
+
     struct PointNode *node = head->next;
     double val = get_point_value(head, axis);
 
