@@ -1,5 +1,5 @@
-#ifndef WEBBODYNAMES_H
-#define WEBBODYNAMES_H
+#ifndef HSSDRIVERUTILS_H
+#define HSSDRIVERUTILS_H
 
 #include <string>
 #include <map>
@@ -18,5 +18,11 @@ struct BodyMinMax {
 };
 
 map<string, string> get_web_names(Part*);
+bool blacklist(Body*);
+bool blacklist(Sketch*);
+int get_number_of_body_exports(Part*);
+
+// things missing from c++
+bool startswith(string, string);
 
 #endif
