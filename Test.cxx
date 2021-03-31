@@ -24,29 +24,51 @@ void test1()
     DxfExportWorker *exporter;
 
     string PATH = "C:\\Users\\PMiller1\\git\\nx-dxf\\test_files\\";
+    vector<int> process_type = { 0, 0, 1, 2, 2, 1 };
+
+    // run all
+    // process_type = vector<int>(process_type.size(), 3);
+    
     vector<string> part_files{
-        // "1190181A_G1A-web_named.prt",
-        // "1190181A_G2A-web.prt",
+        "1190181A_G1A-web_named.prt",
+        "1190181A_G2A-web.prt",
         "1190259A_m3g.prt",
+        "1190259A_SP1-b.prt",
         "1190259A_SP2-c.prt",
         "1190259A_x1b.prt"
     };
 
-        exporter = new DxfExportWorker();
-        // exporter->dry_run = true;
+    exporter = new DxfExportWorker();
 
-        for (string p: part_files)
+    int index = 0;
+    for ( string p: part_files )
+    {
+        switch ( process_type[index++] )
         {
-            try
-            {
-                exporter->process_part((PATH + p).c_str());
-            }
-
-            catch(const exception &ex)
-            {
-                exporter->log << "Exception caught: " << ex.what() << endl;
-            }
+            case 0: // skip processing
+                continue;
+            
+            case 1: // process, but don't export
+                exporter->dry_run = true;
+                break;
+            
+            case 2: // process and export
+                exporter->dry_run = false;
+                break;
+            
+            default: break;
         }
+
+        try
+        {
+            exporter->process_part((PATH + p).c_str());
+        }
+
+        catch(const exception &ex)
+        {
+            exporter->log << "Exception caught: " << ex.what() << endl;
+        }
+    }
 
     delete exporter;
 }
