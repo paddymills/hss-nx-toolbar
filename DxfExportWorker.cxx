@@ -9,8 +9,7 @@
 #include <experimental/filesystem>
 #include <map>
 #include <iomanip>
-#include <ctime>
-#include <chrono>
+#include <sstream>
 #include <windows.h>
 
 #include <uf.h>
@@ -66,18 +65,30 @@ LogFile *(DxfExportWorker::nx_system_log) = NULL;
 
 DxfExportWorker::DxfExportWorker()
 {
-    string log_filename = string(LOG_DIR).append("test.log");
-    log.open(log_filename);
+    stringstream log_filename;
 
     try
     {
         SYSTEMTIME lt;
         GetLocalTime(&lt);
 
-        log << getenv("USERNAME") << "_" << lt << endl;
+        log_filename << setfill('0');
+
+        log_filename << LOG_DIR;
+        log_filename << getenv("USERNAME") << "_";
+        log_filename << lt.wYear;
+        log_filename << setw(2) << lt.wMonth;
+        log_filename << setw(2) << lt.wDay;
+        log_filename << "-";
+        log_filename << setw(2) << lt.wHour;
+        log_filename << setw(2) << lt.wMinute;
+        log_filename << setw(2) << lt.wSecond;
+        log_filename << ".log";
+
+        log.open( log_filename.str() );
     }
     catch( const exception &ex ) {
-        log << ex.what() << endl;
+        log.open( string(LOG_DIR).append("NONAME.log") );
     }
     
 

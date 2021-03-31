@@ -56,7 +56,8 @@
         "sstream": "cpp",
         "stdexcept": "cpp",
         "streambuf": "cpp",
-        "xstring": "cpp"
+        "xstring": "cpp",
+        "complex": "cpp"
     },
     "git.ignoreLimitWarning": true
 }
