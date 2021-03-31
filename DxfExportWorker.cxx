@@ -10,6 +10,8 @@
 #include <map>
 #include <iomanip>
 #include <ctime>
+#include <chrono>
+#include <windows.h>
 
 #include <uf.h>
 #include <uf_defs.h>
@@ -69,16 +71,14 @@ DxfExportWorker::DxfExportWorker()
 
     try
     {
-        char time_str[80];
-        time_t raw_time;
-        struct tm *time_info;
+        SYSTEMTIME lt;
+        GetLocalTime(&lt);
 
-        time(&raw_time);
-        time_info = localtime(&raw_time);
-        strftime(time_str, 80, "(%d%b%Y-%I%M%S %P)", time_info);
-        log << raw_time << "_" << getenv("USERNAME") << time_str << endl;
+        log << getenv("USERNAME") << "_" << lt << endl;
     }
-    catch( const exception &ex ) {}
+    catch( const exception &ex ) {
+        log << ex.what() << endl;
+    }
     
 
     log << endl;
