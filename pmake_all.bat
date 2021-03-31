@@ -45,4 +45,13 @@ GOTO clean
 
     CALL uflink UFDLL=%~n1.dll *.obj
 
+    GOTO end
+
+:end
+    
+    IF EXIST *.exp DEL *.exp
+    IF EXIST *.lib DEL *.lib
+    IF EXIST *.pdb DEL *.pdb
+    IF EXIST *.obj DEL *.obj
+
 @echo on
