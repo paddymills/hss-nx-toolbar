@@ -20,6 +20,7 @@ struct BodyMinMax {
 map<string, string> get_web_names(Part*);
 bool blacklist(Body*);
 bool blacklist(Sketch*);
+void set_layer(Sketch*);
 int get_number_of_body_exports(Part*);
 
 // things missing from c++

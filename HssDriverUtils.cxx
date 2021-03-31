@@ -19,6 +19,7 @@ using namespace std;
 
 // strings to be found in sketch names
 const vector<char*> WHITELISTED_SKETCHES = { "ZINC", "DOR", "NOCUT", "NO_CUT" };
+const vector<int> WHITELISTED_SKETCHES_LAYERS = { 2, 3, 3, 3 };
 
 // list of strings to be found in body names
 //  or names of features that construct body
@@ -104,7 +105,7 @@ bool blacklist(Body *body)
     // if any body is named SN_PART, only that body will be exported
     for ( Body *bd : *( dynamic_cast<Part*>( body->OwningPart() )->Bodies() ) )
     {
-        if ( bd->Name().GetText() == "SN_PART" )
+        if ( strcmp( bd->Name().GetText(), "SN_PART" ) == 0 )
         {
             // if SN_PART body is parameter body -> do NOT blacklist
             if ( bd == body )
@@ -161,6 +162,22 @@ bool blacklist(Sketch *sketch)
     }
 
     return true;
+}
+
+void set_layer(Sketch *sketch)
+{
+    int i = 0;
+    for ( const char *sk : WHITELISTED_SKETCHES )
+    {
+        // basically `sk is in sketch name`
+        if ( strstr(sketch->Name().GetText(), sk) )
+        {
+            sketch->SetLayer( WHITELISTED_SKETCHES_LAYERS[i] );
+            break;
+        }
+
+        i++;
+    }
 }
 
 int get_number_of_body_exports(Part *part)

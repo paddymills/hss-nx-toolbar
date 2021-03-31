@@ -1,5 +1,6 @@
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING 1
+#define _CRT_SECURE_NO_WARNINGS 1
 
 #include "DxfExportWorker.hxx"
 #include "BodyBoundary.hxx"
@@ -8,6 +9,7 @@
 #include <experimental/filesystem>
 #include <map>
 #include <iomanip>
+#include <ctime>
 
 #include <uf.h>
 #include <uf_defs.h>
@@ -35,6 +37,7 @@
 
 #include <NXOpen/DraftingManager.hxx>
 #include <NXOpen/SelectDisplayableObject.hxx>
+#include <NXOpen/Layer_LayerManager.hxx>
 #include <NXOpen/Annotations_Annotation.hxx>
 #include <NXOpen/Annotations_AnnotationManager.hxx>
 #include <NXOpen/Annotations_LeaderBuilder.hxx>
@@ -47,6 +50,8 @@
 #include <NXOpen/NXObject.hxx>
 #include <NXOpen/NXException.hxx>
 #include <NXOpen/SelectNXObjectList.hxx>
+#include <NXOpen/ModelingView.hxx>
+#include <NXOpen/ModelingViewCollection.hxx>
 
 using namespace NXOpen;
 using namespace std;
@@ -61,6 +66,20 @@ DxfExportWorker::DxfExportWorker()
 {
     string log_filename = string(LOG_DIR).append("test.log");
     log.open(log_filename);
+
+    try
+    {
+        char time_str[80];
+        time_t raw_time;
+        struct tm *time_info;
+
+        time(&raw_time);
+        time_info = localtime(&raw_time);
+        strftime(time_str, 80, "(%d%b%Y-%I%M%S %P)", time_info);
+        log << raw_time << "_" << getenv("USERNAME") << time_str << endl;
+    }
+    catch( const exception &ex ) {}
+    
 
     log << endl;
     log << "****************************************************************" << endl;
@@ -165,6 +184,10 @@ void DxfExportWorker::process_part()
     //  this is per part, not per session
     init_factory();
 
+    // Orient View->Top
+    ModelingView *modelingView(dynamic_cast<ModelingView *>(part->ModelingViews()->FindObject("Trimetric")));
+    modelingView->Orient(View::CannedTop, View::ScaleAdjustmentFit);
+
     // ********************
     // *     DO STUFF     *
     // ********************
@@ -186,7 +209,7 @@ void DxfExportWorker::handle_part_properties()
 
     // drawing
     text = get_part_property("DWG_NUMBER");
-    if (!is_empty_property(text))
+    if ( !is_empty_property(text) )
         annotations["DRAWING"] = text;
 
 }
@@ -200,18 +223,18 @@ void DxfExportWorker::add_sketches()
     // Add ZINC sketches
     for (Sketch *sketch: *(part->Sketches()))
     {
-        // sketch is hidden: skip
-        if ( sketch->IsBlanked() )
-        {
-            log << "\t\t- Skipping blanked sketch: ";
-            log << sketch->Name().GetText() << endl;
-            continue;
-        }
-
         // skip if blacklisted
         if ( blacklist(sketch) )
         {
             log << "\t\t- Skipping blacklisted sketch: ";
+            log << sketch->Name().GetText() << endl;
+            continue;
+        }
+
+        // sketch is hidden: skip
+        if ( sketch->IsBlanked() )
+        {
+            log << "\t\t- Skipping blanked sketch: ";
             log << sketch->Name().GetText() << endl;
             continue;
         }
@@ -222,6 +245,7 @@ void DxfExportWorker::add_sketches()
         log << " -> ";
 
         // add sketch lines to sketches
+        set_layer(sketch);
         if (add_object_to_export(sketch->GetAllGeometry()))
             log << "OK" << endl;
         else
@@ -245,24 +269,17 @@ void DxfExportWorker::export_bodies()
         if ( blacklist(body) )
         {
             log << "\t\t- Skipping blacklisted body: ";
-            log << body_name << endl;
+            log << body->JournalIdentifier().GetText() << endl;
             continue;
         }
 
         body_name = get_export_name(body);
 
-        for ( Features::Feature *feature : body->GetFeatures() )
-        {
-            for ( Features::Feature *parent : feature->GetParents() )
-            {
-                log << "FeatureName: " << parent->GetFeatureName().GetText() << endl;
-            }
-        }
-
         // Set output file name
         dxf_factory->SetOutputFile(DXF_OUTPUT_DIR + body_name + ".dxf");
 
         // add body to export
+        body->SetLayer(1);
         add_purgeable_object_to_export(body);
 
         // handle body attributes (i.e. thickness)
@@ -304,7 +321,7 @@ void DxfExportWorker::handle_body(Body *body)
     BodyBoundary *bound = new BodyBoundary(body);
 
     // add thickness annotation if minimum Z is not on XY plane
-    if (bound->minimum(BodyBoundary::Z) != 0.0)
+    if ( bound->minimum(BodyBoundary::Z) != 0.0 )
         annotations["THICKNESS"] = to_string(bound->thickness());
 
     // else -> remove thickness annotation
@@ -312,10 +329,13 @@ void DxfExportWorker::handle_body(Body *body)
         annotations.erase("THICKNESS");
 
     // add annotations, if any
-    if (annotations.size() > 0)
+    if ( annotations.size() > 0 )
     {
         x = bound->minimum(BodyBoundary::X) + NOTE_OFFSET;
         y = bound->minimum(BodyBoundary::Y) - NOTE_OFFSET;
+
+        // set work layer for note to be created on
+        part->Layers()->SetWorkLayer(4);
 
         note = add_annotations(x, y);
         add_purgeable_object_to_export(note);
@@ -472,7 +492,6 @@ bool DxfExportWorker::is_empty_property(string &value)
 string DxfExportWorker::get_export_name(Body *body)
 {
     // TODO: determine body type (web, flange?, other?)
-    BodyCollection *bodies = part->Bodies();
     int number_of_bodies = get_number_of_body_exports(part);
 
     // get filename (no directories or extensions)
