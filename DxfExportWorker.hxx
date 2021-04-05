@@ -64,11 +64,10 @@ class DxfExportWorker
         void handle_part_properties();
         void add_sketches();
         void export_bodies();
+        NXObject *add_annotations(vector<string>, double, double);
         NXObject *add_annotations(double, double);
 
         void handle_body(Body*);
-        void set_wcs_to_face(double);
-
 };
 
 #endif
