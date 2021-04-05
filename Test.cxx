@@ -2,8 +2,10 @@
 #include "DxfExportWorker.hxx"
 #include "BodyBoundary.hxx"
 #include "HssDriverUtils.hxx"
+#include "LogStream.hxx"
 
 #include <map>
+#include <fstream>
 
 #include <uf_defs.h>
 #include <NXOpen/Session.hxx>
@@ -75,31 +77,14 @@ void test1()
 
 void test2()
 {
-    DxfExportWorker *exporter;
+    LogStream log;
 
-    string PATH = "C:\\Users\\PMiller1\\git\\nx-dxf\\test_files\\1190181A_G1A-web_named.prt";
+    log << "test";
+    log.increase_indent();
+    log << "1" << endl;
 
-    try
-    {
-        exporter = new DxfExportWorker();
+    log << "test" << 2 << endl;
 
-        map<string, string> names = get_web_names(exporter->nx_session->Parts()->Work());
-
-        
-        exporter->log << "reading body map" << endl;
-        for (Body *body: *(exporter->nx_session->Parts()->Work()->Bodies()))
-        {
-            exporter->log << " + " << body->JournalIdentifier().GetText();
-            exporter->log << ": " << names[body->JournalIdentifier().GetText()] << endl;
-        }
-    }
-
-    catch(const exception &ex)
-    {
-        exporter->log << "Exception caught: " << ex.what() << endl;
-    }
-
-    delete exporter;
 }
 
 extern "C" DllExport int ufusr_ask_unload()
@@ -109,6 +94,6 @@ extern "C" DllExport int ufusr_ask_unload()
 
 extern "C" DllExport void ufusr(char *param, int *retCode, int paramLen)
 {
-    test1();
-    // test2();
+    // test1();
+    test2();
 }
