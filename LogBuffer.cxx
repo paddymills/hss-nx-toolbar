@@ -22,17 +22,24 @@ void LogBuffer::open_log_file()
         SYSTEMTIME lt;
         GetLocalTime(&lt);
 
+        log_filename << LOG_SAVE_DIR << "\\" << getenv("USERNAME");
+        
+
         log_filename << setfill('0');
 
-        log_filename << LOG_SAVE_DIR;
-        log_filename << getenv("USERNAME") << "_";
+        // date
+        log_filename << "_";
         log_filename << lt.wYear;
         log_filename << setw(2) << lt.wMonth;
         log_filename << setw(2) << lt.wDay;
+
+
+        // time
         log_filename << "-";
         log_filename << setw(2) << lt.wHour;
         log_filename << setw(2) << lt.wMinute;
         log_filename << setw(2) << lt.wSecond;
+        
         log_filename << ".log";
 
         ofile.open( log_filename.str() );

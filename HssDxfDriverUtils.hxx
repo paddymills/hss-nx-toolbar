@@ -1,3 +1,4 @@
+
 #ifndef HSSDRIVERUTILS_H
 #define HSSDRIVERUTILS_H
 
@@ -17,11 +18,17 @@ struct BodyMinMax {
     string name;
 };
 
+string get_export_name(Body);
 map<string, string> get_web_names(Part*);
+int get_number_of_body_exports(Part*);
+
 bool blacklist(Body*);
 bool blacklist(Sketch*);
 void set_layer(Sketch*);
-int get_number_of_body_exports(Part*);
+
+string get_part_property(Part*, const char*);
+string get_part_property(Part*, const vector<char*>);
+bool is_empty_property(string&);
 
 // things missing from c++
 bool startswith(string, string);

@@ -1,7 +1,7 @@
 
 #include "DxfExportWorker.hxx"
 #include "BodyBoundary.hxx"
-#include "HssDriverUtils.hxx"
+#include "HssDxfDriverUtils.hxx"
 #include "LogStream.hxx"
 
 #include <map>

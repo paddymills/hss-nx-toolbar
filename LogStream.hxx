@@ -27,4 +27,6 @@ class LogStream : public ostream
         void set_char(string s) { buffer.set_indent_seq(s); }
 };
 
+ostream& operator<<(ostream&, NXString);
+
 #endif

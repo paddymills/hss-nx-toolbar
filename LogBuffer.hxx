@@ -1,6 +1,5 @@
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING 1
-#define _CRT_SECURE_NO_WARNINGS 1
 
 #ifndef LOGBUFFER_H
 #define LOGBUFFER_H
@@ -11,7 +10,7 @@
 
 using namespace std;
 
-static const char *LOG_SAVE_DIR = "C:\\Users\\PMiller1\\git\\nx-dxf\\logs\\";
+static const char *LOG_SAVE_DIR = "C:\\Users\\PMiller1\\git\\nx-dxf\\logs";
 
 class LogBuffer : public stringbuf
 {
