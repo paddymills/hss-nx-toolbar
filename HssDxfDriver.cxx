@@ -96,13 +96,13 @@ void HssDxfDriver::process_open_parts()
         process_part( part );
 }
 
-void HssDxfDriver::process_parts(vector<char*> part_files)
+void HssDxfDriver::process_parts(vector<const char*> part_files)
 {
     PartLoadStatus *_ploadstat;
     DisplayPartOption _opt = DisplayPartOption::DisplayPartOptionReplaceExisting;
     BasePart* open_part;
     
-    for ( char* part_file : part_files )
+    for ( const char* part_file : part_files )
     {
         // open part
         open_part = session->Parts()->OpenActiveDisplay(part_file, _opt, &_ploadstat);
@@ -115,8 +115,17 @@ void HssDxfDriver::process_parts(vector<char*> part_files)
     }
 
     // clean up objects
-    PartLoadStatus *_ploadstat;
+    delete _ploadstat;
     delete open_part;
+}
+
+void HssDxfDriver::process_part(const char* part_file)
+{
+    vector<const char*> vec;
+
+    vec.push_back(part_file);
+
+    process_parts( vec );
 }
 
 void HssDxfDriver::process_part(Part* part)

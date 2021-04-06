@@ -1,6 +1,8 @@
 
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING 1
 
+#include "HssDxfDriverUtils.hxx"
+
 #include "DxfExportWorker.hxx"
 #include "BodyBoundary.hxx"
 
@@ -131,7 +133,7 @@ string get_part_property(Part* part, const vector<char*> property_names)
     return "";
 }
 
-bool is_empty_property(string &value)
+bool is_empty_property(string value)
 {
     for (char &c: value)
     {

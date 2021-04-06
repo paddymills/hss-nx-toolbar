@@ -6,7 +6,6 @@
 #include "LogStream.hxx"
 
 #include <map>
-#include <string>
 
 #include <uf.h>
 #include <uf_defs.h>
@@ -36,10 +35,10 @@ class HssDxfDriver
         void test();
 
         void process_open_parts();
-        void process_parts(vector<char*>);
+        void process_parts(vector<const char*>);
         void process_part(Part*);
         void process_part(BasePart* part) { process_part( dynamic_cast<Part*>(part) ); }
-        void process_part(const char* part_file) { process_parts( vector<char*>{part_file} ); }
+        void process_part(const char*);
 
         void handle_part_properties(Part*);
         void handle_sketches(Part*);

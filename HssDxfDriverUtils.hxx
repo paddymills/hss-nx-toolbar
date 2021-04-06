@@ -16,7 +16,7 @@ void set_layer(Sketch*);
 
 string get_part_property(Part*, const char*);
 string get_part_property(Part*, const vector<char*>);
-bool is_empty_property(string&);
+bool is_empty_property(string);
 
 // things missing from c++
 bool startswith(string, string);

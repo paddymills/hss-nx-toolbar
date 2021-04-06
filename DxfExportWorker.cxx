@@ -121,7 +121,7 @@ NXObject *DxfExportWorker::add_annotations(map<string, string> anno_map, double 
     for (itr = anno_map.begin(); itr != anno_map.end(); ++itr)
         anno_strings.push_back(itr->first + ": " + itr->second);
 
-    add_annotations(anno_strings, x_loc, y_loc);
+    return add_annotations(anno_strings, x_loc, y_loc);
 }
 
 NXObject *DxfExportWorker::add_annotations(vector<NXString> anno_strings, double x_loc, double y_loc)

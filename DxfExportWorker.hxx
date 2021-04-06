@@ -8,6 +8,7 @@
 #include <uf.h>
 #include <uf_defs.h>
 #include <NXOpen/Session.hxx>
+#include <NXOpen/Sketch.hxx>
 #include <NXOpen/DxfdwgCreator.hxx>
 #include <NXOpen/LogFile.hxx>
 #include <NXOpen/Part.hxx>
