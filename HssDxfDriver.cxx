@@ -2,9 +2,10 @@
 #define _SILENCE_EXPERIMENTAL_FILESYSTEM_DEPRECATION_WARNING 1
 #define _CRT_SECURE_NO_WARNINGS 1
 
+#include "BodyBoundary.hxx"
+#include "DxfNames.hxx"
 #include "HssDxfDriver.hxx"
 #include "HssDxfDriverUtils.hxx"
-#include "BodyBoundary.hxx"
 
 #include <experimental/filesystem>
 #include <iomanip>
@@ -36,7 +37,57 @@ extern "C" DllExport int ufusr_ask_unload()
 
 extern "C" DllExport void ufusr(char *param, int *retCode, int paramLen)
 {
-    HssDxfDriver driver();
+    HssDxfDriver driver;
+
+    driver.test();
+}
+
+void HssDxfDriver::test()
+{
+    string PATH = "C:\\Users\\PMiller1\\git\\nx-dxf\\test_files\\";
+    map<string, int> part_files{
+        { "1190181A_G1A-web_named.prt", 0},
+        { "1190181A_G2A-web.prt",       0},
+        { "1190259A_m3g.prt",           1},
+        { "1190259A_SP1-b.prt",         2},
+        { "1190259A_SP2-c.prt",         2},
+        { "1190259A_x1b.prt",           1}
+    };
+
+    for ( pair<string, int> t : part_files )
+    {
+        switch ( t.second )
+        {
+            case 0: // skip processing
+                continue;
+            
+            case 1: // process, but don't export
+                dry_run = true;
+                break;
+            
+            case 2: // process and export
+                dry_run = false;
+                break;
+            
+            default: break;
+        }
+
+        try
+        {
+            process_part( (PATH + t.first).c_str() );
+        }
+
+        catch(const exception &ex)
+        {
+            log << "Exception caught: " << ex.what() << endl;
+        }
+    }
+}
+
+HssDxfDriver::HssDxfDriver()
+{
+    session = Session::GetSession();
+    dry_run = false;
 }
 
 void HssDxfDriver::process_open_parts()
@@ -177,6 +228,8 @@ void HssDxfDriver::handle_bodies(Part* part)
     log.increase_indent();
 
     string body_name, export_file;
+    map<Body*, string> body_names = get_export_names(part);
+    bool export_result = true;
 
     // Add body to dxf export 
     for ( Body *body: *( part->Bodies() ) )
@@ -193,20 +246,21 @@ void HssDxfDriver::handle_bodies(Part* part)
         body->SetLayer(1);
 
         // body and export names
-        body_name = get_export_name(body);
         export_file = DXF_OUTPUT_DIR;
-        export_file.append(body_name);
+        export_file.append( body_names[ body ] );
         export_file.append(".dxf");
 
         // handle body attributes (i.e. thickness)
         handle_thickness(body);
         
+        // export body
+        if ( !dry_run )
+            export_result = export_worker.export_body( body, export_file.c_str() );
+
         // log success/failure
-        if ( export_worker.export_body( body, export_file.c_str() ) )
-            log << "+ Exported body: ";
-        else
-            log << "* Error processing body: ";
-        log << body_name << endl;
+        if ( export_result )    log << "+ Exported body: ";
+        else                    log << "* Error processing body: ";
+        log << body_names[ body ] << endl;
     }
 
     log.decrease_indent();

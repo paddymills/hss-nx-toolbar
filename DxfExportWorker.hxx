@@ -24,6 +24,7 @@ static const double NOTE_OFFSET = 10.0;
 class DxfExportWorker
 {
     private:
+        Session *session;
         DxfdwgCreator *dxf_factory;
         Part *part;
 
@@ -38,13 +39,6 @@ class DxfExportWorker
         void purge_objects();
 
     public:
-
-        static Session *nx_session;
-        static LogFile *nx_system_log;
-        
-        bool dry_run;
-        ofstream log;
-        
         DxfExportWorker();
         ~DxfExportWorker();
 

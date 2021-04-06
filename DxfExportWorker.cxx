@@ -42,29 +42,21 @@ using namespace std;
 
 namespace fs = experimental::filesystem;
 
-// Initialize static variables
-Session *(DxfExportWorker::nx_session) = NULL;
-LogFile *(DxfExportWorker::nx_system_log) = NULL;
-
 DxfExportWorker::DxfExportWorker()
 {
     // init class members
-    nx_session = Session::GetSession();
-    nx_system_log = nx_session->LogFile();
+    session = Session::GetSession();
 
     // get solid_modeling license
-    DxfExportWorker::nx_session->LicenseManager()->Reserve("solid_modeling", nullptr);
+    DxfExportWorker::session->LicenseManager()->Reserve("solid_modeling", nullptr);
     
-    part = nullptr;
     dxf_factory = nullptr;
-
-    dry_run = false;
 }
 
 DxfExportWorker::~DxfExportWorker()
 {
     // release solid_modeling license
-    DxfExportWorker::nx_session->LicenseManager()->Release("solid_modeling", nullptr);
+    DxfExportWorker::session->LicenseManager()->Release("solid_modeling", nullptr);
     
     // close factory, if not null
     if (dxf_factory)
@@ -76,7 +68,7 @@ DxfExportWorker::~DxfExportWorker()
 
 void DxfExportWorker::init_factory() {
     // init dxf/dwg exporter
-    dxf_factory = nx_session->DexManager()->CreateDxfdwgCreator();
+    dxf_factory = session->DexManager()->CreateDxfdwgCreator();
 
     dxf_factory->SetSettingsFile(DXF_EXPORT_CONFIG);
     dxf_factory->SetExportData(DxfdwgCreator::ExportDataOptionDrawing);

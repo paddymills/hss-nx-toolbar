@@ -1,5 +1,6 @@
 
 #include "LogBuffer.hxx"
+
 #include <iomanip>
 #include <sstream>
 #include <windows.h>

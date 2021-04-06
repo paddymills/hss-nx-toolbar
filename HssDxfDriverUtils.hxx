@@ -2,7 +2,6 @@
 #ifndef HSSDRIVERUTILS_H
 #define HSSDRIVERUTILS_H
 
-#include <string>
 #include <map>
 
 #include <uf_defs.h>
@@ -10,17 +9,6 @@
 
 using namespace NXOpen;
 using namespace std;
-
-struct BodyMinMax {
-    string JournalIdentifier;
-    double min, max;
-    bool is_parent;
-    string name;
-};
-
-string get_export_name(Body);
-map<string, string> get_web_names(Part*);
-int get_number_of_body_exports(Part*);
 
 bool blacklist(Body*);
 bool blacklist(Sketch*);
@@ -32,5 +20,6 @@ bool is_empty_property(string&);
 
 // things missing from c++
 bool startswith(string, string);
+bool startswith(string, NXString);
 
 #endif
