@@ -1,0 +1,1 @@
+watchexec.exe --clear --exts c,h,cpp,hpp,cxx,hxx build.bat
