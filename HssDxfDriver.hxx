@@ -13,15 +13,16 @@
 #include <NXOpen/Part.hxx>
 #include <NXOpen/Body.hxx>
 
-static const char *DXF_OUTPUT_DIR = "\\\\hssieng\\SNDataPrd\\DXF\\";
+static const char* DXF_OUTPUT_DIR = "\\\\hssieng\\SNDataPrd\\DXF\\";
+static const int ANNOTATION_LAYER = 4;
 
-using namespace std;
 using namespace NXOpen;
+using namespace std;
 
 class HssDxfDriver
 {
     private:
-        Session *session;
+        Session* session;
         DxfExportWorker export_worker;
         map<string, string> annotations;
         LogStream log;

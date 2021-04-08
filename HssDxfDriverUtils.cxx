@@ -7,6 +7,7 @@
 #include "BodyBoundary.hxx"
 
 #include <map>
+#include <regex>
 
 #include <uf.h>
 #include <uf_defs.h>
@@ -18,33 +19,67 @@
 
 using namespace NXOpen;
 using namespace std;
+using namespace regex_constants;
 
 // strings to be found in sketch names
 const map<string, int> WHITELISTED_SKETCHES {
-        { "ZINC",       2 },
-        { "DOR",        3 },
-        { "NOCUT",      3 },
-        { "NO_CUT",     3 }
+        { "ZINC"     , 2 },
+        { "DOR"      , 3 },
+        { "NOCUT"    , 3 },
+        { "NO_CUT"   , 3 }
     };
 
 // list of strings to be found in body names
 //  or names of features that construct body
-const vector<char*> BLACKLISTED_BODIES = { "SHIM" };
+const vector<string> BLACKLISTED_BODIES = { "SHIM" };
 
-bool blacklist(Body *body)
+int matches_regex(NXString str, map<string, int> regex_map)
 {
-    // if any body is named SN_PART, only that body will be exported
-    for ( Body *bd : *( dynamic_cast<Part*>( body->OwningPart() )->Bodies() ) )
+    regex _regex;
+    for ( pair<string, int> x : regex_map)
     {
-        if ( strcmp( bd->Name().GetText(), "SN_PART" ) == 0 )
-        {
-            // if SN_PART body is parameter body -> do NOT blacklist
-            if ( bd == body )
-                return false;
-            
+        _regex = regex( x.first );
+
+        if ( matches_regex( str, _regex ))
+            return x.second;
+    }
+
+    return -1;
+}
+
+bool matches_regex(NXString str, vector<string> regex_vec)
+{
+    regex _regex;
+
+    for ( string x : regex_vec)
+    {
+        _regex = regex( x );
+
+        if ( matches_regex( str, _regex ))
+            return true;
+    }
+
+    return false;
+}
+
+bool matches_regex(NXString str, regex r)
+{
+    cmatch m;
+
+    return regex_search( str.GetText(), m, r );
+}
+
+bool blacklist(Body* body)
+{
+    // if body is named SN_PART, only that body will be exported
+    if ( body->Name().GetText() == "SN_PART" )
+        return false;
+
+    for ( Body* bd : *( dynamic_cast<Part*>( body->OwningPart() )->Bodies() ) )
+    {
+        if ( bd->Name().GetText() == "SN_PART" )
             // blacklist all other bodies
             return true;
-        }
     }
 
     /*
@@ -53,31 +88,28 @@ bool blacklist(Body *body)
         Else, not blacklisted
     */
 
-    for ( const char *bd : BLACKLISTED_BODIES )
+    regex _regex;
+    for ( string bd : BLACKLISTED_BODIES )
     {
-        if ( strstr(body->Name().GetText(), bd) )
+        _regex = regex( bd );
+
+        if ( matches_regex( body->Name(), _regex ) )
             return true;
 
-        for ( Features::Feature *feature : body->GetFeatures() )
+        for ( Features::Feature* feature : body->GetFeatures() )
         {
-            for ( Features::Feature *parent : feature->GetParents() )
+            for ( Features::Feature* parent : feature->GetParents() )
             {
-                if ( strstr(parent->GetFeatureName().GetText(), bd) )
+                if ( matches_regex( parent->GetFeatureName(), _regex ) )
                     return true;
             }
         }
     }
 
-    for ( const char *bd : BLACKLISTED_BODIES )
-    {
-        if ( strstr(body->Name().GetText(), bd) )
-            return true;
-    }
-
     return false;
 }
 
-bool blacklist(Sketch *sketch)
+bool blacklist(Sketch* sketch)
 {
     /*
         If the sketch name has any of the values from
@@ -85,24 +117,19 @@ bool blacklist(Sketch *sketch)
         Else, blacklisted
     */
 
-    const char* sketch_name = sketch->Name().GetText();
-
-    // not found
-    if ( WHITELISTED_SKETCHES.find( sketch_name ) == WHITELISTED_SKETCHES.end() )
+    // no sketch regexes match sketch name
+    if ( matches_regex( sketch->Name(), WHITELISTED_SKETCHES ) == -1 )
         return true;
 
     return false;
 }
 
-void set_layer(Sketch *sketch)
+void set_layer(Sketch* sketch)
 {
-    const char* sketch_name = sketch->Name().GetText();
-
-    // not in WHITELISTED_SKETCHES (unlikely)
-    if ( WHITELISTED_SKETCHES.find( sketch_name ) == WHITELISTED_SKETCHES.end() )
-        return;
-
-    sketch->SetLayer( WHITELISTED_SKETCHES.find( sketch_name )->second );
+    int layer = matches_regex( sketch->Name(), WHITELISTED_SKETCHES );
+    
+    if ( layer > -1 )
+        sketch->SetLayer(layer);
 }
 
 string get_part_property(Part* part, const char* property_name)
@@ -117,13 +144,13 @@ string get_part_property(Part* part, const char* property_name)
     }
 
     // error -> return empty string
-    catch (const exception &ex) { return ""; }
+    catch (const exception& ex) { return ""; }
 }
 
 string get_part_property(Part* part, const vector<char*> property_names)
 {
     string result;
-    for (char* property_name : property_names)
+    for (const char* property_name : property_names)
     {
         result = get_part_property(part, property_name);
         if ( !is_empty_property(result) )
@@ -135,7 +162,7 @@ string get_part_property(Part* part, const vector<char*> property_names)
 
 bool is_empty_property(string value)
 {
-    for (char &c: value)
+    for (char& c: value)
     {
         switch (c)
         {
@@ -150,6 +177,7 @@ bool is_empty_property(string value)
 
     return true;
 }
+
 
 bool startswith(string text, string find_in)
 {

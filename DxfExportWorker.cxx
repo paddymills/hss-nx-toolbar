@@ -13,6 +13,7 @@
 #include <NXOpen/Session.hxx>
 #include <NXOpen/LicenseManager.hxx>
 #include <NXOpen/Part.hxx>
+#include <NXOpen/PartCollection.hxx>
 #include <NXOpen/DexBuilder.hxx>
 #include <NXOpen/DexManager.hxx>
 #include <NXOpen/DxfdwgCreator.hxx>
@@ -48,25 +49,25 @@ DxfExportWorker::DxfExportWorker()
     session = Session::GetSession();
 
     // get solid_modeling license
-    DxfExportWorker::session->LicenseManager()->Reserve("solid_modeling", nullptr);
+    session->LicenseManager()->Reserve("solid_modeling", nullptr);
     
     dxf_factory = nullptr;
+    anno_x = 0.0 + NOTE_OFFSET;
+    anno_y = 0.0 - NOTE_OFFSET;
 }
 
 DxfExportWorker::~DxfExportWorker()
 {
     // release solid_modeling license
-    DxfExportWorker::session->LicenseManager()->Release("solid_modeling", nullptr);
+    session->LicenseManager()->Release("solid_modeling", nullptr);
     
     // close factory, if not null
     if (dxf_factory)
-    {
-        dxf_factory->Destroy();
-        delete dxf_factory;
-    }
+        rem_factory();
 }
 
-void DxfExportWorker::init_factory() {
+void DxfExportWorker::init_factory()
+{
     // init dxf/dwg exporter
     dxf_factory = session->DexManager()->CreateDxfdwgCreator();
 
@@ -78,42 +79,42 @@ void DxfExportWorker::init_factory() {
     dxf_factory->ExportSelectionBlock()->SetSelectionScope(ObjectSelector::ScopeSelectedObjects);
     dxf_factory->SetExportFacesAs(DxfdwgCreator::ExportFacesAsOptionsPolylineMesh);
     dxf_factory->SetProcessHoldFlag(true);
-
-    // set up dxf/dwg export for file
-    dxf_factory->SetInputFile(part->FullPath().GetText());
 }
 
-bool DxfExportWorker::export_body(Body* body, const char* output_file)
+bool DxfExportWorker::export_body(Body* body)
 {
-    // Set output file name
-    dxf_factory->SetOutputFile( output_file );
-
-    // add body to export
-    body->SetLayer(1);
-    add_purgeable_object_to_export(body);
-
-    // handle body attributes (i.e. thickness)
     try
     {
+        // add body to export
+        body->SetLayer(PROFILE_LAYER);
+        add_purgeable_object_to_export(body);
+
         /* 
             delete part file if it exists
             this seems to speed up export compared to overwriting files
-            also, it keeps from accumulating *_bk.dxf files
+            also, it keeps from accumulating* _bk.dxf files
         */
-        if ( fs::exists( fs::path( output_file ) ) )
-            remove( output_file );
+        if ( fs::exists( fs::path( dxf_factory->OutputFile().GetText() ) ) )
+            remove( dxf_factory->OutputFile().GetText() );
 
-        NXObject *generate_result = dxf_factory->Commit();
+        NXObject* generate_result = dxf_factory->Commit();
+        
+        // delete added purgeable objects (body, annotations, etc)
+        purge_objects();
+
+        return true;
     }
-    catch (const exception &ex) { return false; }
-    
-    // delete added purgeable objects (body, annotations, etc)
-    purge_objects();
-
-    return true;
+    catch (const exception& ex) { return false; }
 }
 
-NXObject *DxfExportWorker::add_annotations(map<string, string> anno_map, double x_loc, double y_loc)
+NXObject* DxfExportWorker::add_annotations(map<string, string> anno_map, double x_loc, double y_loc)
+{
+    set_annotation_xy(x_loc, y_loc);
+
+    return add_annotations(anno_map);
+}
+
+NXObject* DxfExportWorker::add_annotations(map<string, string> anno_map)
 {
     vector<NXString> anno_strings(anno_map.size());
 
@@ -121,11 +122,20 @@ NXObject *DxfExportWorker::add_annotations(map<string, string> anno_map, double 
     for (itr = anno_map.begin(); itr != anno_map.end(); ++itr)
         anno_strings.push_back(itr->first + ": " + itr->second);
 
-    return add_annotations(anno_strings, x_loc, y_loc);
+    return add_annotations(anno_strings);
 }
 
-NXObject *DxfExportWorker::add_annotations(vector<NXString> anno_strings, double x_loc, double y_loc)
+NXObject* DxfExportWorker::add_annotations(vector<NXString> anno_strings, double x_loc, double y_loc)
 {
+    set_annotation_xy(x_loc, y_loc);
+
+    return add_annotations(anno_strings);
+}
+
+NXObject* DxfExportWorker::add_annotations(vector<NXString> anno_strings)
+{
+    Part* part = session->Parts()->Display();
+
     part->Drafting()->EnterDraftingApplication();
     part->Views()->WorkView()->UpdateCustomSymbols();
     part->Drafting()->SetTemplateInstantiationIsComplete(true);
@@ -133,8 +143,8 @@ NXObject *DxfExportWorker::add_annotations(vector<NXString> anno_strings, double
     // turn off drawing layout (allows drafting tools in modeling)
     part->Drafting()->SetDrawingLayout(false);
     
-    Annotations::DraftingNoteBuilder *note_factory;
-    Annotations::SimpleDraftingAid *drafting_aid(NULL);
+    Annotations::DraftingNoteBuilder* note_factory;
+    Annotations::SimpleDraftingAid* drafting_aid(NULL);
     note_factory = part->Annotations()->CreateDraftingNoteBuilder(drafting_aid);
     
     note_factory->Origin()->SetAnchor(Annotations::OriginBuilder::AlignmentPositionTopLeft);
@@ -143,7 +153,7 @@ NXObject *DxfExportWorker::add_annotations(vector<NXString> anno_strings, double
     note_factory->Origin()->Plane()->SetPlaneMethod(Annotations::PlaneBuilder::PlaneMethodTypeXyPlane);
     
     // set leader settings
-    Annotations::LeaderData *leader_data = part->Annotations()->CreateLeaderData();
+    Annotations::LeaderData* leader_data = part->Annotations()->CreateLeaderData();
     leader_data->SetArrowhead(Annotations::LeaderData::ArrowheadTypeFilledArrow);
     leader_data->SetVerticalAttachment(Annotations::LeaderVerticalAttachmentCenter);
     leader_data->SetStubSide(Annotations::LeaderSideInferred);
@@ -154,9 +164,9 @@ NXObject *DxfExportWorker::add_annotations(vector<NXString> anno_strings, double
     note_factory->Style()->LetteringStyle()->SetHorizontalTextJustification(Annotations::TextJustificationLeft);
     
     Annotations::Annotation::AssociativeOriginData note_origin;
-    Annotations::Annotation *note_annotation(NULL);
-    View *note_view(NULL);
-    Point *note_point(NULL);
+    Annotations::Annotation* note_annotation(NULL);
+    View* note_view(NULL);
+    Point* note_point(NULL);
 
     // set origin settings
     note_origin.OriginType = Annotations::AssociativeOriginTypeDrag;
@@ -180,11 +190,11 @@ NXObject *DxfExportWorker::add_annotations(vector<NXString> anno_strings, double
     note_factory->Origin()->SetAssociativeOrigin(note_origin);
     
     // set note location
-    Point3d note_location(x_loc, y_loc, 0.0);
+    Point3d note_location(anno_x, anno_y, 0.0);
     note_factory->Origin()->Origin()->SetValue(NULL, note_view, note_location);
 
     // create note
-    NXObject *commit_result = note_factory->Commit();
+    NXObject* commit_result = note_factory->Commit();
     add_purgeable_object_to_export(commit_result);
     note_factory->Destroy();
     
@@ -194,7 +204,13 @@ NXObject *DxfExportWorker::add_annotations(vector<NXString> anno_strings, double
     return commit_result;
 }
 
-bool DxfExportWorker::add_purgeable_object_to_export(NXObject *object)
+void DxfExportWorker::set_annotation_xy(double x_loc, double y_loc)
+{
+    anno_x = x_loc;
+    anno_y = y_loc;
+}
+
+bool DxfExportWorker::add_purgeable_object_to_export(NXObject* object)
 {
     purgeable_objects.push_back(object);
 
@@ -203,7 +219,7 @@ bool DxfExportWorker::add_purgeable_object_to_export(NXObject *object)
 
 void DxfExportWorker::purge_objects()
 {
-    for (NXObject *object : purgeable_objects)
+    for (NXObject* object : purgeable_objects)
         dxf_factory->ExportSelectionBlock()->SelectionComp()->Remove(object);
     
     purgeable_objects.clear();

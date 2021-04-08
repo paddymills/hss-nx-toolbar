@@ -12,16 +12,16 @@ using namespace std;
 struct PointNode
 {
   Point3d point;
-  struct PointNode *next;
+  struct PointNode* next;
 };
 
 class BodyBoundary
 {
     private:
 
-        PointNode *head;
+        PointNode* head;
 
-        PointNode *find_end(PointNode*);
+        PointNode* find_end(PointNode*);
         void delete_tail(PointNode*);
 
         

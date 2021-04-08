@@ -25,6 +25,8 @@ class LogStream : public ostream
         void decrease_indent() { buffer.dec(); }
         void reset_indent() { buffer.reset(); }
         void set_char(string s) { buffer.set_indent_seq(s); }
+
+        void remove_old_logs() { buffer.remove_logs(); }
 };
 
 ostream& operator<<(ostream&, NXString);

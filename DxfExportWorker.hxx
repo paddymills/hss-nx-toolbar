@@ -17,22 +17,21 @@
 using namespace NXOpen;
 using namespace std;
 
-static const char *DXF_EXPORT_CONFIG = "C:\\Users\\PMiller1\\git\\nx-dxf\\config\\export.def";
+static const char* DXF_EXPORT_CONFIG = "C:\\Users\\PMiller1\\git\\nx-dxf\\config\\export.def";
 
 static const double NOTE_SIZE = 5.0;
 static const double NOTE_OFFSET = 10.0;
 
+static const int PROFILE_LAYER = 1;
+
 class DxfExportWorker
 {
     private:
-        Session *session;
-        DxfdwgCreator *dxf_factory;
-        Part *part;
+        Session* session;
+        DxfdwgCreator* dxf_factory;
 
         vector<NXObject*> purgeable_objects;
-
-        bool is_empty_property(string&);
-        string get_export_name(Body*);
+        double anno_x, anno_y;
 
         bool add_object_to_export(NXObject* obj) { return dxf_factory->ExportSelectionBlock()->SelectionComp()->Add(obj); }
         bool add_object_to_export(vector<NXObject*> objs) { return dxf_factory->ExportSelectionBlock()->SelectionComp()->Add(objs); }
@@ -43,14 +42,19 @@ class DxfExportWorker
         DxfExportWorker();
         ~DxfExportWorker();
 
+        void set_input_file(Part* p) { dxf_factory->SetInputFile(p->FullPath().GetText()); }
+        void set_output_file(const char* o) { dxf_factory->SetOutputFile( o ); }
+        void set_annotation_xy(double, double);
+
         void init_factory();
         void rem_factory() { dxf_factory->Destroy(); }
-        void handle_part_properties();
 
         bool add_sketch(Sketch* sk) { return add_object_to_export( sk->GetAllGeometry() ); }
-        bool export_body(Body*, const char*);
-        NXObject *add_annotations(map<string, string>, double, double);
-        NXObject *add_annotations(vector<NXString>, double, double);
+        bool export_body(Body*);
+        NXObject* add_annotations(map<string, string>, double, double);
+        NXObject* add_annotations(map<string, string>);
+        NXObject* add_annotations(vector<NXString>, double, double);
+        NXObject* add_annotations(vector<NXString>);
 
 };
 

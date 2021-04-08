@@ -19,7 +19,7 @@ BodyBoundary::BodyBoundary()
     head = nullptr;
 }
 
-BodyBoundary::BodyBoundary(Body *body)
+BodyBoundary::BodyBoundary(Body* body)
 {
     head = nullptr;
 
@@ -32,7 +32,7 @@ BodyBoundary::~BodyBoundary()
         delete_tail(head);
 }
 
-PointNode *BodyBoundary::find_end(PointNode *node)
+PointNode* BodyBoundary::find_end(PointNode* node)
 {
     if (node->next)
         return find_end(node->next);
@@ -40,7 +40,7 @@ PointNode *BodyBoundary::find_end(PointNode *node)
     return node;
 }
 
-void BodyBoundary::delete_tail(PointNode *node)
+void BodyBoundary::delete_tail(PointNode* node)
 {
     if (node->next)
         delete_tail(node->next);
@@ -48,10 +48,10 @@ void BodyBoundary::delete_tail(PointNode *node)
     delete node;
 }
 
-void BodyBoundary::add_point(Point *point)
+void BodyBoundary::add_point(Point* point)
 {
-    PointNode *newNode = new PointNode();
-    Point3d *coord = &(point->Coordinates());
+    PointNode* newNode = new PointNode();
+    Point3d* coord = &(point->Coordinates());
     
     newNode->point = Point3d(coord->X, coord->Y, coord->Z);
     newNode->next = nullptr;
@@ -62,15 +62,15 @@ void BodyBoundary::add_point(Point *point)
         find_end(head)->next = newNode;
 }
 
-void BodyBoundary::get_points(Body *body)
+void BodyBoundary::get_points(Body* body)
 {
-    Point *p = nullptr;
+    Point* p = nullptr;
 
     // save initial part state to revert to at end
-    Session *session = Session::GetSession();
+    Session* session = Session::GetSession();
     Session::UndoMarkId initial_state = session->SetUndoMark(Session::MarkVisibilityVisible, "get_point_coord");
 
-    for (Edge *e: body->GetEdges())
+    for (Edge* e: body->GetEdges())
     {
         try
         {
@@ -113,7 +113,7 @@ double BodyBoundary::minimum(Axis axis)
     if ( !head )
         return 0.0;
 
-    struct PointNode *node = head->next;
+    struct PointNode* node = head->next;
     double val = get_point_value(head, axis);
 
     while (node)
@@ -150,7 +150,7 @@ double BodyBoundary::maximum(Axis axis)
     if ( !head )
         return 0.0;
 
-    struct PointNode *node = head->next;
+    struct PointNode* node = head->next;
     double val = get_point_value(head, axis);
 
     while (node)
@@ -168,7 +168,7 @@ double BodyBoundary::distance(Axis axis)
     return maximum(axis) - minimum(axis);
 }
 
-double BodyBoundary::get_point_value(PointNode *node, Axis axis)
+double BodyBoundary::get_point_value(PointNode* node, Axis axis)
 {
     switch (axis)
     {
@@ -186,12 +186,12 @@ double BodyBoundary::get_point_value(PointNode *node, Axis axis)
     }
 }
 
-bool BodyBoundary::point_equals(PointNode *node1, PointNode *node2)
+bool BodyBoundary::point_equals(PointNode* node1, PointNode* node2)
 {
     return point_equals(node1->point, node2->point);
 }
 
-bool BodyBoundary::point_equals(PointNode *node1, Point3d point2)
+bool BodyBoundary::point_equals(PointNode* node1, Point3d point2)
 {
     return point_equals(node1->point, point2);
 }
@@ -206,14 +206,14 @@ bool BodyBoundary::point_equals(Point3d point1, Point3d point2)
     return false;
 }
 
-bool BodyBoundary::point_exists(PointNode *node)
+bool BodyBoundary::point_exists(PointNode* node)
 {
     return point_exists(node->point);
 }
 
 bool BodyBoundary::point_exists(Point3d point)
 {
-    PointNode *node = head;
+    PointNode* node = head;
 
     while (node)
     {
@@ -231,12 +231,12 @@ double BodyBoundary::thickness()
     return maximum(Z) - minimum(Z);
 }
 
-double BodyBoundary::coverage(BodyBoundary *other)
+double BodyBoundary::coverage(BodyBoundary* other)
 {
     int coincident_points = 0;
     int number_of_points = 0;
 
-    PointNode *node = head;
+    PointNode* node = head;
 
     while(node)
     {

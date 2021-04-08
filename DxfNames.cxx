@@ -33,7 +33,7 @@ map<Body*, string> get_export_names(Part* part)
     string part_name;
 
     // get filename (no directories or extensions)
-    fs::path *part_path = new fs::path(part->FullPath().GetText());
+    fs::path* part_path = new fs::path(part->FullPath().GetText());
     string filename(part_path->filename().stem().string());
 
     // build base part file name
@@ -44,7 +44,7 @@ map<Body*, string> get_export_names(Part* part)
     // make sure part filename starts with build part_name
     // or part_name is more than just job_
     // could be stale data
-    if ( startswith(part_name, filename) && part_name.length() > 10 )
+    if ( !startswith(part_name, filename) || part_name.length() < 10 )
         part_name = filename;
 
     /* 
@@ -56,8 +56,7 @@ map<Body*, string> get_export_names(Part* part)
     {
         case PartType::Web :
         case PartType::Flange :
-            result = get_web_names(part);
-            for ( pair<Body*, string> it : result )
+            for ( pair<Body*, string> it : get_web_names(part) )
                 result[ it.first ] = part_name + "-" + it.second;
 
             break;
@@ -90,7 +89,7 @@ PartType get_part_type(Part* part)
     cmatch m;
     
     // get filename (no directories or extensions)
-    fs::path *part_path = new fs::path(part->FullPath().GetText());
+    fs::path* part_path = new fs::path(part->FullPath().GetText());
     string filename(part_path->filename().stem().string());
 
     /* 
@@ -114,7 +113,7 @@ PartType get_part_type(Part* part)
         ******************************
 
         not yet implemented: flanges should be same
-            as single body
+            as single body at the moment
     */
 
     /* 
@@ -148,7 +147,7 @@ PartType get_part_type(Part* part)
     return PartType::MultiBodyPart;
 }
 
-int get_number_of_body_exports(Part *part)
+int get_number_of_body_exports(Part* part)
 {
     int number_of_bodies = 0;
 
@@ -163,7 +162,7 @@ int get_number_of_body_exports(Part *part)
     return number_of_bodies;
 }
 
-map<Body*, string> get_web_names(Part *part)
+map<Body*, string> get_web_names(Part* part)
 {
     regex web_re(WEB_PARENT_PATTERN, ECMAScript | icase);
     smatch m;
@@ -171,8 +170,8 @@ map<Body*, string> get_web_names(Part *part)
     map<Body*, string> result;
 
     vector<BodyMinMax> bodies;
-    BodyBoundary *bound;
-    BodyMinMax *bmm;
+    BodyBoundary* bound;
+    BodyMinMax* bmm;
 
     for ( Body* body: *(part->Bodies()) )
     {

@@ -5,6 +5,9 @@
 #include <sstream>
 #include <windows.h>
 
+#include <experimental/filesystem>
+namespace fs = experimental::filesystem;
+
 LogBuffer::LogBuffer()
 {
     indent = 0;
@@ -16,37 +19,39 @@ LogBuffer::LogBuffer()
 
 void LogBuffer::open_log_file()
 {
-    stringstream log_filename;
+    stringstream log_name;
 
     try
     {
         SYSTEMTIME lt;
         GetLocalTime(&lt);
 
-        log_filename << LOG_SAVE_DIR << "\\" << getenv("USERNAME");
+        log_name << LOG_SAVE_DIR << "\\" << getenv("USERNAME");
         
 
-        log_filename << setfill('0');
+        log_name << setfill('0');
 
         // date
-        log_filename << "_";
-        log_filename << lt.wYear;
-        log_filename << setw(2) << lt.wMonth;
-        log_filename << setw(2) << lt.wDay;
+        log_name << "_";
+        log_name << lt.wYear;
+        log_name << setw(2) << lt.wMonth;
+        log_name << setw(2) << lt.wDay;
 
 
         // time
-        log_filename << "-";
-        log_filename << setw(2) << lt.wHour;
-        log_filename << setw(2) << lt.wMinute;
-        log_filename << setw(2) << lt.wSecond;
+        log_name << "-";
+        log_name << setw(2) << lt.wHour;
+        log_name << setw(2) << lt.wMinute;
+        log_name << setw(2) << lt.wSecond;
         
-        log_filename << ".log";
+        log_name << ".log";
 
-        ofile.open( log_filename.str() );
+        filename = log_name.str();
+
+        ofile.open( filename );
     }
 
-    catch( const exception &ex )
+    catch( const exception& ex )
     {
         ofile.open( string(LOG_SAVE_DIR).append("NONAME.log") );
     }
@@ -74,4 +79,11 @@ int LogBuffer::sync()
     this->str("");
 
     return 0;
+}
+
+void LogBuffer::remove_logs()
+{
+    for ( fs::directory_entry e : fs::directory_iterator( LOG_SAVE_DIR ) )
+        if ( e.path() != filename )
+            fs::remove( e.path() );
 }

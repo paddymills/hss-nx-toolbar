@@ -10,7 +10,7 @@
 
 using namespace std;
 
-static const char *LOG_SAVE_DIR = "C:\\Users\\PMiller1\\git\\nx-dxf\\logs";
+static const char* LOG_SAVE_DIR = "C:\\Users\\PMiller1\\git\\nx-dxf\\logs";
 
 class LogBuffer : public stringbuf
 {
@@ -18,6 +18,7 @@ class LogBuffer : public stringbuf
         int indent;
         bool needs_indent;
         string indent_seq;
+        string filename;
 
         ofstream ofile;
 
@@ -33,6 +34,7 @@ class LogBuffer : public stringbuf
         void set_indent_seq(string s) { indent_seq = s; }
 
         virtual int sync();
+        void remove_logs();
 };
 
 #endif
