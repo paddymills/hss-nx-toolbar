@@ -1,11 +1,12 @@
 @echo off
 
 SETLOCAL
-CLS
 
 ECHO **************************************
 ECHO *     %DATE%-%TIME%     *
 ECHO **************************************
+
+IF EXIST ..\logs\*.log DEL ..\logs\*.log
 
 IF EXIST *.dll DEL *.dll
 IF EXIST *.exe DEL *.exe
@@ -20,10 +21,10 @@ ECHO     Compiling
 ECHO ----------------------------
 
 rem compile all with matched extension (*.c, *.cpp, *.cxx)
-IF EXIST *.c   CALL cl ..\src\*.c
-IF EXIST *.cpp CALL cl ..\src\*.cpp
-IF EXIST *.cxx CALL cl ..\src\*.cxx
-    
+IF EXIST ..\src\*.c   CALL cl ..\src\*.c
+IF EXIST ..\src\*.cpp CALL cl ..\src\*.cpp
+IF EXIST ..\src\*.cxx CALL cl ..\src\*.cxx
+
 ECHO:
 ECHO ----------------------------
 ECHO     Linking
