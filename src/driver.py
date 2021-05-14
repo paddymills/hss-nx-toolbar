@@ -24,7 +24,7 @@ def main():
 
 
 def tests():
-    processor = hss.HssPartProcessing()
+    processor = hss.PartProcessor()
     logger = logging.getLogger(__name__)
 
     test_files_dir = r"C:\Users\PMiller1\git\nx-dxf\test_files"

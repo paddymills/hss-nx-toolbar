@@ -5,11 +5,11 @@ from os import path
 
 import config
 from nx import NxDxfExporter, set_top_view
-from .filter import *
+from .naming import *
 
 import NXOpen
 
-class HssPartProcessing:
+class PartProcessor:
     
     def __init__(self):
         self.session = NXOpen.Session.GetSession()
@@ -58,16 +58,14 @@ class HssPartProcessing:
             # handle properties
 
             # handle sketches
-            for sketch in self.get_sketches(part):
-                self.logger.info(" + (sketch) {}".format( sketch.Name ))
+            for sketch in get_sketches_to_export(part):
                 dxf_exporter.add_sketch(sketch)
 
             # handle bodies
-            for body in self.get_bodies(part):
-                self.logger.info(" > (body) {}".format( body.Name ))
-
-                # TODO: name body
-                dxf_exporter.export_body(body, body.Name, commit=(not self.dry_run))
+            export_bodies = get_bodies_to_export(part)
+            names = get_body_names(export_bodies)
+            for body in export_bodies:
+                dxf_exporter.export_body(body, names[ body.JournalIdentifier ], commit=(not self.dry_run))
 
             self.session.UndoToMark(initial_state, "dxf_initial")
 
@@ -78,25 +76,30 @@ class HssPartProcessing:
         self.session.LicenseManager.Release("solid_modeling", "hssdxfexport")
 
 
-    def get_sketches(self, part):
-        for sk in part.Sketches:
-            
-            if filter_sketch(sk.Name):
+def get_sketches_to_export(self, part):
+    for sk in part.Sketches:
+        
+        for search_term, layer in config.WHITELISTED_SKETCHES.items():
+            if search_term.search(sk.Name):
+                sk.Layer = layer.value
                 yield sk
-            else:
-                self.logger.debug(" - (sketch) {}".format( sk.Name ))
+
+                break
+
+        else:
+            self.logger.debug("Skipping sketch: {}".format( sk.Name ))
 
 
-    def get_bodies(self, part):
-        bodies = list()
+def get_bodies_to_export(self, part):
+    bodies = list()
 
-        for bd in part.Bodies:
+    for body in part.Bodies:
 
-            blacklist_id = filter_body(bd.Name)
+        if body.Name.startswith( config.SINGLE_BODY_EXPORT_NAME ):
+            return [ body ]
 
-            if blacklist_id == BodyExport.ONE_BODY:
-                return [bd]
-            elif blacklist_id == BodyExport.MULT_BODIES:
-                bodies.append(bd)
+        for blacklist_name in config.BLACKLISTED_BODIES:
+            if blacklist_name.search(body.Name):
+                bodies.append( body )
 
-        return bodies
+    return bodies

@@ -1,2 +1,2 @@
 
-from .part_processing import *
+from .part_processing import PartProcessor

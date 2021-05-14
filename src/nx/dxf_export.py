@@ -1,5 +1,6 @@
 
 import config
+import logging
 import os
 
 import NXOpen
@@ -21,6 +22,8 @@ class NxDxfExporter:
 
         self._dxf.InputFile = part_file
 
+        self.logger = logging.getLogger(__name__)
+
     def __del__(self):
         self._dxf.Destroy()
 
@@ -32,10 +35,14 @@ class NxDxfExporter:
         self._dxf.ExportSelectionBlock.SelectionComp.Remove(obj)
 
     def add_sketch(self, sketch):
+        self.logger.info("Adding sketch: {}".format( sketch.Name ))
+
         self.add( sketch.GetAllGeometry() )
 
     def export_body(self, body, export_name, commit=True):
         self._dxf.OutputFile = export_name
+
+        self.logger.info("Exporting body: {}".format( body.Name ))
 
         try:
             body.Layer = config.Layers.PROFILE.value
@@ -46,6 +53,7 @@ class NxDxfExporter:
             # this seems to speed up export compared to overwriting files
             # also, it keeps from accumulating* _bk.dxf files
             if os.path.exists(self._dxf.OutputFile):
+                self.logger.info("Removing existing .dxf file")
                 os.remove(self._dxf.OutputFile)
 
             # generate dxf file
