@@ -2,12 +2,15 @@
 import logging
 import re
 from os import path
+import sys
 
 import config
-from nx import NxDxfExporter, set_top_view
-from .naming import *
+from nx import DxfExporter, set_top_view
 
 import NXOpen
+
+WEB_REGEX = re.compile(r"[-_]web")
+
 
 class PartProcessor:
     
@@ -44,7 +47,7 @@ class PartProcessor:
         initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "dxf_initial")
 
         # initialize dxf/dwg
-        dxf_exporter = NxDxfExporter(self.session, part.FullPath)
+        dxf_exporter = DxfExporter(self.session, part.FullPath)
 
         # get license
         self.session.LicenseManager.Reserve("solid_modeling", "hssdxfexport")
@@ -58,48 +61,76 @@ class PartProcessor:
             # handle properties
 
             # handle sketches
-            for sketch in get_sketches_to_export(part):
+            for sketch in self.get_sketches_to_export(part):
                 dxf_exporter.add_sketch(sketch)
 
             # handle bodies
-            export_bodies = get_bodies_to_export(part)
-            names = get_body_names(export_bodies)
-            for body in export_bodies:
-                dxf_exporter.export_body(body, names[ body.JournalIdentifier ], commit=(not self.dry_run))
+            for name, body in get_bodies_to_export(part):
+                dxf_exporter.export_body(body, name, commit=(not self.dry_run))
 
             self.session.UndoToMark(initial_state, "dxf_initial")
 
         except Exception as err:
-            self.logger.error(err)
+            _, _, tb = sys.exc_info()
+            self.logger.error("[{}] {}".format( tb.tb_lineno, err ))
 
         # release license
         self.session.LicenseManager.Release("solid_modeling", "hssdxfexport")
 
 
-def get_sketches_to_export(self, part):
-    for sk in part.Sketches:
+    def get_sketches_to_export(self, part):
         
-        for search_term, layer in config.WHITELISTED_SKETCHES.items():
-            if search_term.search(sk.Name):
-                sk.Layer = layer.value
-                yield sk
+        for sk in part.Sketches:
+            
+            for search_term, layer in config.WHITELISTED_SKETCHES.items():
+                if search_term.search(sk.Name):
+                    sk.Layer = layer.value
+                    yield sk
 
-                break
+                    break
 
-        else:
-            self.logger.debug("Skipping sketch: {}".format( sk.Name ))
+            else:
+                self.logger.debug("Skipping sketch: {}".format( sk.Name ))
 
 
-def get_bodies_to_export(self, part):
-    bodies = list()
+def get_bodies_to_export(part):
 
+    # ~~~~~~~~~~~~~~~~~~~~~~~ single body ~~~~~~~~~~~~~~~~~~~~~~~
+    if len([ 1 for _ in part.Bodies ]) == 1:
+        return _single_body(part)
+
+
+    # ~~~~~~~~~~~~~~~~~~~~~~~ named bodies ~~~~~~~~~~~~~~~~~~~~~~
+    if any([ len(body.Name) > 0 for body in part.Bodies ]):
+        return _named_bodies(part)
+
+
+    # ~~~~~~~~~~~~~~~~~~~~~~~~ web naming ~~~~~~~~~~~~~~~~~~~~~~~
+    if WEB_REGEX.search(part.Leaf):
+        return _name_web_bodies(part)
+
+
+    # ~~~~~~~~~ generic multibody ( (1), (2), (3), etc. ) ~~~~~~~
+    return _multi_body(part)
+
+
+def _single_body(part):
     for body in part.Bodies:
+        yield part.Leaf, body
 
-        if body.Name.startswith( config.SINGLE_BODY_EXPORT_NAME ):
-            return [ body ]
 
-        for blacklist_name in config.BLACKLISTED_BODIES:
-            if blacklist_name.search(body.Name):
-                bodies.append( body )
+def _named_bodies(part):
+    for body in part.Bodies:
+        if body.Name:
+            yield "{}-{}".format(part.Leaf, body.Name), body
 
-    return bodies
+
+def _name_web_bodies(part):
+
+    for i, body in enumerate(part.Bodies, start=1):
+        yield "{}-W{}".format(part.Leaf, i), body
+
+
+def _multi_body(part):
+    for i, body in enumerate(part.Bodies, start=1):
+        yield "{}({})".format(part.Leaf, i), body

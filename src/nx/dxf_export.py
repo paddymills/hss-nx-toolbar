@@ -5,7 +5,7 @@ import os
 
 import NXOpen
 
-class NxDxfExporter:
+class DxfExporter:
 
     def __init__(self, session, part_file):
         # replace self with DxfdwgCreator provided by session
@@ -40,9 +40,10 @@ class NxDxfExporter:
         self.add( sketch.GetAllGeometry() )
 
     def export_body(self, body, export_name, commit=True):
-        self._dxf.OutputFile = export_name
+        
+        self._dxf.OutputFile = os.path.join(config.DXF_OUTPUT_DIR, export_name)
 
-        self.logger.info("Exporting body: {}".format( body.Name ))
+        self.logger.info("Exporting body: {}".format( export_name ))
 
         try:
             body.Layer = config.Layers.PROFILE.value

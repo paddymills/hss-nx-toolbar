@@ -1,3 +1,3 @@
 
-from nx.dxf_export import *
+from nx.dxf_export import DxfExporter
 from nx.utils import *
