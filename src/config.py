@@ -1,4 +1,6 @@
 
+import logging
+
 from enum import Enum
 from re import compile as regex
 
@@ -7,6 +9,9 @@ class Layers(Enum):
     MARKING = 2
     NO_CUT  = 3
     DETAIL  = 4
+
+
+logging_level = logging.INFO
 
 BASE_DIR = r"C:\Users\pmiller1\git\nx-dxf"
 LOG_DIR = BASE_DIR + r"\logs"

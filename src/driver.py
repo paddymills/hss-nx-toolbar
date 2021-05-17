@@ -17,8 +17,9 @@ class TestType(Enum):
 
 def main():
     log_file = path.join( config.LOG_DIR, "{}.log".format(date.today().isoformat()) )
+    log_level = config.LOGGING_LEVEL
 
-    logging.basicConfig(filename=log_file, level=logging.INFO, filemode='w')
+    logging.basicConfig(filename=log_file, level=log_level, filemode='w')
 
     tests()
 
