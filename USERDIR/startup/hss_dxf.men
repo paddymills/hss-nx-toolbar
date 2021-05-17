@@ -1,0 +1,27 @@
+VERSION 120
+
+    EDIT UG_GATEWAY_MAIN_MENUBAR
+
+    BEFORE UG_HELP
+      CASCADE_BUTTON HSS_DXF_EXPORT_MENU
+      LABEL High Steel Structures LLC
+    END_OF_BEFORE
+ 
+    MENU HSS_DXF_EXPORT_MENU
+
+        BUTTON HSS_DXF_EXPORT_SELECT
+        LABEL Select Part(s)
+        BITMAP hss_dxf
+        ACTIONS test.py("select")
+
+        BUTTON HSS_DXF_EXPORT_ACTIVE
+        LABEL Work Part
+        BITMAP hss_dxf
+        ACTIONS test.py("active")
+
+        BUTTON HSS_DXF_EXPORT_ALL_OPEN
+        LABEL All Open Parts
+        BITMAP hss_dxf
+        ACTIONS test.py("all_open")
+
+   END_OF_MENU

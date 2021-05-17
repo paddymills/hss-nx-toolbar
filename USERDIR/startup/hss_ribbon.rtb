@@ -1,0 +1,22 @@
+
+TITLE  High Steel Structures LLC
+VERSION 170
+
+BEGIN_GROUP Dxf Export (HSS)
+
+    BUTTON HSS_DXF_EXPORT_SELECT
+    LABEL Select Part(s)
+    BITMAP hss_dxf
+    ACTION test.py("select")
+
+    BUTTON HSS_DXF_EXPORT_ACTIVE
+    LABEL Work Part
+    BITMAP hss_dxf
+    ACTION test.py("active")
+
+    BUTTON HSS_DXF_EXPORT_ALL_OPEN
+    LABEL All Open Parts
+    BITMAP hss_dxf
+    ACTION test.py("all_open")
+
+END_GROUP
