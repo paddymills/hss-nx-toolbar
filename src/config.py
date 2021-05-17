@@ -17,6 +17,7 @@ BASE_DIR = r"C:\Users\pmiller1\git\nx-dxf"
 LOG_DIR = BASE_DIR + r"\logs"
 DXF_CONFIG = BASE_DIR + r"\config\export.def"
 DXF_OUTPUT_DIR = r"\\hssieng\SNDataPrd\DXF"
+NX_PART_FILES_DIR = r"\\hssieng\Jobs"
 
 NOTE_SIZE = 5.0
 NOTE_OFFSET = 10.0

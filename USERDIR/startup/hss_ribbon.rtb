@@ -7,16 +7,16 @@ BEGIN_GROUP Dxf Export (HSS)
     BUTTON HSS_DXF_EXPORT_SELECT
     LABEL Select Part(s)
     BITMAP hss_dxf
-    ACTION test.py("select")
+    ACTION C:\Users\PMiller1\git\nx-dxf\src\test.py("select")
 
     BUTTON HSS_DXF_EXPORT_ACTIVE
     LABEL Work Part
     BITMAP hss_dxf
-    ACTION test.py("active")
+    ACTION C:\Users\PMiller1\git\nx-dxf\src\test.py("active")
 
     BUTTON HSS_DXF_EXPORT_ALL_OPEN
     LABEL All Open Parts
     BITMAP hss_dxf
-    ACTION test.py("all_open")
+    ACTION C:\Users\PMiller1\git\nx-dxf\src\test.py("all_open")
 
 END_GROUP

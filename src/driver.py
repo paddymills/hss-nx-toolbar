@@ -4,6 +4,9 @@ from enum import Enum
 from os import path
 from datetime import date
 
+import tkinter as tk
+from tkinter import filedialog
+
 import config
 import hss
 
@@ -17,9 +20,8 @@ class TestType(Enum):
 
 def main():
     log_file = path.join( config.LOG_DIR, "{}.log".format(date.today().isoformat()) )
-    log_level = config.LOGGING_LEVEL
 
-    logging.basicConfig(filename=log_file, level=log_level, filemode='w')
+    logging.basicConfig(filename=log_file, level=config.LOGGING_LEVEL, filemode='w')
 
     tests()
 
@@ -52,6 +54,16 @@ def tests():
 
         processor.process_part( path.join(test_files_dir, part) )
 
-    
+
+def _get_files_to_process():
+    root = tk.Tk()
+    root.withdraw()
+
+    # opts = dict(filetypes=[("NX Parts", "*.prt")], initialdir=config.NX_PART_FILES_DIR)
+    opts = dict(filetypes=[("NX Parts", "*.prt")], initialdir=r"C:\Users\PMiller1\git\nx-dxf\test_files")
+
+    return filedialog.askopenfilenames(**opts)
+
+
 if __name__ == '__main__':
     main()
