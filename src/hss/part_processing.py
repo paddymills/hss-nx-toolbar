@@ -93,44 +93,56 @@ class PartProcessor:
                 self.logger.debug("Skipping sketch: {}".format( sk.Name ))
 
 
-def get_bodies_to_export(part):
+    def get_bodies_to_export(self, part):
 
-    # ~~~~~~~~~~~~~~~~~~~~~~~ single body ~~~~~~~~~~~~~~~~~~~~~~~
-    if len([ 1 for _ in part.Bodies ]) == 1:
-        return _single_body(part)
+        num_bodies = 0
+        num_named_bodies = 0
+        for body in part.Bodies:
+            num_bodies += 1
 
+            if len(body.Name) > 0:
+                num_named_bodies += 1
 
-    # ~~~~~~~~~~~~~~~~~~~~~~~ named bodies ~~~~~~~~~~~~~~~~~~~~~~
-    if any([ len(body.Name) > 0 for body in part.Bodies ]):
-        return _named_bodies(part)
-
-
-    # ~~~~~~~~~~~~~~~~~~~~~~~~ web naming ~~~~~~~~~~~~~~~~~~~~~~~
-    if WEB_REGEX.search(part.Leaf):
-        return _name_web_bodies(part)
-
-
-    # ~~~~~~~~~ generic multibody ( (1), (2), (3), etc. ) ~~~~~~~
-    return _multi_body(part)
+        
+        # ~~~~~~~~~~~~~~~~~~~~~~~ single body ~~~~~~~~~~~~~~~~~~~~~~~
+        if num_bodies == 1:
+            return self._single_body(part)
 
 
-def _single_body(part):
-    for body in part.Bodies:
-        yield part.Leaf, body
+        # ~~~~~~~~~~~~~~~~~~~~~~~ named bodies ~~~~~~~~~~~~~~~~~~~~~~
+        if num_named_bodies > 0:
+            return self._named_bodies(part)
 
 
-def _named_bodies(part):
-    for body in part.Bodies:
-        if body.Name:
-            yield "{}-{}".format(part.Leaf, body.Name), body
+        # ~~~~~~~~~~~~~~~~~~~~~~~~ web naming ~~~~~~~~~~~~~~~~~~~~~~~
+        if WEB_REGEX.search(part.Leaf):
+            return self._name_web_bodies(part)
 
 
-def _name_web_bodies(part):
-
-    for i, body in enumerate(part.Bodies, start=1):
-        yield "{}-W{}".format(part.Leaf, i), body
+        # ~~~~~~~~~ generic multibody ( (1), (2), (3), etc. ) ~~~~~~~
+        return self._multi_body(part)
 
 
-def _multi_body(part):
-    for i, body in enumerate(part.Bodies, start=1):
-        yield "{}({})".format(part.Leaf, i), body
+    def _single_body(self, part):
+        for body in part.Bodies:
+            yield part.Leaf, body
+
+
+    def _named_bodies(self, part):
+        for body in part.Bodies:
+            if body.Name:
+                yield "{}-{}".format(part.Leaf, body.Name), body
+
+            else:
+                self.logger.debug("Skipping body that is not named (named body strategy)")
+
+
+    def _name_web_bodies(self, part):
+
+        for i, body in enumerate(part.Bodies, start=1):
+            yield "{}-W{}".format(part.Leaf, i), body
+
+
+    def _multi_body(self, part):
+        for i, body in enumerate(part.Bodies, start=1):
+            yield "{}({})".format(part.Leaf, i), body
