@@ -65,7 +65,7 @@ class PartProcessor:
                 dxf_exporter.add_sketch(sketch)
 
             # handle bodies
-            for name, body in get_bodies_to_export(part):
+            for name, body in self.get_bodies_to_export(part):
                 dxf_exporter.export_body(body, name, commit=(not self.dry_run))
 
             self.session.UndoToMark(initial_state, "dxf_initial")
@@ -100,41 +100,55 @@ class PartProcessor:
         for body in part.Bodies:
             num_bodies += 1
 
+            if body.Name == config.SINGLE_BODY_EXPORT_NAME:
+                self.logger.debug("Naming Strategy: matched single body export name")
+                
+                return [(part.Leaf, body)]
+
             if len(body.Name) > 0:
                 num_named_bodies += 1
 
         
         # ~~~~~~~~~~~~~~~~~~~~~~~ single body ~~~~~~~~~~~~~~~~~~~~~~~
         if num_bodies == 1:
+            self.logger.debug("Naming Strategy: single body")
+
             return self._single_body(part)
 
 
         # ~~~~~~~~~~~~~~~~~~~~~~~ named bodies ~~~~~~~~~~~~~~~~~~~~~~
         if num_named_bodies > 0:
+            self.logger.debug("Naming Strategy: named bodies")
+
             return self._named_bodies(part)
 
 
         # ~~~~~~~~~~~~~~~~~~~~~~~~ web naming ~~~~~~~~~~~~~~~~~~~~~~~
         if WEB_REGEX.search(part.Leaf):
+            self.logger.debug("Naming Strategy: named web bodies")
+
             return self._name_web_bodies(part)
 
 
         # ~~~~~~~~~ generic multibody ( (1), (2), (3), etc. ) ~~~~~~~
+        self.logger.debug("Naming Strategy: multiple not-named bodies")
         return self._multi_body(part)
 
 
     def _single_body(self, part):
+
         for body in part.Bodies:
             yield part.Leaf, body
 
 
     def _named_bodies(self, part):
+
         for body in part.Bodies:
             if body.Name:
                 yield "{}-{}".format(part.Leaf, body.Name), body
 
             else:
-                self.logger.debug("Skipping body that is not named (named body strategy)")
+                self.logger.debug("Skipping body that is not named")
 
 
     def _name_web_bodies(self, part):
@@ -144,5 +158,6 @@ class PartProcessor:
 
 
     def _multi_body(self, part):
+
         for i, body in enumerate(part.Bodies, start=1):
             yield "{}({})".format(part.Leaf, i), body
