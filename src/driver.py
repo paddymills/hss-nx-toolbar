@@ -52,8 +52,9 @@ def main():
             msgbox.error("No files are open")
 
 
-    else:
-        hss.tests()
+    # run tests
+    elif opt == "test":
+        hss.test()
 
 
 def _get_files_to_process():
