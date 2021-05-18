@@ -8,7 +8,7 @@ import config
 import NXOpen
 
 # need Tcl (tcl/{tcl8.6, tk8.6})
-os.environ["TCL_LIBRARY"] = os.path.join(r"C:\Program Files\Python39\tcl\tk8.6")
+os.environ["TCL_LIBRARY"] = r"C:\Program Files\Python39\tcl\tcl8.6"
 
 
 def error(msg, title="Error"):
