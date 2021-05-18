@@ -29,7 +29,7 @@ class PartProcessor:
         loadstat.Dispose()
 
         # ~~~ run processing script ~~~
-        self._process_part(self.session.Parts.Work)
+        self.process_work_part()
 
         # close part
         self.session.Parts.Work.Close(NXOpen.BasePart.CloseWholeTree.FalseValue, NXOpen.BasePart.CloseModified.UseResponses, None)
@@ -39,6 +39,18 @@ class PartProcessor:
     def process_parts(self, part_files):
         for part_file in part_files:
             self.process_part(part_file)
+
+
+    def process_work_part(self):
+        self._process_part(self.session.Parts.Work)
+
+
+    def process_open_parts(self):
+        for part in self.session.Parts:
+            # set part as work part
+            self.session.Parts.SetActiveDisplay(part, NXOpen.DisplayPartOption.AllowAdditional, NXOpen.PartDisplayPartWorkPartOption.UseLast)
+            
+            self.process_work_part()
 
 
     def _process_part(self, part):
