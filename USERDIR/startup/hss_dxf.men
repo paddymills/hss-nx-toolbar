@@ -11,17 +11,17 @@ VERSION 120
 
     BUTTON HSS_DXF_EXPORT_SELECT
     LABEL Select Part(s)
-    BITMAP hss_dxf
+    BITMAP high_dxf
     ACTIONS C:\Users\PMiller1\git\nx-dxf\src\test.py("select")
 
     BUTTON HSS_DXF_EXPORT_ACTIVE
     LABEL Work Part
-    BITMAP hss_dxf
+    BITMAP high_dxf
     ACTIONS C:\Users\PMiller1\git\nx-dxf\src\test.py("active")
 
     BUTTON HSS_DXF_EXPORT_ALL_OPEN
     LABEL All Open Parts
-    BITMAP hss_dxf
+    BITMAP high_dxf
     ACTIONS C:\Users\PMiller1\git\nx-dxf\src\test.py("all_open")
 
    END_OF_MENU
