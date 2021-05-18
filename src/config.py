@@ -11,7 +11,7 @@ class Layers(Enum):
     DETAIL  = 4
 
 
-logging_level = logging.INFO
+LOGGING_LEVEL = logging.INFO
 
 BASE_DIR = r"C:\Users\pmiller1\git\nx-dxf"
 LOG_DIR = BASE_DIR + r"\logs"
@@ -40,3 +40,7 @@ WHITELISTED_SKETCHES =  {
 BLACKLISTED_BODIES = (
     regex("SHIM"),
 )
+
+# for testing
+LOGGING_LEVEL = logging.DEBUG
+NX_PART_FILES_DIR = r"C:\Users\PMiller1\git\nx-dxf\test_files"
