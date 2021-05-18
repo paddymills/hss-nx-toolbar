@@ -1,5 +1,14 @@
 
+import os
+import tkinter as tk
+from tkinter import filedialog
+
+import config
+
 import NXOpen
+
+# need Tcl (tcl/{tcl8.6, tk8.6})
+os.environ["TCL_LIBRARY"] = os.path.join(r"C:\Program Files\Python39\tcl\tk8.6")
 
 
 def error(msg, title="Error"):
@@ -20,3 +29,12 @@ def info(msg, title="Information"):
 def _msgbox(msg, dlg_type, title):
 
     return NXOpen.UI.GetUI().NXMessageBox.Show(title, dlg_type, msg)
+
+
+def get_files_to_process():
+    root = tk.Tk()
+    root.withdraw()
+
+    opts = dict(filetypes=[("NX Parts", "*.prt")], initialdir=config.NX_PART_FILES_DIR)
+
+    return filedialog.askopenfilenames(**opts)
