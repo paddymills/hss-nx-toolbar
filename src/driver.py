@@ -1,6 +1,6 @@
 
 import logging
-from enum import Enum
+import sys
 from os import path
 from datetime import date
 
@@ -9,61 +9,65 @@ from tkinter import filedialog
 
 import config
 import hss
+from nx import msgbox
 
 import NXOpen
 
-class TestType(Enum):
-    SKIP = 1
-    DRY_RUN = 2
-    EXPORT = 3
-
 
 def main():
-    log_file = path.join( config.LOG_DIR, "{}.log".format(date.today().isoformat()) )
 
+    # setup logging
+    log_file = path.join( config.LOG_DIR, "{}.log".format(date.today().isoformat()) )
     logging.basicConfig(filename=log_file, level=config.LOGGING_LEVEL, filemode='w')
 
-    tests()
-
-
-def tests():
     processor = hss.PartProcessor()
-    logger = logging.getLogger(__name__)
 
-    test_files_dir = r"C:\Users\PMiller1\git\nx-dxf\test_files"
-    test_files = {
-        "1190181A_G1A-web_named.prt"    : TestType.DRY_RUN,
-        "1190181A_G2A-web.prt"          : TestType.DRY_RUN,
-        "1190259A_m3g.prt"              : TestType.DRY_RUN,
-        "1190259A_SP1-b.prt"            : TestType.DRY_RUN,
-        "1190259A_SP2-c.prt"            : TestType.DRY_RUN,
-        "1190259A_x1b.prt"              : TestType.DRY_RUN,
-    }
+    # parse caller option
+    opt = sys.argv[1]
 
-    for part, test in test_files.items():
-        logger.debug("{} '{}'".format(test.name, part))
+    # Select Part(s)
+    if opt == "select":
+        parts_to_process = _get_files_to_process()
 
-        if test is TestType.SKIP:
-            continue
+        msgbox.info("Process : {}".format(parts_to_process))
+        # processor.process_parts(parts_to_process)
 
-        if test is TestType.DRY_RUN:
-            processor.dry_run = True
+    # Work Part
+    elif opt == "active":
+        if _files_are_open():
+            msgbox.info("Process work part")
+            # processor.process_work_part()
 
-        elif test is TestType.EXPORT:
-            processor.dry_run = False
+        else:   # no files open
+            msgbox.error("No files are open")
 
-        processor.process_part( path.join(test_files_dir, part) )
+
+    # All Open Parts
+    elif opt == "all_open":
+        if _files_are_open():
+            msgbox.info("Process all open parts")
+            # processor.process_open_parts()
+
+        else:   # no files open
+            msgbox.error("No files are open")
+
+
+    else:
+        hss.tests()
 
 
 def _get_files_to_process():
     root = tk.Tk()
     root.withdraw()
 
-    # opts = dict(filetypes=[("NX Parts", "*.prt")], initialdir=config.NX_PART_FILES_DIR)
-    opts = dict(filetypes=[("NX Parts", "*.prt")], initialdir=r"C:\Users\PMiller1\git\nx-dxf\test_files")
+    opts = dict(filetypes=[("NX Parts", "*.prt")], initialdir=config.NX_PART_FILES_DIR)
 
     return filedialog.askopenfilenames(**opts)
 
 
-if __name__ == '__main__':
-    main()
+def _files_are_open():
+
+    for part in NXOpen.Session.GetSession().Parts:
+        return True
+
+    return False
