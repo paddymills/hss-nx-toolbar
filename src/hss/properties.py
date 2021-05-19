@@ -40,10 +40,17 @@ def get_part_properties(part):
 
 def get_part_property(part, prop):
 
-    return part.GetUserAttribute(prop, NXOpen.NXObject.AttributeType.String, -1).StringValue
+    try:
+        return part.GetUserAttribute(prop, NXOpen.NXObject.AttributeType.String, -1).StringValue
+    except:
+        return None
 
 
 def _is_empty_property(value):
+
+    if value is None:
+        return True
+
     if EMPTY_PROPERTY_PATTERN.match(value):
         return True
 
