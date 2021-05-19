@@ -1,5 +1,5 @@
 
-import hss
+from part_processing import PartProcessor
 
 import logging
 from os import path
@@ -13,7 +13,7 @@ class TestType(Enum):
 
 
 def test():
-    processor = hss.PartProcessor()
+    processor = PartProcessor()
     logger = logging.getLogger(__name__)
 
     test_files_dir = r"C:\Users\PMiller1\git\nx-dxf\test_files"

@@ -3,8 +3,8 @@ import logging
 import re
 
 import config
-from .properties import get_part_properties
-from .body_bound import BodyBound
+from properties import get_part_properties
+from body_bound import BodyBound
 
 import NXOpen
 

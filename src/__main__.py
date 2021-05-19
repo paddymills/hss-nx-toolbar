@@ -5,8 +5,9 @@ from os import path
 from datetime import date
 
 import config
-import hss
-from nx import dialog
+import dialog
+from part_processing import PartProcessor
+from tests import test
 
 import NXOpen
 
@@ -23,7 +24,7 @@ def _files_are_open():
 log_file = path.join( config.LOG_DIR, "{}.log".format(date.today().isoformat()) )
 logging.basicConfig(filename=log_file, level=config.LOGGING_LEVEL, filemode='w')
 
-processor = hss.PartProcessor()
+processor = PartProcessor()
 
 
 # parse caller option
@@ -58,4 +59,4 @@ elif opt == "all_open":
 
 # run tests
 elif opt == "test":
-    hss.test()
+    test()
