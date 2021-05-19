@@ -5,7 +5,7 @@ from os import path
 import sys
 
 import config
-from nx import DxfExporter, set_top_view
+from nx import DxfExporter
 from hss import get_sketches_to_export, get_bodies_to_export
 
 import NXOpen
@@ -55,20 +55,20 @@ class PartProcessor:
     def _process_part(self, part):
         self.logger.info("Processing part: {}".format(part.Leaf))
 
-        initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "dxf_initial")
-
-        # initialize dxf/dwg
-        dxf_exporter = DxfExporter(self.session, part.FullPath)
-
-        # get license
-        self.session.LicenseManager.Reserve("solid_modeling", "hssdxfexport")
-
-        # make sure modeling is active and set view
-        self.session.ApplicationSwitchImmediate("UG_APP_MODELING")
-        set_top_view(part)
-
-
         try:
+            initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "dxf_initial")
+
+            # initialize dxf/dwg
+            dxf_exporter = DxfExporter(self.session, part.FullPath)
+
+            # get license
+            self.session.LicenseManager.Reserve("solid_modeling", "hssdxfexport")
+
+            # make sure modeling is active and set view
+            self.session.ApplicationSwitchImmediate("UG_APP_MODELING")
+            part.ModelingViews.WorkView.Orient(NXOpen.View.Canned.Top, NXOpen.View.ScaleAdjustment.Fit)
+
+
             # handle properties
 
             # handle sketches
