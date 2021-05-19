@@ -6,7 +6,8 @@ import sys
 
 import config
 from nx import DxfExporter
-from hss import get_sketches_to_export, get_bodies_to_export
+from .sketches import get_sketches_to_export
+from .bodies import get_bodies_to_export, handle_body_thickness
 
 import NXOpen
 
@@ -77,6 +78,8 @@ class PartProcessor:
 
             # handle bodies
             for name, body in get_bodies_to_export(part):
+                handle_body_thickness(body)
+
                 dxf_exporter.export_body(body, name, commit=(not self.dry_run))
 
             self.session.UndoToMark(initial_state, "dxf_initial")
