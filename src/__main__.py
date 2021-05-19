@@ -35,10 +35,12 @@ opt = sys.argv[1]
 if opt == "select":
     parts_to_process = dialog.get_files_to_process()
 
-    logger.info("Parts selected to process : {}".format(parts_to_process))
-    processor.process_parts(parts_to_process)
+    if parts_to_process:
 
-    dialog.info("Part file(s) exported: {}".format(parts_to_process))
+        logger.info("Parts selected to process : {}".format(parts_to_process))
+        processor.process_parts(parts_to_process)
+
+        dialog.info( ["Part file(s) exported:", *parts_to_process] )
 
 # Work Part
 elif opt == "active":
