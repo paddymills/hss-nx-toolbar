@@ -95,7 +95,12 @@ def _named_bodies(part, base_name):
             continue
 
         if body.Name:
-            yield "{}-{}".format(base_name, body.Name), body
+            for bl_name in config.BLACKLISTED_BODIES:
+                if bl_name.search(body.Name):
+                    logger.debug("Skipping blacklisted body '{}'".format(body.Name))
+                
+                else:
+                    yield "{}-{}".format(base_name, body.Name), body
 
         else:
             logger.debug("Skipping body that is not named")
@@ -103,12 +108,40 @@ def _named_bodies(part, base_name):
 
 def _name_web_bodies(part, base_name):
 
-    for i, body in enumerate(part.Bodies, start=1):
+    num_child_bodies = -1
+    bounds = dict()
+
+    for body in part.Bodies:
         if body.IsBlanked:
             logger.debug("Skipping blanked body '{}'".format(body.Name))
             continue
 
-        yield "{}-W{}".format(base_name, i), body
+        num_child_bodies += 1
+        bounds[body.JournalIdentifier] = BodyBound(body)
+
+    names = dict()
+    index = 0
+    for key1, body1 in bounds.items():
+        for key2, body2 in bounds.items():
+            if key1 == key2:
+                continue
+
+            if body1.is_parent(body2):
+                index = 0
+
+            elif body1.min_x > body2.min_x:
+                index += 1
+
+        if index == 0:
+            names[key1] = ("W{}" * num_child_bodies).format(*range(1, num_child_bodies+1))
+
+        else:
+            names[key1] = "W{}".format(index)
+
+
+    for body in part.Bodies:
+        if body.JournalIdentifier in names:
+            yield "{}-{}".format(base_name, names[body.JournalIdentifier]), body
 
 
 def _multi_body(part, base_name):
