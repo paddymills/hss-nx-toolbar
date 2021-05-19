@@ -38,11 +38,15 @@ if opt == "select":
     logger.info("Parts selected to process : {}".format(parts_to_process))
     processor.process_parts(parts_to_process)
 
+    dialog.info("Part file(s) exported: {}".format(parts_to_process))
+
 # Work Part
 elif opt == "active":
     if _files_are_open():
         logger.info("Process work part")
         processor.process_work_part()
+
+        dialog.info("Work part exported")
 
     else:   # no files open
         dialog.error("No files are open")
@@ -53,6 +57,8 @@ elif opt == "all_open":
     if _files_are_open():
         logger.info("Process all open parts")
         processor.process_open_parts()
+
+        dialog.info("Open parts exported")
 
     else:   # no files open
         dialog.error("No files are open")
