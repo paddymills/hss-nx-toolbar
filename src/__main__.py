@@ -23,6 +23,7 @@ def _files_are_open():
 # setup logging
 log_file = path.join( config.LOG_DIR, "{}.log".format(date.today().isoformat()) )
 logging.basicConfig(filename=log_file, level=config.LOGGING_LEVEL, filemode='w')
+logger = logging.getLogger(__name__)
 
 processor = PartProcessor()
 
@@ -34,14 +35,14 @@ opt = sys.argv[1]
 if opt == "select":
     parts_to_process = dialog.get_files_to_process()
 
-    dialog.info("Process : {}".format(parts_to_process))
-    # processor.process_parts(parts_to_process)
+    logger.info("Parts selected to process : {}".format(parts_to_process))
+    processor.process_parts(parts_to_process)
 
 # Work Part
 elif opt == "active":
     if _files_are_open():
-        dialog.info("Process work part")
-        # processor.process_work_part()
+        logger.info("Process work part")
+        processor.process_work_part()
 
     else:   # no files open
         dialog.error("No files are open")
@@ -50,8 +51,8 @@ elif opt == "active":
 # All Open Parts
 elif opt == "all_open":
     if _files_are_open():
-        dialog.info("Process all open parts")
-        # processor.process_open_parts()
+        logger.info("Process all open parts")
+        processor.process_open_parts()
 
     else:   # no files open
         dialog.error("No files are open")

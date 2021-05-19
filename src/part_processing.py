@@ -5,6 +5,7 @@ from os import path
 import sys
 
 import config
+import dialog
 from dxf_export import DxfExporter
 from sketches import get_sketches_to_export
 from bodies import get_bodies_to_export, handle_body_thickness
@@ -36,14 +37,20 @@ class PartProcessor:
         self.session.Parts.Work.Close(NXOpen.BasePart.CloseWholeTree.FalseValue, NXOpen.BasePart.CloseModified.UseResponses, None)
         self.session.ApplicationSwitchImmediate("UG_APP_NOPART")
 
+        dialog.info("Part file exported: {}".format(part_file))
+
 
     def process_parts(self, part_files):
         for part_file in part_files:
             self.process_part(part_file)
 
+        dialog.info("Part file(s) exported: {}".format(part_files))
+
 
     def process_work_part(self):
         self._process_part(self.session.Parts.Work)
+
+        dialog.info("Work part exported")
 
 
     def process_open_parts(self):
@@ -52,6 +59,8 @@ class PartProcessor:
             self.session.Parts.SetActiveDisplay(part, NXOpen.DisplayPartOption.AllowAdditional, NXOpen.PartDisplayPartWorkPartOption.UseLast)
             
             self.process_work_part()
+
+        dialog.info("Open parts exported")
 
 
     def _process_part(self, part):
