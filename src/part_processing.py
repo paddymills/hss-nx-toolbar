@@ -78,7 +78,7 @@ class PartProcessor:
 
             # handle bodies
             for name, body in get_bodies_to_export(part):
-                handle_body_thickness(body)
+                handle_body_thickness(body, part)
 
                 dxf_exporter.export_body(body, name, commit=(not self.dry_run))
 
