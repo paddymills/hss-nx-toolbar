@@ -56,6 +56,10 @@ def get_bodies_to_export(part):
     return _multi_body(part, base_export_name)
 
 
+def handle_part_thickness(part):
+    pass
+
+
 def _part_export_name(part):
 
     # in case part name has additional information in it
@@ -82,6 +86,10 @@ def _single_body(part, base_name):
 def _named_bodies(part, base_name):
 
     for body in part.Bodies:
+        if body.IsBlanked:
+            logger.debug("Skipping blanked body '{}'".format(body.Name))
+            continue
+
         if body.Name:
             yield "{}-{}".format(base_name, body.Name), body
 
@@ -92,10 +100,18 @@ def _named_bodies(part, base_name):
 def _name_web_bodies(part, base_name):
 
     for i, body in enumerate(part.Bodies, start=1):
+        if body.IsBlanked:
+            logger.debug("Skipping blanked body '{}'".format(body.Name))
+            continue
+
         yield "{}-W{}".format(base_name, i), body
 
 
 def _multi_body(part, base_name):
 
     for i, body in enumerate(part.Bodies, start=1):
+        if body.IsBlanked:
+            logger.debug("Skipping blanked body '{}'".format(body.Name))
+            continue
+
         yield "{}({})".format(base_name, i), body
