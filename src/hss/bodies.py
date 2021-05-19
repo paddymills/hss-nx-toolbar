@@ -3,7 +3,8 @@ import logging
 import re
 
 import config
-from hss import properties
+from .properties import get_part_properties
+from .body_bound import BodyBound
 
 import NXOpen
 
@@ -56,8 +57,11 @@ def get_bodies_to_export(part):
     return _multi_body(part, base_export_name)
 
 
-def handle_part_thickness(part):
-    pass
+def handle_body_thickness(body):
+    bound = BodyBound(body)
+
+    if bound.min_z < 0:
+        logger.debug("Body crosses XY plane: {}".format(bound.min_z))
 
 
 def _part_export_name(part):
@@ -68,7 +72,7 @@ def _part_export_name(part):
     #
     # falls back to part file name if JOB and mark are not found
 
-    props = properties.get_part_properties()
+    props = get_part_properties(part)
 
     if "JOB" in props:
         if "MARK" in props:
