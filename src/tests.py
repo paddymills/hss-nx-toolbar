@@ -18,12 +18,12 @@ def test():
 
     test_files_dir = r"C:\Users\PMiller1\git\nx-dxf\test_files"
     test_files = {
-        "1190181A_G1A-web_named.prt"    : TestType.DRY_RUN,
-        "1190181A_G2A-web.prt"          : TestType.DRY_RUN,
-        "1190259A_m3g.prt"              : TestType.DRY_RUN,
-        "1190259A_SP1-b.prt"            : TestType.DRY_RUN,
-        "1190259A_SP2-c.prt"            : TestType.DRY_RUN,
-        "1190259A_x1b.prt"              : TestType.DRY_RUN,
+        "1190181A_G1A-web_named.prt"    : TestType.EXPORT,
+        "1190181A_G2A-web.prt"          : TestType.EXPORT,
+        "1190259A_m3g.prt"              : TestType.EXPORT,
+        "1190259A_SP1-b.prt"            : TestType.EXPORT,
+        "1190259A_SP2-c.prt"            : TestType.EXPORT,
+        "1190259A_x1b.prt"              : TestType.EXPORT,
     }
 
     for part, test in test_files.items():

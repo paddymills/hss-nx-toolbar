@@ -39,6 +39,11 @@ class DxfExporter:
 
         self.add( sketch.GetAllGeometry() )
 
+    def add_annotation(self, anno):
+        self.logger.info("Adding Annotation: {}".format( anno.JournalIdentifier ))
+
+        self.add( anno )
+
     def export_body(self, body, export_name, commit=True):
         
         self._dxf.OutputFile = os.path.join(config.DXF_OUTPUT_DIR, export_name)

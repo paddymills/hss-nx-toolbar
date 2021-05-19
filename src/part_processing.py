@@ -8,6 +8,7 @@ import config
 from dxf_export import DxfExporter
 from sketches import get_sketches_to_export
 from bodies import get_bodies_to_export, handle_body_thickness
+from annotations import add_annotations
 
 import NXOpen
 
@@ -78,8 +79,18 @@ class PartProcessor:
 
             # handle bodies
             for name, body in get_bodies_to_export(part):
-                handle_body_thickness(body, part)
+                offset_body = handle_body_thickness(body, part)
 
+                if offset_body:
+                    thk = offset_body.max_z - offset_body.min_z
+                    annotations = ["THICKNESS: {}".format(thk)]
+                    note_x = offset_body.min_x
+                    note_y = offset_body.min_y
+
+                    # create annotation and add to export
+                    dxf_exporter.add_annotation( add_annotations(part, annotations, note_x, note_y) )
+
+                # export body
                 dxf_exporter.export_body(body, name, commit=(not self.dry_run))
 
             self.session.UndoToMark(initial_state, "dxf_initial")

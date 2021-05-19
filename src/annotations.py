@@ -25,10 +25,12 @@ def add_annotations(part, annotations, _x, _y):
     note_builder.Origin.Origin.SetValue(NXOpen.TaggedObject.Null, NXOpen.View.Null, location)
     
     # create annotation
-    note_builder.Commit()
+    result = note_builder.Commit()
     note_builder.Destroy()
 
     logger.debug("Annotations set at ({}, {})".format(x, y))
+
+    return result
 
 
 def _init_note_builder(part):
