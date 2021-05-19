@@ -5,6 +5,7 @@ import re
 import config
 from properties import get_part_properties
 from body_bound import BodyBound
+from annotations import add_annotations
 
 import NXOpen
 
@@ -57,11 +58,18 @@ def get_bodies_to_export(part):
     return _multi_body(part, base_export_name)
 
 
-def handle_body_thickness(body):
+def handle_body_thickness(body, part):
     bound = BodyBound(body)
 
     if bound.min_z < 0:
         logger.debug("Body crosses XY plane: {}".format(bound.min_z))
+
+        thk = bound.max_z - bound.min_z
+        annotations = ["THICKNESS: {}".format(thk)]
+        note_x = bound.min_x
+        note_y = bound.min_y
+
+        add_annotations(part, annotations, note_x, note_y)
 
 
 def _part_export_name(part):
