@@ -1,0 +1,48 @@
+VERSION 120
+
+    EDIT UG_GATEWAY_MAIN_MENUBAR
+
+    BEFORE UG_HELP
+      CASCADE_BUTTON UISTYLER_DLG_CASCADE_BTN
+      LABEL HSSL Custom
+    END_OF_BEFORE
+ 
+    MENU UISTYLER_DLG_CASCADE_BTN
+	
+      BUTTON UG_POST_BATCH_DLG_BTN
+      LABEL HSSL Post...
+		BITMAP HssiPost
+      ACTIONS NxPostUtility.dll
+	
+      BUTTON UG_TOOLBOX_BTN
+      LABEL HSSL Tool Box...
+		BITMAP HssiToolBox
+      ACTIONS CamToolBox.dll
+
+      BUTTON UG_OPTOPER_BTN
+      LABEL HSSL Optimize Operations...
+		BITMAP optimize_operations
+      ACTIONS hssi_oper_optz.dll
+
+      BUTTON UG_CAMBER_BLOCK_BTN
+      LABEL HSSL Webs - Camber Blocking...
+      BITMAP camber_blocking
+      ACTIONS CreateCamberBlockRpt.dll
+
+      BUTTON HSSI_ADD_MFG_BTN
+      LABEL Auto Add MFG...
+      ACTIONS hssi_add_mfg.dll
+
+      SEPARATOR
+
+      BUTTON UG_COGOWEB
+      LABEL Create COGO Web
+      ACTIONS CogoWeb.dll
+
+      SEPARATOR
+
+      BUTTON HSS_DXF_EXPORT_SELECT
+      BUTTON HSS_DXF_EXPORT_ACTIVE
+      BUTTON HSS_DXF_EXPORT_ALL_OPEN
+
+   END_OF_MENU

@@ -1,0 +1,81 @@
+
+TITLE  HSSL Custom
+VERSION 170
+
+
+BEGIN_GROUP CAM Utilities
+
+	BUTTON UG_POST_BATCH_DLG_BTN
+      LABEL HSSL Post...
+		BITMAP HssiPost
+
+      BUTTON UG_TOOLBOX_BTN
+      LABEL HSSL Tool Box...
+		BITMAP HssiToolBox
+
+      BUTTON UG_OPTOPER_BTN
+      LABEL HSSL Optimize Operations...
+		BITMAP optimize_operations
+
+      BUTTON UG_CAMBER_BLOCK_BTN
+      LABEL HSSL Webs - Camber Blocking...
+      BITMAP camber_blocking
+
+      BUTTON HSSI_ADD_MFG_BTN
+      LABEL Auto Add MFG...
+
+
+END_GROUP
+
+BEGIN_GROUP COGO
+
+      BUTTON UG_COGOWEB
+      LABEL Create COGO Web
+
+END_GROUP
+
+BEGIN_GROUP Dxf Export (HSS)
+
+      BUTTON HSS_DXF_EXPORT_SELECT
+      BUTTON HSS_DXF_EXPORT_ACTIVE
+      BUTTON HSS_DXF_EXPORT_ALL_OPEN
+
+END_GROUP
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
