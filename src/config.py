@@ -3,7 +3,6 @@ import logging
 
 from enum import Enum
 from re import compile as regex
-from os import path
 
 class Layers(Enum):
     PROFILE = 1
@@ -14,7 +13,6 @@ class Layers(Enum):
 
 LOGGING_LEVEL = logging.INFO
 
-BASE_DIR = path.dirname(__name__)
 LOG_DIR = r"\\hssieng\Jobs\dxf\logs"
 DXF_OUTPUT_DIR = r"\\hssieng\SNDataPrd\DXF"
 NX_PART_FILES_DIR = r"\\hssieng\Jobs"
