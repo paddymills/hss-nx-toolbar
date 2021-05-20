@@ -11,39 +11,43 @@ logger = logging.getLogger(__name__)
 EMPTY_PROPERTY_PATTERN = re.compile(r"^[ xX]+$")
 
 
-def get_part_properties(part):
-    props = {}
+def get_part_properties(part, props=config.ANNOTATION_PROPS):
+    properties = {}
 
-    for key in config.JOB_PROP_KEYS:
-        prop_val = get_part_property(part, key)
+    for key, _props in props.items():
 
-        if not _is_empty_property(prop_val):
-            props["JOB"] = prop_val
-            break
+        properties[key] = get_part_property(part, _props)
 
-    for key in config.MARK_PROP_KEYS:
-        prop_val = get_part_property(part, key)
-
-        if not _is_empty_property(prop_val):
-            props["MARK"] = prop_val
-            break
-
-    for key, val in config.PROPS.items():
-        prop_val = get_part_property(part, key)
-
-        if not _is_empty_property(prop_val):
-            props[val] = prop_val
-            break
-
-    return props
+    return properties
 
 
-def get_part_property(part, prop):
+def get_part_property(part, prop_names):
+    
+    if type(prop_names) is str:
+        prop_names = [prop_names]
+
+    for prop in prop_names:
+
+        result = _get_property_val(part, prop)
+
+        if _is_empty_property(result):
+            continue
+
+        return result
+
+    return None
+
+
+def _get_property_val(part, prop_name):
 
     try:
-        return part.GetUserAttribute(prop, NXOpen.NXObject.AttributeType.String, -1).StringValue
+
+        return part.GetUserAttribute(prop_name, NXOpen.NXObject.AttributeType.String, -1).StringValue
+
     except:
+
         return None
+
 
 
 def _is_empty_property(value):

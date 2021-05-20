@@ -16,7 +16,7 @@ def test():
     processor = PartProcessor()
     logger = logging.getLogger(__name__)
 
-    test_files_dir = r"C:\Users\PMiller1\git\nx-dxf\test_files"
+    test_files_dir = r"\\hssieng\Jobs\dxf\test_files"
     test_files = {
         "1190181A_G1A-web_named.prt"    : TestType.EXPORT,
         "1190181A_G2A-web.prt"          : TestType.EXPORT,

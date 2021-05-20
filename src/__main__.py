@@ -1,9 +1,10 @@
 
 import logging
 import sys
-from os import path
+from os import path, getlogin
 from datetime import date
 
+import _logging
 import config
 import dialog
 from part_processing import PartProcessor
@@ -21,8 +22,7 @@ def _files_are_open():
 
 
 # setup logging
-log_file = path.join( config.LOG_DIR, "{}.log".format(date.today().isoformat()) )
-logging.basicConfig(filename=log_file, level=config.LOGGING_LEVEL, filemode='w')
+_logging.init()
 logger = logging.getLogger(__name__)
 
 processor = PartProcessor()

@@ -3,6 +3,7 @@ import logging
 
 from enum import Enum
 from re import compile as regex
+from os import path
 
 class Layers(Enum):
     PROFILE = 1
@@ -13,19 +14,21 @@ class Layers(Enum):
 
 LOGGING_LEVEL = logging.INFO
 
-BASE_DIR = r"C:\Users\pmiller1\git\nx-dxf"
-LOG_DIR = BASE_DIR + r"\logs"
-DXF_CONFIG = BASE_DIR + r"\config\export.def"
+BASE_DIR = path.dirname(__name__)
+LOG_DIR = r"\\hssieng\Jobs\dxf\logs"
 DXF_OUTPUT_DIR = r"\\hssieng\SNDataPrd\DXF"
 NX_PART_FILES_DIR = r"\\hssieng\Jobs"
 
 NOTE_SIZE = 5.0
 NOTE_OFFSET = 10.0
 
-JOB_PROP_KEYS = ( "JobNo", "JOB_NUMBER" )
-MARK_PROP_KEYS = ( "Mark", "PIECE_MARK" )
-PROPS = {
-    "DWG_NUMBER": "DRAWING",
+PART_NAME_PROPS = {
+    "JOB":      ( "JobNo", "JOB_NUMBER" ),
+    "MARK":     ( "Mark", "PIECE_MARK" ),
+}
+
+ANNOTATION_PROPS = {
+    "DRAWING":      ( "DWG_NUMBER" ),
 }
 
 SINGLE_BODY_EXPORT_NAME = "SN_PART"
@@ -40,7 +43,3 @@ WHITELISTED_SKETCHES =  {
 BLACKLISTED_BODIES = (
     regex("SHIM"),
 )
-
-# for testing
-LOGGING_LEVEL = logging.DEBUG
-NX_PART_FILES_DIR = r"C:\Users\PMiller1\git\nx-dxf\test_files"

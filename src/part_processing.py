@@ -6,8 +6,10 @@ import sys
 
 import config
 from dxf_export import DxfExporter
+from properties import get_part_properties
 from sketches import get_sketches_to_export
-from bodies import get_bodies_to_export, handle_body_thickness
+from bodies import get_bodies_to_export
+from body_bound import BodyBound
 from annotations import add_annotations
 
 import NXOpen
@@ -17,14 +19,14 @@ class PartProcessor:
     
     def __init__(self):
         self.session = NXOpen.Session.GetSession()
-        self.dry_run = False
+
+        self.dry_run = False    # for testing
 
         self.logger = logging.getLogger(__name__)
 
 
     def process_part(self, part_file):
-        self.active_part_name = part_file
-
+        
         # open part
         _, loadstat = self.session.Parts.OpenActiveDisplay(part_file, NXOpen.DisplayPartOption.AllowAdditional)
         loadstat.Dispose()
@@ -38,11 +40,13 @@ class PartProcessor:
 
 
     def process_parts(self, part_files):
+        
         for part_file in part_files:
             self.process_part(part_file)
 
 
     def process_work_part(self):
+        
         self._process_part(self.session.Parts.Work)
 
 
@@ -61,17 +65,14 @@ class PartProcessor:
             initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "dxf_initial")
 
             # initialize dxf/dwg
-            dxf_exporter = DxfExporter(self.session, part.FullPath)
-
-            # get license
-            self.session.LicenseManager.Reserve("solid_modeling", "hssdxfexport")
+            dxf_exporter = DxfExporter(part.FullPath)
 
             # make sure modeling is active and set view
             self.session.ApplicationSwitchImmediate("UG_APP_MODELING")
             part.ModelingViews.WorkView.Orient(NXOpen.View.Canned.Top, NXOpen.View.ScaleAdjustment.Fit)
 
-
             # handle properties
+            props = get_part_properties(part)
 
             # handle sketches
             for sketch in get_sketches_to_export(part):
@@ -79,16 +80,15 @@ class PartProcessor:
 
             # handle bodies
             for name, body in get_bodies_to_export(part):
-                offset_body = handle_body_thickness(body, part)
+                _bound = BodyBound(body)
 
-                if offset_body:
-                    thk = offset_body.max_z - offset_body.min_z
-                    annotations = ["THICKNESS: {}".format(thk)]
-                    note_x = offset_body.min_x
-                    note_y = offset_body.min_y
+                # if bottom face is not on XY plane
+                if _bound.min_z != 0:
+                    self.logger.info("Origin not on XY plane")
+                    props["THICKNESS"] = _bound.max_z - _bound.min_z
 
-                    # create annotation and add to export
-                    dxf_exporter.add_annotation( add_annotations(part, annotations, note_x, note_y) )
+                # create annotation and add to export
+                dxf_exporter.add_annotation( add_annotations(part, props, _bound.min_x, _bound.min_y) )
 
                 # export body
                 dxf_exporter.export_body(body, name, commit=(not self.dry_run))
@@ -98,6 +98,3 @@ class PartProcessor:
         except Exception as err:
             _, _, tb = sys.exc_info()
             self.logger.error("[{}] {}".format( tb.tb_lineno, err ))
-
-        # release license
-        self.session.LicenseManager.Release("solid_modeling", "hssdxfexport")

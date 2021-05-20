@@ -57,17 +57,6 @@ def get_bodies_to_export(part):
     return _multi_body(part, base_export_name)
 
 
-def handle_body_thickness(body, part):
-    bound = BodyBound(body)
-
-    if bound.min_z < 0:
-        logger.debug("Body crosses XY plane: {}".format(bound.min_z))
-
-        return bound
-
-    return None
-
-
 def _part_export_name(part):
 
     # in case part name has additional information in it
@@ -76,11 +65,10 @@ def _part_export_name(part):
     #
     # falls back to part file name if JOB and mark are not found
 
-    props = get_part_properties(part)
+    props = get_part_properties(part, props=config.PART_NAME_PROPS)
 
-    if "JOB" in props:
-        if "MARK" in props:
-            return "{}_{}".format(props["JOB"], props["MARK"])
+    if props["JOB"] and props["MARK"]:
+        return "{JOB}_{MARK}".format(**props)
     
     return part.Leaf
 
