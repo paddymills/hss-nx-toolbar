@@ -17,6 +17,7 @@ class DxfExporter:
         self._dxf.ExportData = NXOpen.DxfdwgCreator.ExportDataOption.Drawing
         self._dxf.ViewEditMode = True
         self._dxf.FlattenAssembly = True
+        self._dxf.OutputFileType = NXOpen.DxfdwgCreator.OutputFileTypeOption.Dxf
         self._dxf.ExportAs = NXOpen.DxfdwgCreator.ExportAsOption.ThreeD
         self._dxf.ExportSelectionBlock.SelectionScope = NXOpen.ObjectSelector.Scope.SelectedObjects
         self._dxf.ExportFacesAs = NXOpen.DxfdwgCreator.ExportFacesAsOptions.PolylineMesh
@@ -62,7 +63,8 @@ class DxfExporter:
         
         self.logger.info("Exporting body: {}".format( export_name ))
 
-        self._dxf.OutputFile = os.path.join(config.DXF_OUTPUT_DIR, export_name)
+        export_filename = "{}.dxf".format(export_name)
+        self._dxf.OutputFile = os.path.join(config.DXF_OUTPUT_DIR, export_filename)
 
         try:
             body.Layer = config.Layers.PROFILE.value

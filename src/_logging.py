@@ -14,6 +14,6 @@ def init():
 
     logging.basicConfig(
         filename=log_file,
-        format='[%(asctime)s]%(levelname)s:%(messages)s',
+        format='[%(asctime)s]%(levelname)s:%(message)s',
         level=config.LOGGING_LEVEL
     )
