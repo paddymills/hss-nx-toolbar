@@ -45,6 +45,9 @@ def add_annotations(part, annotations, _x, _y):
 
 def _init_note_builder(part):
 
+    # set work layer
+    part.Layers.WorkLayer = config.Layers.DETAIL.value
+
     # enter drafting
     NXOpen.Session.GetSession().ApplicationSwitchImmediate("UG_APP_DRAFTING")
     part.Drafting.EnterDraftingApplication()
