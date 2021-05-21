@@ -14,6 +14,7 @@ class DxfExporter:
         # replace self with DxfdwgCreator provided by session
         self._dxf = NXOpen.Session.GetSession().DexManager.CreateDxfdwgCreator()
         
+        self._dxf.SettingsFile = os.path.join( os.environ["UGII_CUSTOM_DIR"], "DXFDWG", "dxfdwg.def" )
         self._dxf.ExportData = NXOpen.DxfdwgCreator.ExportDataOption.Drawing
         self._dxf.ViewEditMode = True
         self._dxf.FlattenAssembly = True

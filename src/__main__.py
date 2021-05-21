@@ -38,9 +38,12 @@ if opt == "select":
     if parts_to_process:
 
         logger.info("Parts selected to process : {}".format(parts_to_process))
-        processor.process_parts(parts_to_process)
+        result = processor.process_parts(parts_to_process)
 
-        dialog.info( ["Part file(s) exported:", *parts_to_process] )
+        if any(result):
+            exports = [parts_to_process[i] for i, x in enumerate(result) if x]
+
+            dialog.info( ["Part file(s) exported:", *exports] )
 
 # Work Part
 elif opt == "active":

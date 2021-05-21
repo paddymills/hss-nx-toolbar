@@ -5,6 +5,7 @@ from os import path
 import sys
 
 import config
+import dialog
 from dxf_export import DxfExporter
 from properties import get_part_properties
 from sketches import get_sketches_to_export
@@ -29,20 +30,33 @@ class PartProcessor:
         
         # open part
         _, loadstat = self.session.Parts.OpenActiveDisplay(part_file, NXOpen.DisplayPartOption.AllowAdditional)
-        loadstat.Dispose()
+
+        # make sure part opens
+        if self.session.Parts.Work is None:
+            self.logger.error("{}: {}".format(loadstat.GetStatusDescription(0), loadstat.GetPartName(0)))
+            dialog.error([
+                "Error opening part: {}".format(loadstat.GetPartName(0)),
+                "",
+                loadstat.GetStatusDescription(0)
+            ])
+            return False
+
 
         # ~~~ run processing script ~~~
         self.process_work_part()
 
         # close part
+        loadstat.Dispose()
         self.session.Parts.Work.Close(NXOpen.BasePart.CloseWholeTree.FalseValue, NXOpen.BasePart.CloseModified.UseResponses, None)
         self.session.ApplicationSwitchImmediate("UG_APP_NOPART")
+
+        return True
 
 
     def process_parts(self, part_files):
         
         for part_file in part_files:
-            self.process_part(part_file)
+            yield self.process_part(part_file)
 
 
     def process_work_part(self):
@@ -59,6 +73,7 @@ class PartProcessor:
 
 
     def _process_part(self, part):
+
         self.logger.info("Processing part: {}".format(part.Leaf))
 
         try:
