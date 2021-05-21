@@ -32,6 +32,16 @@ def get_files_to_process():
     root = tk.Tk()
     root.withdraw()
 
-    opts = dict(filetypes=[("NX Parts", "*.prt")], initialdir=config.NX_PART_FILES_DIR)
+    # get latest load path
+    session = NXOpen.Session.GetSession()
+    _dir = session.GetEnvironmentVariableValue("_HSS_DXF_LAST_LOAD_DIR") or config.NX_PART_FILES_DIR
 
-    return filedialog.askopenfilenames(**opts)
+    # get files from file dialog
+    opts = dict(filetypes=[("NX Parts", "*.prt")], initialdir=_dir)
+    files = filedialog.askopenfilenames(**opts)
+
+    # save last file load director
+    if files:
+        session.SetEnvironmentVariableValue( "_HSS_DXF_LAST_LOAD_DIR", os.path.dirname(files[0]) )
+
+    return files
