@@ -29,14 +29,15 @@ def _msgbox(msg, dlg_type, title):
 
 
 def get_files_to_process():
-    root = tk.Tk()
-    root.withdraw()
 
     # get latest load path
     session = NXOpen.Session.GetSession()
     _dir = session.GetEnvironmentVariableValue("_HSS_DXF_LAST_LOAD_DIR") or config.NX_PART_FILES_DIR
+    os.environ["TCL_LIBRARY"] = session.GetEnvironmentVariableValue("TCL_LIBRARY")
 
     # get files from file dialog
+    root = tk.Tk()
+    root.withdraw()
     opts = dict(filetypes=[("NX Parts", "*.prt")], initialdir=_dir)
     files = filedialog.askopenfilenames(**opts)
 

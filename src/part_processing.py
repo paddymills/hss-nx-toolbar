@@ -84,7 +84,8 @@ class PartProcessor:
 
             # make sure modeling is active and set view
             self.session.ApplicationSwitchImmediate("UG_APP_MODELING")
-            part.ModelingViews.WorkView.Orient(NXOpen.View.Canned.Top, NXOpen.View.ScaleAdjustment.Fit)
+            if not self.session.IsBatch:
+                part.ModelingViews.WorkView.Orient(NXOpen.View.Canned.Top, NXOpen.View.ScaleAdjustment.Fit)
 
             # handle properties
             props = get_part_properties(part)

@@ -12,7 +12,7 @@ class TestType(Enum):
     EXPORT = 3
 
 
-def test():
+def run_tests():
     processor = PartProcessor()
     logger = logging.getLogger(__name__)
 
