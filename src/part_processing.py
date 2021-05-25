@@ -25,6 +25,10 @@ class PartProcessor:
 
         self.logger = logging.getLogger(__name__)
 
+    
+    def __del__(self):
+        self.session = None
+
 
     def process_part(self, part_file):
         
@@ -47,8 +51,10 @@ class PartProcessor:
 
         # close part
         loadstat.Dispose()
-        self.session.Parts.Work.Close(NXOpen.BasePart.CloseWholeTree.FalseValue, NXOpen.BasePart.CloseModified.UseResponses, None)
-        self.session.ApplicationSwitchImmediate("UG_APP_NOPART")
+
+        if not self.session.Parts.Work.IsReadOnly:
+            self.session.Parts.Work.Close(NXOpen.BasePart.CloseWholeTree.FalseValue, NXOpen.BasePart.CloseModified.UseResponses, None)
+            self.session.ApplicationSwitchImmediate("UG_APP_NOPART")
 
         return True
 
@@ -82,8 +88,11 @@ class PartProcessor:
             # initialize dxf/dwg
             dxf_exporter = DxfExporter(part.FullPath)
 
-            # make sure modeling is active and set view
-            self.session.ApplicationSwitchImmediate("UG_APP_MODELING")
+            # make sure modeling is active
+            if self.session.ApplicationName != "UG_APP_MODELING":
+                self.session.ApplicationSwitchImmediate("UG_APP_MODELING")
+
+            # set top view
             if not self.session.IsBatch:
                 part.ModelingViews.WorkView.Orient(NXOpen.View.Canned.Top, NXOpen.View.ScaleAdjustment.Fit)
 
@@ -96,20 +105,24 @@ class PartProcessor:
 
             # handle bodies
             for name, body in get_bodies_to_export(part):
-                _bound = BodyBound(body)
 
-                # if bottom face is not on XY plane
-                if _bound.min_z != 0:
-                    self.logger.info("Origin not on XY plane")
-                    props["THICKNESS"] = _bound.max_z - _bound.min_z
+                # thickness handling (only if NOT read-only)
+                if not part.IsReadOnly:
+                    _bound = BodyBound(body)
 
-                # create annotation and add to export
-                dxf_exporter.add_annotation( add_annotations(part, props, _bound.min_x, _bound.min_y) )
+                    # if bottom face is not on XY plane
+                    if _bound.min_z != 0:
+                        self.logger.info("Origin not on XY plane")
+                        props["THICKNESS"] = _bound.max_z - _bound.min_z
+
+                    # create annotation and add to export
+                    dxf_exporter.add_annotation( add_annotations(part, props, _bound.min_x, _bound.min_y) )
 
                 # export body
                 dxf_exporter.export_body(body, name, commit=(not self.dry_run))
 
-            self.session.UndoToMark(initial_state, "dxf_initial")
+            if not part.IsReadOnly:
+                self.session.UndoToMark(initial_state, "dxf_initial")
 
         except Exception as err:
             _, _, tb = sys.exc_info()
