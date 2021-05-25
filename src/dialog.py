@@ -4,6 +4,7 @@ import tkinter as tk
 from tkinter import filedialog
 
 import config
+import filedialog
 
 import NXOpen
 
@@ -33,13 +34,9 @@ def get_files_to_process():
     # get latest load path
     session = NXOpen.Session.GetSession()
     _dir = session.GetEnvironmentVariableValue("_HSS_DXF_LAST_LOAD_DIR") or config.NX_PART_FILES_DIR
-    os.environ["TCL_LIBRARY"] = session.GetEnvironmentVariableValue("TCL_LIBRARY")
 
     # get files from file dialog
-    root = tk.Tk()
-    root.withdraw()
-    opts = dict(filetypes=[("NX Parts", "*.prt")], initialdir=_dir)
-    files = filedialog.askopenfilenames(**opts)
+    files = filedialog.get_files( config.NX_PART_FILES_DIR )
 
     # save last file load director
     if files:
