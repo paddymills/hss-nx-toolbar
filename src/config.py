@@ -15,7 +15,7 @@ LOGGING_LEVEL = logging.INFO
 
 LOG_DIR = r"\\hssieng\Jobs\dxf\logs"
 DXF_OUTPUT_DIR = r"\\hssieng\SNDataPrd\DXF"
-NX_PART_FILES_DIR = r"\\hssieng\Jobs"
+NX_PART_FILES_DIR = r"\\hssieng\hssedsserv\Jobs"
 
 NOTE_SIZE = 5.0
 NOTE_OFFSET = 10.0
