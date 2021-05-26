@@ -16,5 +16,7 @@ if not os.path.exists(FILEDIALOG_FROM):
 shutil.copy(FILEDIALOG_FROM, FILEDIALOG_TO)
 
 zipapp.create_archive("src", "menus\\application\\hss_dxf_export.zip")
+zipapp.create_archive("src", "C:\\Users\\PMiller1\\nx\\12\\application\\hss_dxf_export.zip")
+zipapp.create_archive("src", "C:\\Users\\PMiller1\\nx\\1953\\application\\hss_dxf_export.zip")
 
 print("[{}] build complete.".format(datetime.now().isoformat()))

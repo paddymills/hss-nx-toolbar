@@ -2,7 +2,10 @@
 import os
 import runpy
 
+import NXOpen
+
 def main():
+
     # This file is necessary because NX will not execute a .zip python file.
     # 
     # The workaround is for this file to execute the .zip python file.
