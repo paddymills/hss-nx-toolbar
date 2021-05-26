@@ -6,7 +6,7 @@ import zipapp
 from datetime import datetime
 
 FILEDIALOG_FROM = r"filedialog-rs\target\release\filedialog.dll"
-FILEDIALOG_TO = r"src\filedialog.pyd"
+FILEDIALOG_TO = r"menus\application\filedialog.pyd"
 
 # generate filedialog
 if not os.path.exists(FILEDIALOG_FROM):

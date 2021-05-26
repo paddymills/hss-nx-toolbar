@@ -34,7 +34,7 @@ def get_files_to_process():
     _dir = session.GetEnvironmentVariableValue("_HSS_DXF_LAST_LOAD_DIR") or config.NX_PART_FILES_DIR
 
     # get files from file dialog
-    files = filedialog.get_files( config.NX_PART_FILES_DIR )
+    files = filedialog.get_files( _dir )
 
     # save last file load director
     if files:
