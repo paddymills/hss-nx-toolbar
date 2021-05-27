@@ -1,0 +1,41 @@
+
+from part_processing import PartProcessor
+
+import logging
+from os import path
+from enum import Enum
+
+
+class TestType(Enum):
+    SKIP = 1
+    DRY_RUN = 2
+    EXPORT = 3
+
+
+def run_tests():
+    processor = PartProcessor()
+    logger = logging.getLogger(__name__)
+
+    test_files_dir = r"\\hssieng\Jobs\dxf\test_files"
+    test_files = {
+        "1190181A_G1A-web_named.prt"    : TestType.EXPORT,
+        "1190181A_G2A-web.prt"          : TestType.EXPORT,
+        "1190259A_m3g.prt"              : TestType.EXPORT,
+        "1190259A_SP1-b.prt"            : TestType.EXPORT,
+        "1190259A_SP2-c.prt"            : TestType.EXPORT,
+        "1190259A_x1b.prt"              : TestType.EXPORT,
+    }
+
+    for part, test in test_files.items():
+        logger.debug("{} '{}'".format(test.name, part))
+
+        if test is TestType.SKIP:
+            continue
+
+        if test is TestType.DRY_RUN:
+            processor.dry_run = True
+
+        elif test is TestType.EXPORT:
+            processor.dry_run = False
+
+        processor.process_part( path.join(test_files_dir, part) )

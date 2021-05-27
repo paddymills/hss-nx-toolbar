@@ -1,4 +1,0 @@
-﻿export : Arial Unicode MS =Arial Unicode MS
-export : blockfont =simplex.shx
-export : blockmod1 =simplex.shx
-export : DEFAULT =simplex.shx

@@ -1,16 +1,16 @@
-## NX DXF export using UGOPEN
+## NX DXF export using python API
 
-### to compile, link and run:
+### build
+
+requires no additional dependencies
 
 ```
-ufcomp [name].cpp
-uflink UFEXE=[name].exe
-[name].exe
+python -m build.py
 ```
 
-i.e
+don't forget to copy tcl from the target python installation into application folder (NX 12.0 uses python3.6, NX1953 uses python3.8)
 ```
-ufcomp Test.cpp
-uflink UFEXE=Test.exe
-Test.exe
+- tcl/
+    - tcl8.6/
+    - tk8.6/
 ```

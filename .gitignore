@@ -1,9 +1,4 @@
-*.obj
-*.pdb
-*.exp
-*.lib
-
-*.exe
-*.dll
+*.pyc
+*.zip
 
 *.log
