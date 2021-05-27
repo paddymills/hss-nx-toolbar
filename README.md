@@ -1,14 +1,16 @@
 ## NX DXF export using python API
 
-### build
+## build
 
+
+### python (src)
 python files require no additional dependencies
 
 ```
 python -m build.py
 ```
 
-# filedialog
+### rust (filedialog)
 
 filedialog requires rust to build. (NX 12.0 uses python3.6, NX1953 uses python3.8)
 ```
@@ -23,7 +25,10 @@ cp target/release/filedialog.dll ../menus/application/filedialog.pyd
 python -m build.py rs
 ```
 
-make sure python version matches what NX needs:
+#### Python version
+make sure python version matches what NX needs, otherwise NX will complain about loading Python{version}.dll
+
+NX Python versions:
 - NX 12: Python 3.6
 - NX 1953: Python 3.8
 
