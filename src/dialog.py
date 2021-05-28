@@ -22,7 +22,16 @@ def info(msg, title="Information"):
     return _msgbox(msg, NXOpen.NXMessageBox.DialogType.Information, title)
 
 
+def question(msg, title="Question"):
+
+    return _msgbox(msg, NXOpen.NXMessageBox.DialogType.Question, title)
+
+
 def _msgbox(msg, dlg_type, title):
+    # if this is a question msgbox, returns:
+    #   -  yes:  1
+    #   -   no:  2
+    # else, returns -2
 
     return NXOpen.UI.GetUI().NXMessageBox.Show(title, dlg_type, msg)
 

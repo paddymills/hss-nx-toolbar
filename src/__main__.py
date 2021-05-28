@@ -34,4 +34,9 @@ except IndexError:
     opt = "select"
     logger.info("No process args given. Using default ('select').")
 
+except KeyError:
+    opt = "select"
+    logger.info("Invalid process args. Using default ('select').")
+
+
 entrypoint_map[opt]()

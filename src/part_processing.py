@@ -15,6 +15,7 @@ from body_bound import BodyBound
 from annotations import add_annotations
 
 import NXOpen
+import NXOpen.Options
 
 
 class PartProcessor:
@@ -82,12 +83,17 @@ class PartProcessor:
     def _process_part(self, part):
 
         self.logger.info("Processing part: {}".format(part.Leaf))
+        initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "dxf_initial")
 
         if part.IsReadOnly:
             self.logger.warning("!!! Part is Read Only !!!")
 
+            abort = self.handle_read_only()
+            if abort:
+                return
+
         try:
-            initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "dxf_initial")
+            # initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "dxf_initial")
 
             # initialize dxf/dwg
             dxf_exporter = DxfExporter(part.FullPath)
@@ -97,7 +103,7 @@ class PartProcessor:
                 self.session.ApplicationSwitchImmediate("UG_APP_MODELING")
 
             # set top view
-            if not self.session.IsBatch and not part.IsReadOnly:
+            if not (self.session.IsBatch or part.IsReadOnly):
                 part.ModelingViews.WorkView.Orient(NXOpen.View.Canned.Top, NXOpen.View.ScaleAdjustment.Fit)
 
             # handle properties
@@ -113,16 +119,15 @@ class PartProcessor:
                 name = "{}_{}".format(part.Leaf, i)
 
                 # thickness handling (only if NOT read-only)
-                if not part.IsReadOnly:
-                    _bound = BodyBound(body)
+                _bound = BodyBound(body)
 
-                    # if bottom face is not on XY plane
-                    if _bound.min_z != 0:
-                        self.logger.info("Origin not on XY plane")
-                        props["THICKNESS"] = _bound.max_z - _bound.min_z
+                # if bottom face is not on XY plane
+                if _bound.min_z != 0:
+                    self.logger.info("Origin not on XY plane")
+                    props["THICKNESS"] = _bound.max_z - _bound.min_z
 
-                    # create annotation and add to export
-                    dxf_exporter.add_annotation( add_annotations(part, props, _bound.min_x, _bound.min_y) )
+                # create annotation and add to export
+                dxf_exporter.add_annotation( add_annotations(part, props, _bound.min_x, _bound.min_y) )
 
                 # export body
                 dxf_exporter.export_body(body, name, commit=(not self.dry_run))
@@ -134,3 +139,41 @@ class PartProcessor:
         except Exception as err:
             _, _, tb = sys.exc_info()
             self.logger.error("[{}] {}".format( tb.tb_lineno, err ))
+
+    def handle_read_only(self):
+        # check that Display Message when Modifying Read-Only Parts is not set
+        # (Customer Defaults > Assemblies > Miscellaneous > Display Message when Modifying Read-Only Parts)
+        read_only_warn_mod = self.session.OptionsManager.GetIntValue("Assemblies_DisplayReadOnly")
+        self.logger.info("Assemblies Warn Read-Only state: {}".format(read_only_warn_mod))
+
+        if read_only_warn_mod == 1:
+            msg = [
+                "Display of modification warning for Read-Only parts is turned on.",
+                "",
+                "This means that for every Read-Only part being processed, ",
+                "\tyou will get a warning that the part was modified during processing.",
+                "",
+                "To suppress this, you need to turn the following option off and restart NX for the change to take affect.",
+                "File > Utilities > Customer Defaults > Assemblies > Miscellaneous > Display Message when Modifying Read-Only Parts",
+                "",
+                "Do you want to continue processing?",
+            ]
+            res = dialog.question(msg, "Read-Only modifications will display warning")
+
+            if res == 2:
+                # user chose to abort. make sure nothing else processes
+                res = dialog.question("Do you want these warnings turned off?", "Turn off warnings")
+
+                # turn off warning for user
+                if res == 1:
+                    change_opt = self.session.OptionsManager.NewOptionsChangeList(NXOpen.Options.LevelType.User, NXOpen.Options.LevelLockedByDefault.FalseValue)
+                    change_opt.SetValue("Assemblies_DisplayReadOnly", 0)
+                    change_opt.Save()
+                    change_opt.Dispose()
+
+                    dialog.info("Modification warnings turned off. Please restart NX.")
+
+                # TODO: Abort current and future processing
+                return True
+
+        return False
