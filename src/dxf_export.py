@@ -70,6 +70,7 @@ class DxfExporter:
         self._dxf.OutputFile = os.path.join(config.DXF_OUTPUT_DIR, export_filename)
 
         try:
+            # if not body.OwningPart.IsReadOnly:
             body.Layer = config.Layers.PROFILE.value
 
             self.add( body )

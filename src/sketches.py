@@ -15,8 +15,9 @@ def get_sketches_to_export(part):
             if search_term.search(sk.Name):
 
                 # set layer
-                for geo in sk.GetAllGeometry():
-                    geo.Layer = layer.value
+                if not part.IsReadOnly:
+                    for geo in sk.GetAllGeometry():
+                        geo.Layer = layer.value
 
                 yield sk
 

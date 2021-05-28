@@ -10,10 +10,10 @@ def init():
     user = os.getlogin()
     timestamp = date.today().isoformat()
 
-    log_file = os.path.join( config.LOG_DIR, "{}_{}.log".format( user, timestamp ) )
+    log_file = os.path.join( config.LOG_DIR, "{}_{}.log".format( timestamp, user ) )
 
     logging.basicConfig(
         filename=log_file,
-        format='[%(asctime)s]%(levelname)s:%(message)s',
+        format='[%(asctime)s]%(levelname)s|%(name)s:%(message)s',
         level=config.LOGGING_LEVEL
     )

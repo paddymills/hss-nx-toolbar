@@ -6,6 +6,7 @@ import sys
 
 import config
 import dialog
+
 from dxf_export import DxfExporter
 from properties import get_part_properties
 from sketches import get_sketches_to_export
@@ -82,6 +83,9 @@ class PartProcessor:
 
         self.logger.info("Processing part: {}".format(part.Leaf))
 
+        if part.IsReadOnly:
+            self.logger.warning("!!! Part is Read Only !!!")
+
         try:
             initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "dxf_initial")
 
@@ -93,7 +97,7 @@ class PartProcessor:
                 self.session.ApplicationSwitchImmediate("UG_APP_MODELING")
 
             # set top view
-            if not self.session.IsBatch:
+            if not self.session.IsBatch and not part.IsReadOnly:
                 part.ModelingViews.WorkView.Orient(NXOpen.View.Canned.Top, NXOpen.View.ScaleAdjustment.Fit)
 
             # handle properties
@@ -104,7 +108,9 @@ class PartProcessor:
                 dxf_exporter.add_sketch(sketch)
 
             # handle bodies
-            for name, body in get_bodies_to_export(part):
+            # for name, body in get_bodies_to_export(part):
+            for i, body in enumerate(part.Bodies, start=1):
+                name = "{}_{}".format(part.Leaf, i)
 
                 # thickness handling (only if NOT read-only)
                 if not part.IsReadOnly:
@@ -121,8 +127,9 @@ class PartProcessor:
                 # export body
                 dxf_exporter.export_body(body, name, commit=(not self.dry_run))
 
-            if not part.IsReadOnly:
-                self.session.UndoToMark(initial_state, "dxf_initial")
+            del dxf_exporter
+            self.session.UndoToMark(initial_state, "dxf_initial")
+            self.session.DeleteAllUndoMarks()
 
         except Exception as err:
             _, _, tb = sys.exc_info()
