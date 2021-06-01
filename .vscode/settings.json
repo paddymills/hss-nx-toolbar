@@ -1,4 +1,5 @@
 {
     "git.ignoreLimitWarning": true,
-    "python.autoComplete.extraPaths": ["C:\\Program Files\\Siemens\\NX1953\\NXBIN\\python"]
+    "python.autoComplete.extraPaths": ["C:\\Program Files\\Siemens\\NX1953\\NXBIN\\python"],
+    "python.analysis.disabled": ["unresolved-import"]
 }
