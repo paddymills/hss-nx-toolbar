@@ -12,7 +12,6 @@ entrypoint_map = {
     "active":       _entrypoints.active,
     "all_open":     _entrypoints.all_open,
     "mfg":          _entrypoints.mfg,
-    "test":         _entrypoints.test,
 }
 
 # setup logging

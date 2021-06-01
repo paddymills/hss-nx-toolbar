@@ -12,6 +12,9 @@ from tests import run_tests
 import NXOpen
 
 
+logger = logging.getLogger(__name__)
+
+
 def _files_are_open():
 
     for part in NXOpen.Session.GetSession().Parts:
@@ -20,10 +23,6 @@ def _files_are_open():
     # no files open
     dialog.error("No files are open")
     return False
-
-
-
-logger = logging.getLogger(__name__)
 
 
 # Select Part(s)
@@ -55,11 +54,6 @@ def all_open():
 # headless -> provide list of parts
 def mfg():
     _process_files(sys.argv[2:])
-
-
-# run tests
-def test():
-    run_tests()
 
 
 def _process_files(files):
