@@ -62,7 +62,7 @@ class DxfExporter:
         self.annotations.append(anno)
 
 
-    def export_body(self, body, export_name, commit=True):
+    def export_body(self, body, export_name):
         
         self.logger.info("Exporting body: {}".format( export_name ))
 
@@ -82,8 +82,7 @@ class DxfExporter:
                 os.remove(self._dxf.OutputFile)
 
             # generate dxf file
-            if commit:
-                self._dxf.Commit()
+            self._dxf.Commit()
 
             # remove single export items (body and annotations)
             self.remove( body )
