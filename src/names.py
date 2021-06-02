@@ -8,7 +8,7 @@ import config
 
 import NXOpen
 
-WEB_REGEX = re.compile(r"[-_]web")
+WEB_REGEX = re.compile(r"[-_]web", re.IGNORECASE)
 
 class ExportNamer:
 
@@ -22,14 +22,7 @@ class ExportNamer:
         self.SKIP_BODY_STR = "SKIP_THIS_BODY"
         self.stop_exporting = False
 
-        if WEB_REGEX.search(part.Leaf):
-            logger.debug("Naming Strategy: named web bodies")
-            self.requires_post_rename = True
-            self.is_web = True
-
-        else:
-            self.requires_post_rename = False
-            self.is_web = False
+        self.is_web = bool( WEB_REGEX.search(part.Leaf) )
 
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         #               base export name
@@ -71,7 +64,6 @@ class ExportNamer:
 
             export_name = "{}_{}".format(self.base_name, self.unnamed_body_id)
             self.unnamed_body_id += 1
-            self.requires_post_rename = True
 
         self.exported_bodies[export_name] = pts
 
@@ -81,11 +73,11 @@ class ExportNamer:
     def rename_files(self):
 
         if self.is_web:
-            self.logger.info("Renaming web exports")
+            self.logger.info("Renaming web export(s)")
 
             num_child_bodies = len(self.exported_bodies) - 1
 
-            index = 0
+            index = 1
             for name1, body1 in self.exported_bodies.items():
                 for name2, body2 in self.exported_bodies.items():
                     if name1 == name2:
