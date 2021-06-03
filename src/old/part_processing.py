@@ -1,20 +1,20 @@
 
 import logging
 import re
-from os import path
+import sys
 
 import config
 import dialog
 
-from _processor import process_file, process_open_part
+from _processor import process_file
+from bodies import BodyBound
 from dxf_export import DxfExporter
 from names import ExportNamer
 from properties import get_part_properties
-from bodies import BodyBound
 from annotations import add_annotations
 
 import NXOpen
-import NXOpen.Options
+import NXOpen.Layer
 
 
 class PartProcessor:
@@ -30,10 +30,6 @@ class PartProcessor:
         }
 
         self.logger = logging.getLogger(__name__)
-
-    
-    def __del__(self):
-        self.session = None
 
 
     @process_file
@@ -61,7 +57,7 @@ class PartProcessor:
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         for sketch in part.Sketches:
             if sketch.IsBlanked:
-                logger.debug("Skipping sketch: {}".format( sketch.Name ))
+                self.logger.debug("Skipping sketch: {}".format( sketch.Name ))
                 continue
 
             for search_term, layer in config.WHITELISTED_SKETCHES.items():
@@ -74,41 +70,50 @@ class PartProcessor:
                     break
 
             else:
-                logger.debug("Skipping sketch: {}".format( sketch.Name ))
+                self.logger.debug("Skipping sketch: {}".format( sketch.Name ))
 
         
 
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         #               bodies
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-        namer = ExportNamer(part)
+        name_props = get_part_properties(part, props=config.PART_NAME_PROPS)
+        name_props["PART_LEAF"] = part.Leaf
+        namer = ExportNamer(**name_props)
 
         props = get_part_properties(part)
         for body in part.Bodies:
 
             if body.IsBlanked:
-                logger.debug("Skipping body: {}".format( body.Name or body.JournalIdentifier ))
+                self.logger.debug("Skipping body: {}".format( body.Name or body.JournalIdentifier ))
                 continue
-
-            body_pts = BodyBound(body)
-            export_name = namer.add_export(body, body_pts)
+            
+            if part.IsReadOnly:
+                body_pts = None
+            else:
+                body_pts = BodyBound(body)
+                # thickness handling (if bottom face is not on XY plane)
+                if body_pts.min_z != 0:
+                    self.logger.info("Origin not on XY plane")
+                    props["THICKNESS"] = body_pts.max_z - body_pts.min_z
+                else:
+                    props["THICKNESS"] = None
+            
+            # export_name = namer.add_export(body, body_pts)
+            export_name = part.Leaf
 
             # skip this body
             if export_name == namer.SKIP_BODY_STR:
                 continue
 
-            # thickness handling (if bottom face is not on XY plane)
-            if body_pts.min_z != 0:
-                self.logger.info("Origin not on XY plane")
-                props["THICKNESS"] = body_pts.max_z - body_pts.min_z
-            else:
-                props["THICKNESS"] = None
 
             # create annotation and add to export
-            added_annotations = add_annotations(part, props, body_pts.min_x, body_pts.min_y)
-            dxf_exporter.add_annotation( added_annotations )
+            # added_annotations = add_annotations(part, props, body_pts.min_x, body_pts.min_y)
+            # added_annotations = add_annotations(part, props, 0.0, 0.0)
+            # dxf_exporter.add_annotation( added_annotations )
 
             # export body
+            part.Layers.MoveDisplayableObjects(2, [body])
             dxf_exporter.export_body(body, export_name)
 
             # stop exporting if SINGLE_BODY_EXPORT_NAME encountered
@@ -120,7 +125,9 @@ class PartProcessor:
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         namer.rename_files()
 
-        self.result["success"].append(part.Leaf)
+        # clean-up
+        del namer
+        del dxf_exporter
 
 
     def add_parts_to_process(self, fn):
@@ -131,10 +138,22 @@ class PartProcessor:
             self.parts_to_process.append(fn.lower())
 
 
-    def process_parts(self, part_files):
+    def process_parts(self):
         
         while self.parts_to_process:
-            self.process_part(self.parts_to_process.pop(0))
+            part = self.parts_to_process.pop(0)
+
+            try:
+                self.process_part(part)
+
+                self.result["success"].append(part)
+
+            except Exception as err:
+                _, _, tb = sys.exc_info()
+                self.logger.error("[{}] {}".format( tb.tb_lineno, err ))
+                self.logger.error(err, exc_info=True)
+
+                self.result["failed"].append(part)
 
 
     def display_results(self):
@@ -143,7 +162,7 @@ class PartProcessor:
         if not any(self.result.values()):
             return
 
-        msg = ["DXF export finished", ""]
+        msg = ["DXF export finished"]
 
         if self.result["success"]:
             msg.extend(["", "Successful exports:"])
@@ -154,4 +173,3 @@ class PartProcessor:
             msg.extend(["  - {}".format(exp) for exp in self.result["failed"]])
 
         dialog.info(msg, "Export Results")
-

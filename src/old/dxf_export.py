@@ -70,7 +70,7 @@ class DxfExporter:
         self._dxf.OutputFile = os.path.join(config.DXF_OUTPUT_DIR, export_filename)
 
         try:
-            body.Layer = config.Layers.PROFILE.value
+            # body.Layer = config.Layers.PROFILE.value
 
             self.add( body )
 

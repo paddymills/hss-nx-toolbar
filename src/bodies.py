@@ -109,6 +109,25 @@ class BodyBound:
     def max_z(self):
         return self._extrema("Z", max)
 
+
+    @property
+    def len_x(self):
+        return self._len("X")
+
+
+    @property
+    def len_y(self):
+        return self._len("Y")
+
+
+    @property
+    def len_z(self):
+        return self._len("Z")
+
     
     def _extrema(self, axis_attr, minmax_func):
         return minmax_func([ getattr(x, axis_attr) for x in self._points] )
+
+
+    def _len(self, axis_attr):
+        return self._extrema(axis_attr, max) - self._extrema(axis_attr, min)

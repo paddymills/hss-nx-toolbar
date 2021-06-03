@@ -3,7 +3,6 @@ import logging
 import os
 import re
 
-from properties import get_part_properties
 import config
 
 import NXOpen
@@ -12,7 +11,7 @@ WEB_REGEX = re.compile(r"[-_]web", re.IGNORECASE)
 
 class ExportNamer:
 
-    def __init__(self, part):
+    def __init__(self, **kwargs):
         self.logger = logging.getLogger(__name__)
         
         self.exported_bodies = dict()
@@ -22,7 +21,7 @@ class ExportNamer:
         self.SKIP_BODY_STR = "SKIP_THIS_BODY"
         self.stop_exporting = False
 
-        self.is_web = bool( WEB_REGEX.search(part.Leaf) )
+        self.is_web = bool( WEB_REGEX.search(kwargs["PART_LEAF"]) )
 
         # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
         #               base export name
@@ -33,11 +32,10 @@ class ExportNamer:
         #
         # falls back to part file name if JOB or MARK are not found
 
-        props = get_part_properties(part, props=config.PART_NAME_PROPS)
-        if props["JOB"] and props["MARK"]:
-            self.base_name = "{JOB}_{MARK}".format(**props)
+        if kwargs["JOB"] and kwargs["MARK"]:
+            self.base_name = "{JOB}_{MARK}".format(**kwargs)
         else:
-            self.base_name =  part.Leaf
+            self.base_name = kwargs["PART_LEAF"]
 
 
     def add_export(self, body, pts):
@@ -101,7 +99,7 @@ class ExportNamer:
         # single body was exported
         elif len(self.exported_bodies) == 1:
             self.logger.info("Renaming single body export")
-            self.rename(exported_bodies.keys()[0], self.base_name)
+            self.rename(self.exported_bodies.popitem()[0], self.base_name)
             return
 
         # else -> leave parts with named with number suffixes
@@ -113,10 +111,14 @@ class ExportNamer:
         for name in self.exported_bodies.keys():
             os.remove(name)
 
-        self.exported_bodies = dict()
+        self.exported_bodies.clear()
+
 
     def rename(self, from_name, to_name):
-        from_fn = os.path.join(config.DXF_OUTPUT_DIR, from_name)
-        to_fn = os.path.join(config.DXF_OUTPUT_DIR, to_name)
+        from_fn = os.path.join(config.DXF_OUTPUT_DIR, "{}.dxf".format( from_name ))
+        to_fn = os.path.join(config.DXF_OUTPUT_DIR, "{}.dxf".format( to_name ))
+
+        if os.path.exists(to_fn):
+            os.remove(to_fn)
 
         os.rename(from_fn, to_fn)

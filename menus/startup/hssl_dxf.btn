@@ -10,7 +10,7 @@ ACTIONS hss_dxf_export.py("--select")
 BUTTON HSS_DXF_EXPORT_ACTIVE
 LABEL Work Part
 BITMAP high_dxf
-ACTIONS hss_dxf_export.py("--active")
+ACTIONS hss_dxf_export.py("--work")
 
 BUTTON HSS_DXF_EXPORT_ALL_OPEN
 LABEL All Open Parts

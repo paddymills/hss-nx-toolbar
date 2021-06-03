@@ -6,6 +6,7 @@ import config
 import dialog
 
 import NXOpen
+import NXOpen.Options
 
 
 ABORT_STR = "ABORT_PROCESSING"
@@ -19,32 +20,41 @@ def process_file(wrapped_func):
 
     def _impl(self, part_file):
 
+
         # look for part in open parts
         for open_part in self.session.Parts:
             if open_part.FullPath.lower() == part_file:
                 # set part as work part
                 self.session.Parts.SetActiveDisplay(open_part, NXOpen.DisplayPartOption.AllowAdditional, NXOpen.PartDisplayPartWorkPartOption.UseLast)
+                close_when_done = False
 
                 break
 
         # open part
         else:
-            _, loadstat = self.session.Parts.OpenActiveDisplay(part_file, NXOpen.DisplayPartOption.AllowAdditional)
+            close_when_done = True
 
-            # make sure part opens
-            if loadstat:
-                # loadstat == 0 if part was loaded successfully
-                self.logger.error("{}: {}".format(loadstat.GetStatusDescription(0), loadstat.GetPartName(0)))
-                dialog.error([
-                    "Error opening part: {}".format(loadstat.GetPartName(0)),
-                    "",
-                    loadstat.GetStatusDescription(0)
-                ])
+            try:
+                _base_part, loadstat = self.session.Parts.OpenActiveDisplay(part_file, NXOpen.DisplayPartOption.AllowAdditional)
 
-                self.result["failed"].append(loadstat.GetPartName(0))
-                loadstat.Dispose()
+                # make sure part opens
+                if loadstat.NumberUnloadedParts > 0:
+                    self.logger.error("{}: {}".format(loadstat.GetStatusDescription(0), loadstat.GetPartName(0)))
+                    dialog.error([
+                        "Error opening part: {}".format(loadstat.GetPartName(0)),
+                        "",
+                        loadstat.GetStatusDescription(0)
+                    ])
 
+                    self.result["failed"].append(loadstat.GetPartName(0))
+                    
+                    raise("Failed to open part")
+
+            except:
                 return
+
+            finally:
+                loadstat.Dispose()
 
 
         part = self.session.Parts.Work
@@ -55,37 +65,31 @@ def process_file(wrapped_func):
         if part.IsReadOnly:
             self.logger.warning("!!! Part is Read Only !!!")
 
-            if self.handle_read_only(self.session) == ABORT_STR:
-                self.files_to_process.clear()
+            if handle_read_only(self.session) == ABORT_STR:
+                self.parts_to_process.clear()
                 return
 
-        try:
-            initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "dxf_initial")
+        # set top view
+        if not self.session.IsBatch:
+            part.ModelingViews.WorkView.Orient(NXOpen.View.Canned.Top, NXOpen.View.ScaleAdjustment.Fit)
 
-            # make sure modeling is active
-            self.session.ApplicationSwitchImmediate("UG_APP_MODELING")
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        # ~              run processing script              ~
+        # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+        wrapped_func(self, part_file)
 
-            # set top view
-            if self.session.IsBatch:
-                part.ModelingViews.WorkView.Orient(NXOpen.View.Canned.Top, NXOpen.View.ScaleAdjustment.Fit)
-
-            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            # ~              run processing script              ~
-            # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-            wrapped_func(self)
-
-            self.session.UndoToMark(initial_state, "dxf_initial")
-
-        except Exception as err:
-            _, _, tb = sys.exc_info()
-            self.logger.error("[{}] {}".format( tb.tb_lineno, err ))
-
-            self.result["failed"].append(part.Leaf)
+        # if not part.IsReadOnly:
+            # undo to initial state (NX crashes when part is read-only)
+        # self.session.UndoToMark(initial_state, "dxf_initial")
+        # marksRecycled1, undoUnavailable1 = self.session.UndoLastNVisibleMarks(1)
 
         # close part
-        loadstat.Dispose()
-        self.session.Parts.Work.Close(NXOpen.BasePart.CloseWholeTree.FalseValue, NXOpen.BasePart.CloseModified.UseResponses, None)
-        self.session.ApplicationSwitchImmediate("UG_APP_NOPART")
+        if close_when_done:
+            partCloseResponses1 = self.session.Parts.NewPartCloseResponses()
+            part.Close(NXOpen.BasePart.CloseWholeTree.FalseValue, NXOpen.BasePart.CloseModified.UseResponses, partCloseResponses1)
+            part = NXOpen.Part.Null
+            partCloseResponses1.Dispose()
+            # self.session.Parts.Work.Close(NXOpen.BasePart.CloseWholeTree.FalseValue, NXOpen.BasePart.CloseModified.CloseModified, None)
 
     return _impl
 
@@ -98,7 +102,7 @@ def handle_read_only(session):
     # check that Display Message when Modifying Read-Only Parts is not set
     # (Customer Defaults > Assemblies > Miscellaneous > Display Message when Modifying Read-Only Parts)
     read_only_warn_mod = session.OptionsManager.GetIntValue("Assemblies_DisplayReadOnly")
-    logging.getLogger(__name__).info("Assemblies Warn Read-Only state: {}".format(read_only_warn_mod))
+    logging.getLogger(__name__).debug("Assemblies Warn Read-Only state: {}".format(read_only_warn_mod))
 
     if read_only_warn_mod == 1:
         msg = [

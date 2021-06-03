@@ -1,16 +1,26 @@
 
-import _logging
+import config
 import dialog
-from part_processing import PartProcessor
+from processing import Processor
 
 import argparse
+from datetime import date
 import logging
-import sys
+import os
 
 import NXOpen
 
 # setup logging
-_logging.init()
+user = os.getlogin()
+timestamp = date.today().isoformat()
+
+log_file = os.path.join( config.LOG_DIR, "{}_{}.log".format( timestamp, user ) )
+
+logging.basicConfig(
+    filename=log_file,
+    format='[%(asctime)s]%(levelname)s|%(name)s:%(message)s',
+    level=config.LOGGING_LEVEL
+)
 logger = logging.getLogger(__name__)
 
 nx_version = NXOpen.Session.GetSession().GetEnvironmentVariableValue("NX_FULL_VERSION")
@@ -27,8 +37,10 @@ parser.add_argument("--mfg", action="append")
 
 
 # parse arguments
-args = parser.parse_known_args()[0]
+args, unparsed = parser.parse_known_args()
 logger.info("Process args: {}".format( args ))
+if unparsed:
+    logger.info("Unparsed args: {}".format( unparsed ))
 
 # default -> select
 if not any(vars(args).values()):
@@ -37,7 +49,7 @@ if not any(vars(args).values()):
 
 
 session = NXOpen.Session.GetSession()
-processor = PartProcessor()
+processor = Processor()
 
 if args.select:
     logger.info("Select parts to process")
