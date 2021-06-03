@@ -14,9 +14,6 @@ import NXOpen.Features
 import NXOpen.Layer
 
 
-LOGFILE = os.path.join( os.path.dirname(__file__), "test.log" )
-
-
 class Processor:
 
     def __init__(self):
@@ -311,6 +308,7 @@ class Processor:
     
 
 if __name__ == '__main__':
+    LOGFILE = os.path.join( os.path.dirname(__file__), "test.log" )
     logging.basicConfig(filename=LOGFILE, filemode="w", level=logging.INFO)
     fn = "\\\\hssieng\\jobs\\2019\\1190181f\\eng\\mainmemberparts\\1190181f_x606c.prt"
 
