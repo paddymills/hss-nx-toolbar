@@ -4,6 +4,7 @@ import os
 import re
 
 import config
+import dialog
 
 import NXOpen
 import NXOpen.Annotations
@@ -15,10 +16,16 @@ import NXOpen.Drawings
 
 DT_FORMAT = r"%m-%d-%Y %I:%M:%S %p"
 
+IGNORE_OPEN_ERRORS = [
+    "Failed to find file using current search options, part left unloaded",
+]
+
 
 def process_part(func):
 
-    def _impl(self, filename, close=False):
+    def _impl(self, filename):
+        close = True
+
         self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Load Part")
         
         part_load_status = None
@@ -36,33 +43,40 @@ def process_part(func):
                 _, part_load_status = self.session.Parts.OpenActiveDisplay(filename, NXOpen.DisplayPartOption.AllowAdditional)
                 
                 if part_load_status.NumberUnloadedParts > 0:
-                    raise("Failed to open part")
+                    _part = part_load_status.GetPartName(0)
+                    _desc = part_load_status.GetStatusDescription(0)
 
-        except:
-            self.logger.error("Failed to open part: {}".format(filename))
-            return
+                    if _desc not in IGNORE_OPEN_ERRORS:
+                        raise Exception("{}: {}".format(_desc, _part))
+
+            self.session.ApplicationSwitchImmediate("UG_APP_MODELING")
+            
+            initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Initial State")
+            self.logger.info("Processing part: {}".format(self.work_part.FullPath))
+
+            func(self, filename)
+
+            self.session.UndoToMark(initial_state, None)
+
+        except Exception as err:
+            dialog.error([
+                "Error opening part. ({})".format(filename),
+                "",
+                str(err)
+            ])
+
+            raise err
 
         finally:
             if part_load_status:
                 part_load_status.Dispose()
 
-
-        self.session.ApplicationSwitchImmediate("UG_APP_MODELING")
-        
-        initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Initial State")
-        self.logger.info("Processing part: {}".format(self.work_part.FullPath))
-
-        func(self, filename, close)
-
-        if close:
-            self.session.UndoToMark(initial_state, None)
-            
-            part_close_responses = self.session.Parts.NewPartCloseResponses()
-            self.work_part.Close(NXOpen.BasePart.CloseWholeTree.FalseValue, NXOpen.BasePart.CloseModified.UseResponses, part_close_responses)
-            
-            part_close_responses.Dispose()
-            self.session.ApplicationSwitchImmediate("UG_APP_NOPART")
-
+            if close and self.work_part.FullPath == filename:    
+                part_close_responses = self.session.Parts.NewPartCloseResponses()
+                self.work_part.Close(NXOpen.BasePart.CloseWholeTree.FalseValue, NXOpen.BasePart.CloseModified.UseResponses, part_close_responses)
+                part_close_responses.Dispose()
+                
+                self.session.ApplicationSwitchImmediate("UG_APP_NOPART")
 
     return _impl
 
@@ -70,70 +84,6 @@ def process_part(func):
 def annotation(func):
 
     def _impl(self, *args):
-        work_part = self.work_part
-        
-        # ----------------------------------------------
-        #   Menu: Application->Design->Drafting
-        # ----------------------------------------------
-        self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Enter Drafting")
-        self.session.ApplicationSwitchImmediate("UG_APP_DRAFTING")
-        work_part.Drafting.EnterDraftingApplication()
-        
-        # ----------------------------------------------
-        #   Menu: Insert->Annotation->Note...
-        # ----------------------------------------------
-        self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Note Dialog")
-        
-        note_builder = work_part.Annotations.CreateDraftingNoteBuilder(NXOpen.Annotations.SimpleDraftingAid.Null)
-        note_builder.Origin.Anchor = NXOpen.Annotations.OriginBuilder.AlignmentPosition.MidCenter
-        note_builder.Origin.Plane.PlaneMethod = NXOpen.Annotations.PlaneBuilder.PlaneMethodType.XyPlane
-
-        # note leader
-        leader = work_part.Annotations.CreateLeaderData()
-        leader.StubSize = 1.0
-        leader.Arrowhead = NXOpen.Annotations.LeaderData.ArrowheadType.FilledArrow
-        leader.VerticalAttachment = NXOpen.Annotations.LeaderVerticalAttachment.Center
-        note_builder.Leader.Leaders.Append(leader)
-        
-        # associative origin
-        assoc_origin = NXOpen.Annotations.Annotation.AssociativeOriginData()
-        assoc_origin.OriginType = NXOpen.Annotations.AssociativeOriginType.Drag
-        
-        assoc_origin.View = NXOpen.View.Null
-        assoc_origin.ViewOfGeometry = NXOpen.View.Null
-        assoc_origin.PointOnGeometry = NXOpen.Point.Null
-        assoc_origin.AssociatedView = NXOpen.View.Null
-        assoc_origin.AssociatedPoint = NXOpen.Point.Null
-        assoc_origin.VertAnnotation = NXOpen.Annotations.Annotation.Null
-        assoc_origin.HorizAnnotation = NXOpen.Annotations.Annotation.Null
-        assoc_origin.AlignedAnnotation = NXOpen.Annotations.Annotation.Null
-        assoc_origin.OffsetAnnotation = NXOpen.Annotations.Annotation.Null
-        assoc_origin.XOffsetFactor = 0.0
-        assoc_origin.YOffsetFactor = 0.0
-        assoc_origin.DimensionLine = 0
-        
-        assoc_origin.VertAlignmentPosition = NXOpen.Annotations.AlignmentPosition.TopLeft
-        assoc_origin.HorizAlignmentPosition = NXOpen.Annotations.AlignmentPosition.TopLeft
-        assoc_origin.OffsetAlignmentPosition = NXOpen.Annotations.AlignmentPosition.TopLeft
-        assoc_origin.StackAlignmentPosition = NXOpen.Annotations.StackAlignmentPosition.Above
-
-        note_builder.Origin.SetAssociativeOrigin(assoc_origin)
-        
-        data = func(self, *args)
-        data.text.append("EXPORTED: {}".format( datetime.now().strftime(DT_FORMAT) ))
-
-        note_builder.Text.TextBlock.SetText(data.text)
-        note_builder.Style.LetteringStyle.GeneralTextSize = data.note_size
-        note_loc = NXOpen.Point3d(data.note_x, data.note_y, data.note_z)
-        note_builder.Origin.Origin.SetValue(NXOpen.TaggedObject.Null, NXOpen.View.Null, note_loc)
-
-        # create note
-        note_result = note_builder.Commit()
-        note_builder.Destroy()
-
-        return note_result
-
-    def _impl2(self, *args):
         work_part = self.work_part
 
         # ----------------------------------------------
@@ -172,7 +122,7 @@ def annotation(func):
 
         return note_result
 
-    return _impl2
+    return _impl
 
 
 def dwgdxf(func):

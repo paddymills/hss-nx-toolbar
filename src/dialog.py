@@ -6,34 +6,43 @@ import filedialog
 
 import NXOpen
 
+def ui_dialog(dlg_type):
 
+    def msgbox(func):
+
+        def _impl(*args, **kwargs):
+            msg, title = func(*args, **kwargs)
+
+            # if this is a question msgbox, returns:
+            #   -  yes:  1
+            #   -   no:  2
+            # else, returns -2
+
+            return NXOpen.UI.GetUI().NXMessageBox.Show(title, dlg_type, msg)
+
+        return _impl
+
+    return msgbox
+
+
+@ui_dialog(NXOpen.NXMessageBox.DialogType.Error)
 def error(msg, title="Error"):
+    return msg, title
 
-    return _msgbox(msg, NXOpen.NXMessageBox.DialogType.Error, title)
 
-
+@ui_dialog(NXOpen.NXMessageBox.DialogType.Warning)
 def warn(msg, title="Warning"):
+    return msg, title
 
-    return _msgbox(msg, NXOpen.NXMessageBox.DialogType.Warning, title)
 
-
+@ui_dialog(NXOpen.NXMessageBox.DialogType.Information)
 def info(msg, title="Information"):
+    return msg, title
 
-    return _msgbox(msg, NXOpen.NXMessageBox.DialogType.Information, title)
 
-
+@ui_dialog(NXOpen.NXMessageBox.DialogType.Question)
 def question(msg, title="Question"):
-
-    return _msgbox(msg, NXOpen.NXMessageBox.DialogType.Question, title)
-
-
-def _msgbox(msg, dlg_type, title):
-    # if this is a question msgbox, returns:
-    #   -  yes:  1
-    #   -   no:  2
-    # else, returns -2
-
-    return NXOpen.UI.GetUI().NXMessageBox.Show(title, dlg_type, msg)
+    return msg, title
 
 
 def get_files_to_process():

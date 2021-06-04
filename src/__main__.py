@@ -43,7 +43,7 @@ if unparsed:
     logger.info("Unparsed args: {}".format( unparsed ))
 
 # default -> select
-if not any(vars(args).values()):
+if not any( vars(args).values() ):
     logger.error("No/Invalid process args. Defaulting to select.")
     args.select = True
 

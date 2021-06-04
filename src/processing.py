@@ -14,6 +14,10 @@ import NXOpen.Features
 import NXOpen.Layer
 
 
+NAME_STRIP_PATTERNS = [
+    "_mfg",
+]
+
 class Processor:
 
     def __init__(self):
@@ -49,13 +53,13 @@ class Processor:
             except Exception as err:
                 _, _, tb = sys.exc_info()
                 self.logger.error("[{}] {}".format( tb.tb_lineno, err ))
-                self.logger.error(err, exc_info=True)
+                self.logger.debug(err, exc_info=True)
 
                 self.result["failed"].append(part)
 
 
     @decorators.process_part
-    def process_part(self, filename, close=True):
+    def process_part(self, filename):
 
         if self.work_part.IsReadOnly:
             self.logger.warning("!!! Part is Read Only !!!")
@@ -90,17 +94,20 @@ class Processor:
 
         # note positon
         anno.note_z = 0.0
-        if body_pts.len_x < body_pts.len_y:
-            # vertical part -> put note to the right of part
-            anno.note_x = body_pts.max_x + config.NOTE_OFFSET
-            anno.note_y = body_pts.min_y + config.NOTE_OFFSET
-            anno.note_size = body_pts.len_y * config.NOTE_SIZE_MULTIPLIER
+        if body_pts.len_x / body_pts.len_y < 0.75:
+            # mostly vertical part -> put note to the right of part
+            anno.note_x    = body_pts.max_x + config.NOTE_OFFSET
+            anno.note_y    = body_pts.min_y + config.NOTE_OFFSET
+            anno.note_size = body_pts.len_y
         else:
-            # horizontal/square part -> put note below part
-            anno.note_x = body_pts.min_x + config.NOTE_OFFSET
-            anno.note_y = body_pts.min_y - config.NOTE_OFFSET
-            anno.note_size = body_pts.len_x * config.NOTE_SIZE_MULTIPLIER
+            anno.note_x    = body_pts.min_x + config.NOTE_OFFSET
+            anno.note_y    = body_pts.min_y - config.NOTE_OFFSET
+            anno.note_size = body_pts.len_x
 
+        # scale for size
+        anno.note_x    *= config.NOTE_SIZE_MULTIPLIER
+        anno.note_y    *= config.NOTE_SIZE_MULTIPLIER
+        anno.note_size *= config.NOTE_SIZE_MULTIPLIER
 
         anno.text = [ "{}: {}".format(k, v) for k, v in attrs.items() if v ]
 
@@ -121,17 +128,26 @@ class Processor:
 
         # add sketches
         for sk in work_part.Sketches:
+            if sk.IsBlanked:
+                self.logger.debug("Skipping blanked sketch: {}".format( sk.Name ))
+                continue
+
             for wl, layer in config.WHITELISTED_SKETCHES:
                 if wl.search(sk.Name):
                     exports.sketches.append( sk )
                     layer_moves[layer].append( sk )
+
+                    self.logger.info("Skipping adding sketch: {}".format( sk.Name ))
                     break
+            else:
+                self.logger.debug("Skipping sketch: {}".format( sk.Name ))
 
         # add bodies
         i = 1
         for body in work_part.Bodies:
 
             if body.IsBlanked:
+                self.logger.debug("Skipping blanked body: {}".format( body.Name ))
                 continue
             
             body_export = SimpleNamespace()
@@ -160,6 +176,7 @@ class Processor:
                 i += 1
 
             exports.bodies.append(body_export)
+            self.logger.info("Export body: {}".format( body_export.name ))
 
         # single body -> follows name of part
         if len(exports.bodies) == 1:
@@ -203,6 +220,9 @@ class Processor:
                 self.base_name = "{}_{}".format(job, mark)
             else:
                 self.base_name = self.work_part.Leaf
+                for pattern in NAME_STRIP_PATTERNS:
+                    if self.base_name.endswith(pattern):
+                        self.base_name = self.base_name[: (-1 * len(pattern)) ]
 
         if index:
             dxf_filename = "{}_{}".format(self.base_name, index)
@@ -225,6 +245,8 @@ class Processor:
         # ----------------------------------------------
         for layer, entities in layer_map.items():
             self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Move Layer: {} -> {}".format(layer.name, layer.value))
+
+            self.logger.debug("Move Layer: {} -> {}".format(layer.name, layer.value))
             work_part.Layers.MoveDisplayableObjects( layer.value, entities )
 
     
@@ -260,7 +282,8 @@ class Processor:
             msg.extend(["  - {}".format(exp) for exp in self.result["failed"]])
 
         dialog.info(msg, "Export Results")
-        
+
+
     def handle_read_only(self):
 
         if config.HANDLED_READ_ONLY:
@@ -305,11 +328,3 @@ class Processor:
 
         # keep this dialog from showing again
         config.HANDLED_READ_ONLY = True
-    
-
-if __name__ == '__main__':
-    LOGFILE = os.path.join( os.path.dirname(__file__), "test.log" )
-    logging.basicConfig(filename=LOGFILE, filemode="w", level=logging.INFO)
-    fn = "\\\\hssieng\\jobs\\2019\\1190181f\\eng\\mainmemberparts\\1190181f_x606c.prt"
-
-    Processor().process_part(fn, close=True)
