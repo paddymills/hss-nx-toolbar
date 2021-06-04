@@ -182,7 +182,7 @@ def dwgdxf(func):
     
     return _impl
 
-def property(func):
+def part_property(func):
     EMPTY_PROPERTY_PATTERN = re.compile(r"^[ xX]+$")
 
     def _impl(self, *args):

@@ -137,7 +137,7 @@ class Processor:
                     exports.sketches.append( sk )
                     layer_moves[layer].append( sk )
 
-                    self.logger.info("Skipping adding sketch: {}".format( sk.Name ))
+                    self.logger.info("Adding sketch: {}".format( sk.Name ))
                     break
             else:
                 self.logger.debug("Skipping sketch: {}".format( sk.Name ))
@@ -160,10 +160,12 @@ class Processor:
 
                 # skip blacklisted body
                 if any([ bl.search(body.Name) for bl in config.BLACKLISTED_BODIES ]):
+                    self.logger.debug("Skipping blacklisted body: {}".format( body.Name ))
                     continue
 
                 # single body name -> only export this body
                 if body.Name == config.SINGLE_BODY_EXPORT_NAME:
+                    self.logger.debug("Single body name encountered.")
                     body_export.name = self.dxf_export_filename()
                     exports.bodies = [ body_export ]
                     break
@@ -196,7 +198,7 @@ class Processor:
         return exports
 
 
-    @decorators.property
+    @decorators.part_property
     def get_property(self, prop):
 
         if prop in config.PROPS:
