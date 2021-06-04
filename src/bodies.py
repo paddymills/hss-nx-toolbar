@@ -1,146 +1,133 @@
 
 import logging
-import re
-
-import config
-from properties import get_part_properties
-from body_bound import BodyBound
 
 import NXOpen
 
-WEB_REGEX = re.compile(r"[-_]web")
 
 logger = logging.getLogger(__name__)
 
+class Point:
 
-def get_bodies_to_export(part):
-
-    base_export_name = _part_export_name(part)
-
-    num_bodies = 0
-    num_named_bodies = 0
-    for body in part.Bodies:
-        num_bodies += 1
-
-        if body.Name == config.SINGLE_BODY_EXPORT_NAME:
-            logger.debug("Naming Strategy: matched single body export name")
-            
-            return [(base_export_name, body)]
-
-        if len(body.Name) > 0:
-            num_named_bodies += 1
+    def __init__(self, x, y, z):
+        self.X = x
+        self.Y = y
+        self.Z = z
 
     
-    # ~~~~~~~~~~~~~~~~~~~~~~~ single body ~~~~~~~~~~~~~~~~~~~~~~~
-    if num_bodies == 1:
-        logger.debug("Naming Strategy: single body")
+    def __eq__(self, other):
+        if self.X == other.X:
+            if self.Y == other.Y:
+                if self.Z == other.Z:
+                    return True
 
-        return _single_body(part, base_export_name)
-
-
-    # ~~~~~~~~~~~~~~~~~~~~~~~ named bodies ~~~~~~~~~~~~~~~~~~~~~~
-    if num_named_bodies > 0:
-        logger.debug("Naming Strategy: named bodies")
-
-        return _named_bodies(part, base_export_name)
+        return False
 
 
-    # ~~~~~~~~~~~~~~~~~~~~~~~~ web naming ~~~~~~~~~~~~~~~~~~~~~~~
-    if WEB_REGEX.search(part.Leaf):
-        logger.debug("Naming Strategy: named web bodies")
+class BodyBound:
 
-        return _name_web_bodies(part, base_export_name)
+    def __init__(self, body):
+        self._points = list()
 
+        for edge in body.GetEdges():
+            for vert in edge.GetVertices():
+                self.add_point(vert)
 
-    # ~~~~~~~~~ generic multibody ( (1), (2), (3), etc. ) ~~~~~~~
-    logger.debug("Naming Strategy: multiple not-named bodies")
-    return _multi_body(part, base_export_name)
-
-
-def _part_export_name(part):
-
-    # in case part name has additional information in it
-    #       (i.e. '_web', '_PM')
-    # we want to build the part name from part properties
-    #
-    # falls back to part file name if JOB and mark are not found
-
-    props = get_part_properties(part, props=config.PART_NAME_PROPS)
-
-    if props["JOB"] and props["MARK"]:
-        return "{JOB}_{MARK}".format(**props)
     
-    return part.Leaf
+    def add_point(self, point):
+        _x = round(point.X, 4)
+        _y = round(point.Y, 4)
+        _z = round(point.Z, 4)
+
+        logger.debug("Adding point ({} , {}, {})".format(_x, _y, _z))
+        
+        self._points.append( Point(_x, _y, _z) )
 
 
-def _single_body(part, base_name):
+    def has_point(self, point):
+        for _pt in self._points:
+            if _pt == point:
+                return True
 
-    for body in part.Bodies:
-        yield base_name, body
+        return False
 
+    
+    def coverage(self, other):
+        # returns the percentage of points in self's body
+        #   that are also in other's body
 
-def _named_bodies(part, base_name):
+        coincident_points = 0
 
-    for body in part.Bodies:
-        if body.IsBlanked:
-            logger.debug("Skipping blanked body '{}'".format(body.Name))
-            continue
+        for point in self._points:
+            if other.has_point(point):
+                coincident_points += 1
 
-        if body.Name:
-            for bl_name in config.BLACKLISTED_BODIES:
-                if bl_name.search(body.Name):
-                    logger.debug("Skipping blacklisted body '{}'".format(body.Name))
-                
-                else:
-                    yield "{}-{}".format(base_name, body.Name), body
+        return coincident_points / len(self._points)
 
-        else:
-            logger.debug("Skipping body that is not named")
+    
+    def is_parent(self, other):
+        self_cov = self.coverage(other)
+        other_cov = other.coverage(self)
 
+        # if self is parent of other
+        #   - other will have more coincident points that this
+        #   - other's coverage will be more than 50%
+        #       (probably more like 75% or 90%, but 50% will work)
+        #       (this filters out 2 bodies with a coincident edge such as a W1 and W2)
 
-def _name_web_bodies(part, base_name):
+        if self_cov < other_cov and other_cov > 0.5:
+            return True
 
-    num_child_bodies = -1
-    bounds = dict()
-
-    for body in part.Bodies:
-        if body.IsBlanked:
-            logger.debug("Skipping blanked body '{}'".format(body.Name))
-            continue
-
-        num_child_bodies += 1
-        bounds[body.JournalIdentifier] = BodyBound(body)
-
-    names = dict()
-    index = 0
-    for key1, body1 in bounds.items():
-        for key2, body2 in bounds.items():
-            if key1 == key2:
-                continue
-
-            if body1.is_parent(body2):
-                index = 0
-
-            elif body1.min_x > body2.min_x:
-                index += 1
-
-        if index == 0:
-            names[key1] = ("W{}" * num_child_bodies).format(*range(1, num_child_bodies+1))
-
-        else:
-            names[key1] = "W{}".format(index)
+        return False
 
 
-    for body in part.Bodies:
-        if body.JournalIdentifier in names:
-            yield "{}-{}".format(base_name, names[body.JournalIdentifier]), body
+    @property
+    def min_x(self):
+        return self._extrema("X", min)
 
 
-def _multi_body(part, base_name):
+    @property
+    def min_y(self):
+        return self._extrema("Y", min)
 
-    for i, body in enumerate(part.Bodies, start=1):
-        if body.IsBlanked:
-            logger.debug("Skipping blanked body '{}'".format(body.Name))
-            continue
 
-        yield "{}({})".format(base_name, i), body
+    @property
+    def min_z(self):
+        return self._extrema("Z", min)
+
+
+    @property
+    def max_x(self):
+        return self._extrema("X", max)
+
+
+    @property
+    def max_y(self):
+        return self._extrema("Y", max)
+
+
+    @property
+    def max_z(self):
+        return self._extrema("Z", max)
+
+
+    @property
+    def len_x(self):
+        return self._len("X")
+
+
+    @property
+    def len_y(self):
+        return self._len("Y")
+
+
+    @property
+    def len_z(self):
+        return self._len("Z")
+
+    
+    def _extrema(self, axis_attr, minmax_func):
+        return minmax_func([ getattr(x, axis_attr) for x in self._points] )
+
+
+    def _len(self, axis_attr):
+        return self._extrema(axis_attr, max) - self._extrema(axis_attr, min)

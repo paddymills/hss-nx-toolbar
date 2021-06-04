@@ -52,10 +52,7 @@ def _get_property_val(part, prop_name):
 
 def _is_empty_property(value):
 
-    if value is None:
-        return True
-
-    if EMPTY_PROPERTY_PATTERN.match(value):
+    if value is None or EMPTY_PROPERTY_PATTERN.match(value):
         return True
 
     return False
