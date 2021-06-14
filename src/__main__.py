@@ -23,10 +23,16 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-nx_version = NXOpen.Session.GetSession().GetEnvironmentVariableValue("NX_FULL_VERSION")
+
+session = NXOpen.Session.GetSession()
+processor = Processor()
+
+# log NX version
+nx_version = session.GetEnvironmentVariableValue("NX_FULL_VERSION")
 if not nx_version:  # NX 12 and prior
-    nx_version = NXOpen.Session.GetSession().GetEnvironmentVariableValue("UGII_FULL_VERSION")
+    nx_version = session.GetEnvironmentVariableValue("UGII_FULL_VERSION")
 logger.info("NX Version: {}".format(nx_version))
+
 
 # parse caller options
 parser = argparse.ArgumentParser()
@@ -34,7 +40,6 @@ parser.add_argument("--select", action="store_true")
 parser.add_argument("--work", action="store_true")
 parser.add_argument("--all_open", action="store_true")
 parser.add_argument("--mfg", action="append", nargs="?")
-
 
 # parse arguments
 args, unparsed = parser.parse_known_args()
@@ -48,15 +53,10 @@ if not any( vars(args).values() ):
     args.select = True
 
 
-session = NXOpen.Session.GetSession()
-processor = Processor()
-
 if args.select:
-    logger.info("Select parts to process")
     processor.add_parts_to_process( dialog.get_files_to_process() )
 
 if args.work:
-    logger.info("Process work part")
 
     try:
         processor.add_parts_to_process( session.Parts.Work.FullPath )
@@ -64,7 +64,6 @@ if args.work:
         dialog.error("Session does not have a work part")
 
 if args.all_open:
-    logger.info("Process all open parts")
     parts_added = False
 
     for part in session.Parts:
@@ -75,7 +74,6 @@ if args.all_open:
         dialog.error("No files are open")
 
 if args.mfg:
-    logger.info("Process mfg parts")
     processor.add_parts_to_process( args.mfg )
 
 processor.process_parts()

@@ -15,11 +15,11 @@ class Layers(Enum):
 
 LOGGING_LEVEL = logging.INFO
 
-LOG_DIR = r"\\hssieng\Jobs\dxf\logs"
+LOG_DIR = r"\\hssieng\Jobs\DXF\logs"
 DXF_OUTPUT_DIR = r"\\hssieng\SNDataPrd\DXF"
-NX_PART_FILES_DIR = r"\\hssieng\hssedsserv\Jobs"
+NX_PART_FILES_DIR = r"\\hssieng\Jobs"
 
-NOTE_SIZE_MULTIPLIER = 0.025
+NOTE_SIZE_MULTIPLIER = 0.0125
 NOTE_OFFSET = 10.0
 
 SINGLE_BODY_EXPORT_NAME = "SN_PART"
@@ -42,5 +42,11 @@ WHITELISTED_SKETCHES = (
 BLACKLISTED_BODIES = (
     regex("SHIM"),
 )
+
+
+NAME_STRIP_PATTERNS = [
+    regex("_mfg"),
+    regex("_copy"),
+]
 
 HANDLED_READ_ONLY = False

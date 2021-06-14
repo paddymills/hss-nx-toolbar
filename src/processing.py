@@ -14,10 +14,6 @@ import NXOpen.Features
 import NXOpen.Layer
 
 
-NAME_STRIP_PATTERNS = [
-    "_mfg",
-]
-
 class Processor:
 
     def __init__(self):
@@ -52,8 +48,7 @@ class Processor:
 
             except Exception as err:
                 _, _, tb = sys.exc_info()
-                self.logger.error("[{}] {}".format( tb.tb_lineno, err ))
-                self.logger.debug(err, exc_info=True)
+                self.logger.error(err, exc_info=True)
 
                 self.result["failed"].append(part)
 
@@ -88,26 +83,13 @@ class Processor:
         
         # handle body (thickness and note loc/size)
         body_pts = BodyBound(body)
-        if body_pts.min_z != 0:
-            self.logger.info("Origin not on XY plane")
-            attrs["THICKNESS"] = body_pts.max_z - body_pts.min_z
+        attrs["THICKNESS"] = body_pts.max_z - body_pts.min_z
 
-        # note positon
-        anno.note_z = 0.0
-        if body_pts.len_x / body_pts.len_y < 0.75:
-            # mostly vertical part -> put note to the right of part
-            anno.note_x    = body_pts.max_x + config.NOTE_OFFSET
-            anno.note_y    = body_pts.min_y + config.NOTE_OFFSET
-            anno.note_size = body_pts.len_y
-        else:
-            anno.note_x    = body_pts.min_x + config.NOTE_OFFSET
-            anno.note_y    = body_pts.min_y - config.NOTE_OFFSET
-            anno.note_size = body_pts.len_x
-
-        # scale for size
-        anno.note_x    *= config.NOTE_SIZE_MULTIPLIER
-        anno.note_y    *= config.NOTE_SIZE_MULTIPLIER
-        anno.note_size *= config.NOTE_SIZE_MULTIPLIER
+        # note position and size
+        anno.note_x    = body_pts.min_x + config.NOTE_OFFSET
+        anno.note_y    = body_pts.min_y - config.NOTE_OFFSET
+        anno.note_z    = 0.0
+        anno.note_size = body_pts.len_x * config.NOTE_SIZE_MULTIPLIER
 
         anno.text = [ "{}: {}".format(k, v) for k, v in attrs.items() if v ]
 
@@ -178,7 +160,6 @@ class Processor:
                 i += 1
 
             exports.bodies.append(body_export)
-            self.logger.info("Export body: {}".format( body_export.name ))
 
         # single body -> follows name of part
         if len(exports.bodies) == 1:
@@ -212,31 +193,34 @@ class Processor:
 
     
     def dxf_export_filename(self, index=None, name=None):
-        EXTENSION = ".dxf"
-
+        
+        directory = os.path.join( os.path.dirname( self.work_part.FullPath ), "DXF" )
+        if not os.path.exists(directory):
+            os.mkdir(directory)
+        
         if not self.base_name:
             job = self.get_property("JOB")
             mark = self.get_property("MARK")
 
-            if job and mark:
+            part_name = self.work_part.Leaf
+
+            if job and mark and part_name.startswith(job) and mark in part_name:
                 self.base_name = "{}_{}".format(job, mark)
             else:
-                self.base_name = self.work_part.Leaf
-                for pattern in NAME_STRIP_PATTERNS:
-                    if self.base_name.endswith(pattern):
-                        self.base_name = self.base_name[: (-1 * len(pattern)) ]
+                self.base_name = part_name
+                for pattern in config.NAME_STRIP_PATTERNS:
+                    self.base_name = pattern.sub( "", self.base_name )
 
         if index:
-            dxf_filename = "{}_{}".format(self.base_name, index)
+            filename = "{}_{}".format(self.base_name, index)
 
         elif name:
-            dxf_filename = "{}-{}".format(self.base_name, name)
+            filename = "{}-{}".format(self.base_name, name)
 
         else:
-            dxf_filename = self.base_name
+            filename = self.base_name
 
-
-        return os.path.join(config.DXF_OUTPUT_DIR, dxf_filename + EXTENSION)
+        return os.path.join( directory, filename + ".dxf" )
 
 
     def move_to_layers(self, layer_map):

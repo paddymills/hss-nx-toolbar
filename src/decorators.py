@@ -174,6 +174,8 @@ def dwgdxf(func):
 
             if os.path.exists( body_export.name ):
                 os.remove( body_export.name )
+
+            self.logger.info("Export body: {}".format( body_export.name ))
         
             dxf_result  = dxfdwg_creator.Commit()
             dxfdwg_creator.ExportSelectionBlock.SelectionComp.Clear()
