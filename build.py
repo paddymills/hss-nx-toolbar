@@ -22,6 +22,8 @@ def build_rs():
 
 def build_py():
 
+    shutil.rmtree("src\\__pycache__", ignore_errors=True)
+
     zipapp.create_archive("src", "menus\\application\\hss_dxf_export.zip")
     zipapp.create_archive("src", "C:\\Users\\PMiller1\\nx\\12\\application\\hss_dxf_export.zip")
     zipapp.create_archive("src", "C:\\Users\\PMiller1\\nx\\1953\\application\\hss_dxf_export.zip")
