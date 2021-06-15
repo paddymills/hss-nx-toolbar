@@ -39,7 +39,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument("--select", action="store_true")
 parser.add_argument("--work", action="store_true")
 parser.add_argument("--all_open", action="store_true")
-parser.add_argument("--mfg", action="append", nargs="?")
+parser.add_argument("--mfg", action="store", nargs="*")
 
 # parse arguments
 args, unparsed = parser.parse_known_args()

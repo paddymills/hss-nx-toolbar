@@ -195,8 +195,15 @@ class Processor:
     def dxf_export_filename(self, index=None, name=None):
         
         directory = os.path.join( os.path.dirname( self.work_part.FullPath ), "DXF" )
-        if not os.path.exists(directory):
-            os.mkdir(directory)
+        try:
+            if not os.path.exists(directory):
+                os.mkdir(directory)
+        except PermissionError:
+            directory = config.DXF_OUTPUT_FALLBACK_DIR
+            dialog.info([
+                "Cannot write to part's parent directory. Will save part to:",
+                "\t" + directory,
+            ])
         
         if not self.base_name:
             job = self.get_property("JOB")
