@@ -149,7 +149,6 @@ def dwgdxf(func):
         
         dxfdwg_creator.ViewEditMode = True
         dxfdwg_creator.FlattenAssembly = True
-        dxfdwg_creator.ExportScaleValue = "1:1"
 
         dxfdwg_creator.InputFile = self.work_part.FullPath
         
