@@ -309,7 +309,7 @@ class Processor:
 
                 # turn off warning for user
                 if res == 1:
-                    change_opt = session.OptionsManager.NewOptionsChangeList(NXOpen.Options.LevelType.User, NXOpen.Options.LevelLockedByDefault.FalseValue)
+                    change_opt = self.session.OptionsManager.NewOptionsChangeList(NXOpen.Options.LevelType.User, NXOpen.Options.LevelLockedByDefault.FalseValue)
                     change_opt.SetValue("Assemblies_DisplayReadOnly", 0)
                     change_opt.Save()
                     change_opt.Dispose()
