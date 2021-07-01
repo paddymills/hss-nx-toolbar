@@ -54,8 +54,11 @@ def get_files_to_process():
     # get files from file dialog
     files = filedialog.get_files( _dir )
 
-    # save last file load director
-    if files:
-        session.SetEnvironmentVariableValue( "_HSS_DXF_LAST_LOAD_DIR", os.path.dirname(files[0]) )
+    # save last file load directory
+    try:
+        if files:
+            session.SetEnvironmentVariableValue( "_HSS_DXF_LAST_LOAD_DIR", os.path.dirname(files[0]) )
+    except:
+        pass
 
     return files
