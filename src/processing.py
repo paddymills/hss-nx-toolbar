@@ -110,8 +110,8 @@ class Processor:
 
         # add sketches
         for sk in work_part.Sketches:
-            if sk.IsBlanked:
-                self.logger.debug("Skipping blanked sketch: {}".format( sk.Name ))
+            if sk.Feature.Suppressed:
+                self.logger.debug("Skipping suppressed sketch: {}".format( sk.Name ))
                 continue
 
             for wl, layer in config.WHITELISTED_SKETCHES:
