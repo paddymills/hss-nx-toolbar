@@ -206,17 +206,16 @@ class Processor:
             ])
         
         if not self.base_name:
-            job = self.get_property("JOB")
-            mark = self.get_property("MARK")
-
             part_name = self.work_part.Leaf
 
-            if job and mark and part_name.startswith(job) and mark in part_name:
-                self.base_name = "{}_{}".format(job, mark)
-            else:
-                self.base_name = part_name
-                for pattern in config.NAME_STRIP_PATTERNS:
-                    self.base_name = pattern.sub( "", self.base_name )
+            # job = self.get_property("JOB")
+            # mark = self.get_property("MARK")
+            # if job and mark and part_name.startswith(job) and mark in part_name:
+            #     self.base_name = "{}_{}".format(job, mark)
+
+            self.base_name = part_name
+            for pattern in config.NAME_STRIP_PATTERNS:
+                self.base_name = pattern.sub( "", self.base_name )
 
         if index:
             filename = "{}_{}".format(self.base_name, index)
