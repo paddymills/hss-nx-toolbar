@@ -37,7 +37,7 @@ impl MultiFileSelect {
             Ok(files) => {
                 for f in files {
                     match f.into_string() {
-                        Ok(filename) => res.push(filename),
+                        Ok(filename) => res.push(filename.to_uppercase()),
                         _ => ()
                     };
                 }
