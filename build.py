@@ -26,11 +26,11 @@ def build_py():
 
     zipapp.create_archive("src", "menus\\application\\hss_dxf_export.zip")
 
-    try:
-        zipapp.create_archive("src", "C:\\Users\\PMiller1\\nx\\12\\application\\hss_dxf_export.zip")
-        zipapp.create_archive("src", "C:\\Users\\PMiller1\\nx\\1953\\application\\hss_dxf_export.zip")
-    except FileNotFoundError:
-        pass
+    for ver in ["12", "NX1953", "NX2007"]:
+        try:
+            zipapp.create_archive("src", os.path.join("C:\\Users\\PMiller1\\nx", ver, "application", "hss_dxf_export.zip"))
+        except FileNotFoundError:
+            pass
 
     print("[{}] build complete.".format(datetime.now().isoformat()))
 
