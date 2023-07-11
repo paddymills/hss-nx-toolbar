@@ -139,6 +139,7 @@ class Processor:
             layer_moves[config.Layers.DETAIL].append( body_export.anno )
 
             if body.Name:
+                self.logger.debug("Adding body '{}' to exports".format(body.Name))
 
                 # skip blacklisted body
                 if any([ bl.search(body.Name) for bl in config.BLACKLISTED_BODIES ]):
@@ -156,6 +157,7 @@ class Processor:
                     body_export.name = self.dxf_export_filename(name=body.Name)
 
             else:
+                self.logger.debug("Adding body '{}' to exports".format(body.JournalIdentifier))
                 body_export.name = self.dxf_export_filename(index=i)
                 i += 1
 

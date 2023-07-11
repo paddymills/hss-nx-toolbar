@@ -13,7 +13,8 @@ class Layers(Enum):
     DETAIL  = 4
 
 
-LOGGING_LEVEL = logging.INFO
+# LOGGING_LEVEL = logging.INFO
+LOGGING_LEVEL = logging.DEBUG
 
 LOG_DIR = r"\\hssieng\Jobs\DXF\logs"
 DXF_OUTPUT_DIR = r"\\hssieng\SNDataPrd\DXF"

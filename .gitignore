@@ -1,4 +1,8 @@
-*.pyc
-*.zip
+# packaging
+target/
 
-*.log
+# python
+*.py[cod]
+
+# build
+*.zip

@@ -1,0 +1,18 @@
+#
+#     Copyright 1991 - 2013 Siemens Product Lifecycle Management Software Inc.
+#                                   All Rights Reserved.
+#
+###############################################################################
+# 
+#
+# This file should be used to override any standard NX environment variables.
+# The values defined here will take precedence over the NX values. This file 
+# will not be overwritten by an MR installation. 
+#
+# Override any variables here.
+
+
+#
+UGII_SITE_DIR=${USERPROFILE}\nx\NX1953\site
+UGII_CAM_BASE_DIR="T:\Program Files\UGS\NX1953\MACH\"
+
