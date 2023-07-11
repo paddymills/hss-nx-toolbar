@@ -66,7 +66,8 @@ if args.work:
 if args.all_open:
     parts_added = False
 
-    for part in session.Parts:
+    # for part in session.Parts:
+    for part in session.Parts.GetDisplayedParts():
         processor.add_parts_to_process( part.FullPath )
         parts_added = True
 
