@@ -1,0 +1,11 @@
+[package]
+name = "settings-gui"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "settings"
+crate-type = ["cdylib"]
+
+[dependencies]
+eframe = "0.19"
