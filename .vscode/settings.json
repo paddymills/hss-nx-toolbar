@@ -1,10 +1,8 @@
 {
-    "git.ignoreLimitWarning": true,
-    "python.autoComplete.extraPaths": ["C:\\Program Files\\Siemens\\NX1953\\NXBIN\\python"],
+    "python.analysis.extraPaths": [
+        "C:\\Program Files\\Siemens\\NX2007\\NXBIN\\python"
+    ],
     "python.analysis.diagnosticSeverityOverrides": {
         "reportMissingImports": "none"
-    },
-    "python.analysis.extraPaths": [
-        "C:\\Program Files\\Siemens\\NX1953\\NXBIN\\python"
-    ]
+    }
 }
