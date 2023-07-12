@@ -34,7 +34,6 @@ def main():
     ap.add_argument("-d", "--dest", action="append", help="base NX installation folder to deploy to")
     ap.add_argument("--dev", action="store_true", help="deploy to dev environment")
     ap.add_argument("-l", "--local", action="store_true", help="deploy to local NX installations")
-    ap.add_argument("--no-deploy", action="store_true", help="do not deploy (will not override --dev)")
     ap.add_argument("--skip-rs-build", action="store_true", help="skip building rust modules")
     ap.add_argument("-v", "--verbose", action="count", default=0, help="verbosity level")
     args = ap.parse_args()
@@ -56,7 +55,7 @@ def main():
         for entry in os.scandir(r"C:\Program Files\Siemens"):
             if entry.is_dir():
                 deploy(entry.path, locality="local")
-    if not args.no_deploy:
+    if args.dest:
         print("🚚 deploying...")
         for dest_dir in args.dest:
             deploy(dest_dir)
@@ -81,6 +80,13 @@ def build_rs():
             1) build module
             2) copy {module}.dll to TARGET_BIN/{module}.pyd
     """
+
+    # TODO: dynamically build against deployment python version
+    # 1) find python version by parsing {NX base dir}/NXBIN/python/Python{version}.dll
+    # 2) create(if needed) and activate virtualenv for this version
+    # 3) build modules
+    # 4) deactivate virtualenv
+
     for module in RS_MODULES:
         module_src = "rs-modules/{0}/target/release/{0}.dll".format(module)
         module_dest = os.path.join(TARGET_BIN, "{}.pyd".format(module))
