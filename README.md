@@ -17,13 +17,15 @@ cd filedialog-rs
 cargo build --release
 ```
 
+
 copy into application directory
 ```
 cp target/release/filedialog.dll ../menus/application/filedialog.pyd
+```
 
-   --- OR ---
-
-python -m build.py rs
+or pass the `--rs` flag to the build script to build 
+```
+python -m build.py --rs
 ```
 
 #### Python version

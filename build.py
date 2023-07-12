@@ -6,11 +6,13 @@ import zipapp
 from argparse import ArgumentParser
 from datetime import datetime
 
+# TODO: fix HSS NX config to align with "local" setup
+
 # TODO: parse these from ugii_env.dat
 DIRS = {
     "local": {
-        "menu": r"site\startup",
-        "bin": r"site\application",
+        "menu": r"UGALLIANCE\site\startup",
+        "bin": r"UGALLIANCE\site\application",
     },
     "eng": {
         "menu": r"UGALLIANCE\group\Manufacturing\startup",
@@ -18,40 +20,54 @@ DIRS = {
     },
 }
 
-TARGET_BIN = "target/site/application"
-TARGET_MENU = "target/site/startup"
+TARGET_DIR = "target/site"
+TARGET_BIN = os.path.join(TARGET_DIR, "application")
+TARGET_MENU = os.path.join(TARGET_DIR, "startup")
 
 def main():
     ap = ArgumentParser()
-    ap.add_argument("-d", "--dest", action="append", help="base nx installation folder to deploy to")
+    ap.add_argument("-d", "--dest", action="append", help="base NX installation folder to deploy to")
     ap.add_argument("--dev", action="store_true", help="deploy to dev environment")
+    ap.add_argument("-l", "--local", action="store_true", help="deploy to local NX installations")
     ap.add_argument("--no-deploy", action="store_true", help="do not deploy (will not override --dev)")
-    ap.add_argument("--rs", action="store_true", help="build rust modules")
+    # ap.add_argument("--rs", action="store_true", help="build rust modules")
     ap.add_argument("-v", "--verbose", action="count", default=0, help="verbosity level")
     args = ap.parse_args()
 
     if args.verbose > 1:
         print("Args:", args)
 
-    print("📦 packaging...")
-    os.makedirs(TARGET_BIN, exist_ok=True)
-    if args.rs:
-        build_rs()
-    build_py()
-    shutil.copytree("icons", TARGET_BIN, dirs_exist_ok=True)
-    shutil.copytree("menus", TARGET_MENU)
+    clean()
 
-    if args.dev:
-        print("🚚 deploying dev...")
-        deploy("NX1953", locality="local")
-        deploy("NX2007", locality="local")
-        # deploy(r"\\hssieng\hssedsserv\Program Files\UGS\NX1953 Test")
-    elif not args.no_deploy:
+    print("📦 packaging...")
+    shutil.copytree("icons", TARGET_BIN)
+    shutil.copytree("menus", TARGET_MENU)
+    build_rs()
+    build_py()
+
+    if args.local:
+        print("🚚 deploying local...")
+        for entry in os.scandir(r"C:\Program Files\Siemens"):
+            if entry.is_dir():
+                deploy(entry.path, locality="local")
+    if not args.no_deploy:
         print("🚚 deploying...")
         for dest_dir in args.dest:
             deploy(dest_dir)
 
-    print("🐍 [{}] build complete.".format(datetime.now().isoformat()))
+    print("🐍 [{:%d-%b-%y %I:%M%p}] build complete.".format(datetime.now()))
+
+def clean():
+    # reset target folder structure
+    if os.path.exists("target"):
+        shutil.rmtree("target")
+    os.makedirs(TARGET_DIR)
+
+    # remove all __pycache__
+    for root, _dirs, _files in os.walk("src"):
+        if root.endswith("__pycache__"):
+            shutil.rmtree(root)
+
 
 def build_rs():
     FILEDIALOG_FROM = r"filedialog-rs\target\release\filedialog.dll"
@@ -60,17 +76,13 @@ def build_rs():
     print("\t🦀 Building filedialog...")
 
     # generate filedialog
-    if not os.path.exists(FILEDIALOG_FROM):
-        os.system("cd filedialog-rs && cargo build --release && cd ..")
+    os.system("cargo build --manifest-path=filedialog-rs/Cargo.toml --quiet --release")
 
     # copy filedialog
     shutil.copy(FILEDIALOG_FROM, FILEDIALOG_TO)
 
 
 def build_py():
-
-    shutil.rmtree("src\\__pycache__", ignore_errors=True)
-
     """
         For each directory in /src
             1) zip directory into /target
@@ -88,15 +100,14 @@ def build_py():
 
 
 def deploy(base_dir, locality="eng"):
-    print("🚚 deploying to {} ...".format(base_dir))
+    print("🚚 deploying to {} {} ...".format(locality, base_dir))
 
-    deploy_dir("nx_ui", os.path.join(base_dir, DIRS[locality]["menu"]))
+    deploy_dir("target/site/startup", os.path.join(base_dir, DIRS[locality]["menu"]))
     print("\t📁 menus")
     
     dest = os.path.join(base_dir, DIRS[locality]["bin"])
-    deploy_dir("img", dest)
+    deploy_dir("target/site/application", dest)
     print("\t📁 icons")
-    deploy_dir("target", dest)
     print("\t📁 code files")
 
 
