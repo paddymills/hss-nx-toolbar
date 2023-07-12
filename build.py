@@ -20,6 +20,11 @@ DIRS = {
     },
 }
 
+RS_MODULES = [
+    "filedialog",
+    # "settings-gui",
+]
+
 TARGET_DIR = "target/site"
 TARGET_BIN = os.path.join(TARGET_DIR, "application")
 TARGET_MENU = os.path.join(TARGET_DIR, "startup")
@@ -30,7 +35,7 @@ def main():
     ap.add_argument("--dev", action="store_true", help="deploy to dev environment")
     ap.add_argument("-l", "--local", action="store_true", help="deploy to local NX installations")
     ap.add_argument("--no-deploy", action="store_true", help="do not deploy (will not override --dev)")
-    # ap.add_argument("--rs", action="store_true", help="build rust modules")
+    ap.add_argument("--skip-rs-build", action="store_true", help="skip building rust modules")
     ap.add_argument("-v", "--verbose", action="count", default=0, help="verbosity level")
     args = ap.parse_args()
 
@@ -42,7 +47,8 @@ def main():
     print("📦 packaging...")
     shutil.copytree("icons", TARGET_BIN)
     shutil.copytree("menus", TARGET_MENU)
-    build_rs()
+    if not args.skip_rs_build:
+        build_rs()
     build_py()
 
     if args.local:
@@ -70,30 +76,36 @@ def clean():
 
 
 def build_rs():
-    FILEDIALOG_FROM = r"filedialog-rs\target\release\filedialog.dll"
-    FILEDIALOG_TO = os.path.join(TARGET_BIN, "filedialog.pyd")
+    """
+        For each directory in /rs-modules
+            1) build module
+            2) copy {module}.dll to TARGET_BIN/{module}.pyd
+    """
+    for module in RS_MODULES:
+        module_src = "rs-modules/{0}/target/release/{0}.dll".format(module)
+        module_dest = os.path.join(TARGET_BIN, "{}.pyd".format(module))
 
-    print("\t🦀 Building filedialog...")
+        print("\t🦀 Building {}...".format(module))
 
-    # generate filedialog
-    os.system("cargo build --manifest-path=filedialog-rs/Cargo.toml --quiet --release")
+        # compile module
+        os.system("cargo build --manifest-path=rs-modules/{}/Cargo.toml --quiet --release".format(module))
 
-    # copy filedialog
-    shutil.copy(FILEDIALOG_FROM, FILEDIALOG_TO)
+        # copy filedialog
+        shutil.copy(module_src, module_dest)
 
 
 def build_py():
     """
         For each directory in /src
-            1) zip directory into /target
-            2) copy {directory}.py into /target
+            1) copy {directory}.py into TARGET_BIN
+            2) zip directory into TARGET_BIN
     """
     for entry in os.scandir("src"):
         if entry.is_dir():
             print("\t🗜️  {} zipping...".format(entry.name))
 
             # copy entrypoint
-            shutil.copy("src\\{}.py".format(entry.name), TARGET_BIN)
+            shutil.copy("src/{}.py".format(entry.name), TARGET_BIN)
 
             # create zip file
             zipapp.create_archive(entry.path, os.path.join(TARGET_BIN, entry.name + ".zip"))
