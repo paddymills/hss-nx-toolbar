@@ -13,6 +13,5 @@
 
 
 #
-UGII_SITE_DIR=${USERPROFILE}\nx\NX1953\site
+UGII_SITE_DIR=${USERPROFILE}\src\hss-nx-toolbar\target\site
 UGII_CAM_BASE_DIR="T:\Program Files\UGS\NX1953\MACH\"
-
