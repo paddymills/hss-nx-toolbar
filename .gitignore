@@ -6,3 +6,6 @@ target/
 
 # build
 *.zip
+
+# dev logs
+/logs/*.log
