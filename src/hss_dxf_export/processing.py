@@ -133,7 +133,7 @@ class Processor:
                 continue
 
             if not body.IsSolidBody and config.EXPORT_ONLY_SOLID_BODIES:
-                self.logger.debug("Skipping non solid body body: {}".format( body.Name ))
+                self.logger.debug("Skipping non solid body: {}".format( body.Name ))
                 continue
             
             body_export = SimpleNamespace()
