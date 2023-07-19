@@ -13,5 +13,6 @@
 
 
 #
-UGII_SITE_DIR=${USERPROFILE}\src\hss-nx-toolbar\target\site
-UGII_CAM_BASE_DIR="T:\Program Files\UGS\NX1953\MACH\"
+UGII_CAM_BASE_DIR="T:\Program Files\UGS\NX${NX_COMPATIBLE_BASE_RELEASE_VERSION}\MACH\"
+
+UGII_CUSTOM_DIRECTORY_FILE=${USERPROFILE}\src\hss-nx-toolbar\custom_dirs.dat
