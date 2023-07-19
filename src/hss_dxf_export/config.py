@@ -14,7 +14,6 @@ class Layers(Enum):
 
 
 # LOGGING_LEVEL = logging.INFO
-LOGGING_LEVEL = logging.DEBUG
 
 LOG_DIR = r"\\hssieng\Jobs\DXF\logs"
 DXF_OUTPUT_DIR = r"\\hssieng\SNDataPrd\DXF"
@@ -23,6 +22,9 @@ DXF_OUTPUT_FALLBACK_DIR = r"\\hssieng\Jobs\DXF\EXPORT"
 
 NOTE_SIZE_MULTIPLIER = 0.0125
 NOTE_OFFSET = 10.0
+
+# TODO: settings gui for this option and others (logging level, etc.)
+EXPORT_ONLY_SOLID_BODIES = True
 
 SINGLE_BODY_EXPORT_NAME = "SN_PART"
 

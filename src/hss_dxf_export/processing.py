@@ -131,6 +131,10 @@ class Processor:
             if body.IsBlanked:
                 self.logger.debug("Skipping blanked body: {}".format( body.Name ))
                 continue
+
+            if not body.IsSolidBody and config.EXPORT_ONLY_SOLID_BODIES:
+                self.logger.debug("Skipping non solid body body: {}".format( body.Name ))
+                continue
             
             body_export = SimpleNamespace()
             body_export.body = body
