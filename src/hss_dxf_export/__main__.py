@@ -10,22 +10,48 @@ import os
 
 import NXOpen
 
+session = NXOpen.Session.GetSession()
+processor = Processor()
+
 # setup logging
 user = os.getlogin()
 timestamp = date.today().isoformat()
 
-log_file = os.path.join( config.LOG_DIR, "{}_{}.log".format( timestamp, user ) )
+# add custom log level "TRACE"
+TRACE = 5
+logging.addLevelName(TRACE, "TRACE")
+def trace(self, message, *args, **kw):
+    self.log(TRACE, message, *args, **kw)
+logging.Logger.trace = trace
+
+
+# parse caller options
+parser = argparse.ArgumentParser()
+parser.add_argument("--select", action="store_true", help="Select parts to export")
+parser.add_argument("--work", action="store_true", help="Export work part only")
+parser.add_argument("--all_open", action="store_true", help="Export all open parts")
+parser.add_argument("--mfg", action="store", nargs="*", help="Export supplied part files")
+parser.add_argument("-d", "--dev", action="store_true", help="Development mode")
+parser.add_argument("-v", "--verbose", action="count", default=0, help="Increase logging verbosity")
+
+# parse arguments
+args, unparsed = parser.parse_known_args()
+
+if args.dev:
+    log_file = "logs/dev_log.log"
+else:
+    log_file = os.path.join( config.LOG_DIR, "{}_{}.log".format( timestamp, user ) )
 
 logging.basicConfig(
     filename=log_file,
     format='[%(asctime)s]%(levelname)s|%(name)s:%(message)s',
-    level=config.LOGGING_LEVEL
+    level=logging.INFO
 )
 logger = logging.getLogger(__name__)
 
-
-session = NXOpen.Session.GetSession()
-processor = Processor()
+logger.info("Process args: {}".format( args ))
+if unparsed:
+    logger.info("Unparsed args: {}".format( unparsed ))
 
 # log NX version
 nx_version = session.GetEnvironmentVariableValue("NX_FULL_VERSION")
@@ -33,19 +59,11 @@ if not nx_version:  # NX 12 and prior
     nx_version = session.GetEnvironmentVariableValue("UGII_FULL_VERSION")
 logger.info("NX Version: {}".format(nx_version))
 
-
-# parse caller options
-parser = argparse.ArgumentParser()
-parser.add_argument("--select", action="store_true")
-parser.add_argument("--work", action="store_true")
-parser.add_argument("--all_open", action="store_true")
-parser.add_argument("--mfg", action="store", nargs="*")
-
-# parse arguments
-args, unparsed = parser.parse_known_args()
-logger.info("Process args: {}".format( args ))
-if unparsed:
-    logger.info("Unparsed args: {}".format( unparsed ))
+# Logging level
+if args.verbose == 1 or args.dev:
+    logger.level = logging.DEBUG
+elif args.verbose > 1:
+    logger.level = TRACE
 
 # default -> select
 if not any( vars(args).values() ):
