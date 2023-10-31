@@ -110,8 +110,12 @@ class Processor:
 
         # add sketches
         for sk in work_part.Sketches:
-            if sk.Feature.Suppressed:
-                self.logger.debug("Skipping suppressed sketch: {}".format( sk.Name ))
+            try:
+                if sk.Feature.Suppressed:
+                    self.logger.debug("Skipping suppressed sketch: {}".format( sk.Name ))
+                    continue
+            except:
+                self.logger.debug("Skipping sketch: {}. Got error when querying sketch suppression".format( sk.Name ))
                 continue
 
             for wl, layer in config.WHITELISTED_SKETCHES:
