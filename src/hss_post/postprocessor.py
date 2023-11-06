@@ -60,6 +60,9 @@ class PostProcessor:
 
                 programs.append(prog)
 
+        # ensure tool paths are generated
+        part.CAMSetup.GenerateToolPath(programs)
+
         # postprocess all programs
         for program in programs:
             program.post()
