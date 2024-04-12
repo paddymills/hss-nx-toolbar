@@ -16,6 +16,8 @@ class PostProcessor:
         self.session  = NXOpen.Session.GetSession()
         self.logger = self.session.LogFile
 
+        self.log("HSS Postprocessor utility code running from `{}`".format(__file__))
+
         # get posts list
         post_cfg = self.session.GetEnvironmentVariableValue("UGII_CAM_POST_CONFIG_FILE")
         with open(post_cfg) as f:
@@ -61,13 +63,15 @@ class PostProcessor:
                 programs.append(prog)
 
         # ensure tool paths are generated
-        part.CAMSetup.GenerateToolPath(programs)
+        part.CAMSetup.GenerateToolPath([p.mfg_program for p in programs])
+
+        # export PDF files before posting or they won't show up in the HTML file
+        self.export_pdfs(programs)
 
         # postprocess all programs
         for program in programs:
             program.post()
 
-        self.export_pdfs(programs)
         self.log_banner("POSTPROCESSING COMPLETE")
 
         part.Save(SAVE_COMPONENTS, CLOSE_AFTER_SAVE)
@@ -93,7 +97,7 @@ class PostProcessor:
                     dwg.Open()
             
                     pdf_factory.SourceBuilder.SetSheets([dwg])
-                    for fn in program.pdf_files:
+                    for fn in program.pdfs:
                         pdf_factory.Filename = fn
                         pdf_factory.Commit()
 

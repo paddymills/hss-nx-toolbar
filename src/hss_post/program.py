@@ -26,10 +26,12 @@ class Program:
 
     def post(self):
         for post in self.posts:
-            posted_file = post.postprocess(self.part, self.mfg_program, self.name)
-            self.pdf_files.append(
-                os.path.join(os.path.dirname(posted_file), self.name + '.pdf')
-            )
+            post.postprocess(self.part, self.mfg_program, self.name)
+
+    @property
+    def pdfs(self):
+        for post in self.posts:
+            yield post.filename(self.part, self.name, '.pdf')
 
     @property
     def name(self):

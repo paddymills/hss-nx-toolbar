@@ -55,15 +55,16 @@ class Post:
                 return False
 
         return True
+    
+    def filename(self, part, filename, ext):
+        return os.path.join(os.path.dirname(part.FullPath), self.folder, filename + ext)
 
     def postprocess(self, part, program, filename):
         # set posting directory
-        post_dir = os.path.join(os.path.dirname(part.FullPath), self.folder)
+        nc_filename = self.filename(part, filename, ext=self.ext)
 
-        if not os.path.exists(post_dir):
-            os.mkdir(post_dir)
-
-        nc_filename = os.path.join(post_dir, filename + self.ext)
+        if not os.path.exists(os.path.dirname(part.FullPath)):
+            os.mkdir(os.path.dirname(part.FullPath))
 
         try:
             part.CAMSetup.PostprocessWithPostModeSetting(
