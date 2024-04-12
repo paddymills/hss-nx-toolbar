@@ -1,21 +1,17 @@
 
+#![allow(dead_code)]
+
 pub mod fileselect;
 pub use fileselect::MultiFileSelect;
 
 use native_windows_gui::NativeUi;
 use pyo3::prelude::*;
 
-#[pymodule]
-fn filedialog(_py: Python, pymod: &PyModule) -> PyResult<()> {
-    
-    #[pyfn(pymod, "get_files")]
-    fn get_files(_py: Python, dir: &str) -> PyResult<Vec<String>> {
-        let out = gui(dir);
+#[pyfunction]
+fn get_files(_py: Python, dir: &str) -> PyResult<Vec<String>> {
+    let out = gui(dir);
 
-        Ok(out)
-    }
-
-    Ok(())
+    Ok(out)
 }
 
 fn gui(dir: &str) -> Vec<String> {

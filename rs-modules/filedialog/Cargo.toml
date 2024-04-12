@@ -9,8 +9,8 @@ crate-type = ["cdylib"]
 
 [dependencies]
 native-windows-gui = "1.0.11"
-native-windows-derive = "1.0.3"
+native-windows-derive = "1.0.5"
 
 [dependencies.pyo3]
-version = "0.19.1"
+version = "0.21.1"
 features = ["extension-module"]
