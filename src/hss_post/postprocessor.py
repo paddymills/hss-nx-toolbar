@@ -77,6 +77,8 @@ class PostProcessor:
         part.Save(SAVE_COMPONENTS, CLOSE_AFTER_SAVE)
 
     def export_pdfs(self, programs):
+        self.log(">>> Generating PDF files")
+
         part = self.session.Parts.Work
 
         # pdf export options
@@ -98,6 +100,7 @@ class PostProcessor:
             
                     pdf_factory.SourceBuilder.SetSheets([dwg])
                     for fn in program.pdfs:
+                        self.log("\t>>> Generating PDF " + fn)
                         pdf_factory.Filename = fn
                         pdf_factory.Commit()
 
