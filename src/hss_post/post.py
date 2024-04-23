@@ -57,7 +57,12 @@ class Post:
         return True
     
     def filename(self, part, filename, ext):
-        return os.path.join(os.path.dirname(part.FullPath), self.folder, filename + ext)
+        folder = os.path.join(os.path.dirname(part.FullPath), self.folder)
+
+        if not os.path.exists(folder):
+            os.mkdir(folder)
+        
+        return os.path.join(folder, filename + ext)
 
     def postprocess(self, part, program, filename):
         # set posting directory
