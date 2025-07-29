@@ -18,7 +18,7 @@ class Processor:
 
     def __init__(self):
         self.session = NXOpen.Session.GetSession()
-        
+
         self.parts_to_process = []
         self.result = {
             "success": [],
@@ -80,7 +80,7 @@ class Processor:
         test = self.get_property("TEST")
         if spec and grade and test:
             attrs["MATERIAL"] = "{}-{}{}".format(spec, grade, test)
-        
+
         # handle body (thickness and note loc/size)
         body_pts = BodyBound(body)
         attrs["THICKNESS"] = body_pts.max_z - body_pts.min_z
@@ -139,7 +139,7 @@ class Processor:
             if not body.IsSolidBody and config.EXPORT_ONLY_SOLID_BODIES:
                 self.logger.debug("Skipping non solid body: {}".format( body.Name ))
                 continue
-            
+
             body_export = SimpleNamespace()
             body_export.body = body
 
@@ -201,9 +201,9 @@ class Processor:
         # return to wrapper to get property value
         return prop
 
-    
+
     def dxf_export_filename(self, index=None, name=None):
-        
+
         directory = os.path.join( os.path.dirname( self.work_part.FullPath ), "DXF" )
         try:
             if not os.path.exists(directory):
@@ -214,7 +214,7 @@ class Processor:
                 "Cannot write to part's parent directory. Will save part to:",
                 "\t" + directory,
             ])
-        
+
         if not self.base_name:
             part_name = self.work_part.Leaf
 
@@ -251,7 +251,7 @@ class Processor:
             self.logger.debug("Move Layer: {} -> {}".format(layer.name, layer.value))
             work_part.Layers.MoveDisplayableObjects( layer.value, entities )
 
-    
+
     def orient_top_view(self):
 
         if not self.session.IsBatch:

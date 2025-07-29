@@ -3,11 +3,11 @@
 #                                   All Rights Reserved.
 #
 ###############################################################################
-# 
+#
 #
 # This file should be used to override any standard NX environment variables.
-# The values defined here will take precedence over the NX values. This file 
-# will not be overwritten by an MR installation. 
+# The values defined here will take precedence over the NX values. This file
+# will not be overwritten by an MR installation.
 #
 # Override any variables here.
 
