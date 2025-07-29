@@ -48,6 +48,7 @@ WHITELISTED_SKETCHES = (
     ( regex("ZINC"),        Layers.MARKING ),
     ( regex("DOR"),         Layers.NO_CUT  ),
     ( regex("NO[-_]?CUT"),  Layers.NO_CUT  ),
+    ( regex("HEATNUM"),     Layers.MARKING )
 )
 
 BLACKLISTED_BODIES = (
