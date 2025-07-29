@@ -37,7 +37,7 @@ class Processor:
 
 
     def process_parts(self):
-        
+
         while self.parts_to_process:
             part = self.parts_to_process.pop(0)
 
@@ -99,6 +99,9 @@ class Processor:
 
     @decorators.dwgdxf
     def export_dxf(self):
+        model_schema_version = int(self.get_property("HSS_SCHEMA_VERSION") or "0")
+        self.logger.info("Model schema version: {}, ({})".format(model_schema_version, type(model_schema_version)))
+
         work_part = self.work_part
         self.base_name = None
 
@@ -161,6 +164,12 @@ class Processor:
                     exports.bodies = [ body_export ]
                     break
 
+                elif model_schema_version > 1 and body.Name in config.PROP_NAMED_BODIES:
+                    self.logger.debug("Body naming property encountered.")
+                    name = self.get_property(body.Name)
+                    self.logger.debug("Body {} property value: {}".format(body.Name, name))
+
+                    body_export.name = self.dxf_export_filename(name=name or body.Name)
                 else:
                     body_export.name = self.dxf_export_filename(name=body.Name)
 
