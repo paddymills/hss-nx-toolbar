@@ -38,14 +38,14 @@ parser.add_argument("-v", "--verbose", action="count", default=0, help="Increase
 args, unparsed = parser.parse_known_args()
 
 if args.dev:
-    log_file = "logs/dev_log.log"
+    log_file = r"C:\temp\nx_dxf_export.log"
 else:
     log_file = os.path.join( config.LOG_DIR, "{}_{}.log".format( timestamp, user ) )
 
 logging.basicConfig(
     filename=log_file,
     format='[%(asctime)s]%(levelname)s|%(name)s:%(message)s',
-    level=logging.INFO
+    level=logging.DEBUG
 )
 logger = logging.getLogger(__name__)
 
