@@ -2,7 +2,6 @@
 import os
 
 import config
-import filedialog
 
 import NXOpen
 
@@ -46,6 +45,7 @@ def question(msg, title="Question"):
 
 
 def get_files_to_process():
+    import filedialog
 
     # get latest load path
     session = NXOpen.Session.GetSession()
