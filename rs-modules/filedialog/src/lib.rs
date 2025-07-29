@@ -1,4 +1,3 @@
-
 #![allow(dead_code)]
 
 pub mod fileselect;
@@ -23,4 +22,9 @@ fn gui(dir: &str) -> Vec<String> {
     native_windows_gui::dispatch_thread_events();
 
     app.get_files()
+}
+
+#[pymodule(name = "filedialog")]
+fn exports(m: &Bound<'_, PyModule>) -> PyResult<()> {
+    m.add_function(wrap_pyfunction!(get_files, m)?)
 }
