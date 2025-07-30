@@ -13,7 +13,7 @@ class Point:
         self.Y = y
         self.Z = z
 
-    
+
     def __eq__(self, other):
         if self.X == other.X:
             if self.Y == other.Y:
@@ -50,7 +50,7 @@ class BodyBound:
 
         return False
 
-    
+
     def coverage(self, other):
         # returns the percentage of points in self's body
         #   that are also in other's body
@@ -63,7 +63,7 @@ class BodyBound:
 
         return coincident_points / len(self._points)
 
-    
+
     def is_parent(self, other):
         self_cov = self.coverage(other)
         other_cov = other.coverage(self)
@@ -124,7 +124,7 @@ class BodyBound:
     def len_z(self):
         return self._len("Z")
 
-    
+
     def _extrema(self, axis_attr, minmax_func):
         return minmax_func([ getattr(x, axis_attr) for x in self._points] )
 

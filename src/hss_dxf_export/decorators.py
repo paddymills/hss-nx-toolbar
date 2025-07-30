@@ -27,7 +27,7 @@ def process_part(func):
         close = True
 
         self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Load Part")
-        
+
         part_load_status = None
         try:
             # look for part in open parts
@@ -41,7 +41,7 @@ def process_part(func):
 
             else:
                 _, part_load_status = self.session.Parts.OpenActiveDisplay(filename, NXOpen.DisplayPartOption.AllowAdditional)
-                
+
                 if part_load_status.NumberUnloadedParts > 0:
                     _part = part_load_status.GetPartName(0)
                     _desc = part_load_status.GetStatusDescription(0)
@@ -50,7 +50,7 @@ def process_part(func):
                         raise Exception("{}: {}".format(_desc, _part))
 
             self.session.ApplicationSwitchImmediate("UG_APP_MODELING")
-            
+
             initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Initial State")
             self.logger.info("Processing part: {}".format(self.work_part.FullPath))
 
@@ -71,11 +71,11 @@ def process_part(func):
             if part_load_status:
                 part_load_status.Dispose()
 
-            if close and self.work_part.FullPath == filename:    
+            if close and self.work_part.FullPath == filename:
                 part_close_responses = self.session.Parts.NewPartCloseResponses()
                 self.work_part.Close(NXOpen.BasePart.CloseWholeTree.FalseValue, NXOpen.BasePart.CloseModified.UseResponses, part_close_responses)
                 part_close_responses.Dispose()
-                
+
                 self.session.ApplicationSwitchImmediate("UG_APP_NOPART")
 
     return _impl
@@ -95,7 +95,7 @@ def annotation(func):
 
         work_part.Views.WorkView.UpdateCustomSymbols()
         work_part.Drafting.SetTemplateInstantiationIsComplete(True)
-        
+
         # turn off sheet display
         work_part.Drafting.SetDrawingLayout(False)
 
@@ -133,10 +133,10 @@ def dwgdxf(func):
         #   Menu: File->Export->AutoCAD DXF/DWG...
         # ----------------------------------------------
         self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "AutoCAD DXF/DWG Export")
-        
+
         dxfdwg_creator = self.session.DexManager.CreateDxfdwgCreator()
         dxfdwg_creator.SettingsFile = os.path.join( self.session.GetEnvironmentVariableValue("UGII_CUSTOM_DIR"), "DXFDWG", "dxfdwg.def" )
-        
+
         dxfdwg_creator.AutoCADRevision = NXOpen.DxfdwgCreator.AutoCADRevisionOptions.R2013
         dxfdwg_creator.WidthFactorMode = NXOpen.DxfdwgCreator.WidthfactorMethodOptions.AutomaticCalculation
 
@@ -146,16 +146,16 @@ def dwgdxf(func):
         dxfdwg_creator.ExportSelectionBlock.SelectionScope = NXOpen.ObjectSelector.Scope.SelectedObjects
         dxfdwg_creator.ExportFacesAs = NXOpen.DxfdwgCreator.ExportFacesAsOptions.PolylineMesh
         dxfdwg_creator.ExportSplinesAs = NXOpen.DxfdwgCreator.ExportSplinesAsOptions.Polyline3D
-        
+
         dxfdwg_creator.ViewEditMode = True
         dxfdwg_creator.FlattenAssembly = True
 
         dxfdwg_creator.InputFile = self.work_part.FullPath
-        
+
         # ----------------------------------------------
-        #   Dialog Begin AutoCAD DXF/DWG Export Wizard 
+        #   Dialog Begin AutoCAD DXF/DWG Export Wizard
         # ----------------------------------------------
-        
+
         exports = func(self)
 
         # add body
@@ -175,12 +175,12 @@ def dwgdxf(func):
                 os.remove( body_export.name )
 
             self.logger.info("Export body: {}".format( body_export.name ))
-        
+
             dxf_result  = dxfdwg_creator.Commit()
             dxfdwg_creator.ExportSelectionBlock.SelectionComp.Clear()
-        
+
         dxfdwg_creator.Destroy()
-    
+
     return _impl
 
 def part_property(func):
