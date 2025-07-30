@@ -28,20 +28,14 @@ EXPORT_ONLY_SOLID_BODIES = True
 
 SINGLE_BODY_EXPORT_NAME = "SN_PART"
 
-PROP_NAMED_BODIES = ["PARENT", "CHILD1", "CHILD2", "CHILD3", "CHILD4", "CHILD5"]
+BODY_NAME_PROP_SUFFIX = "_NAME"
 PROPS = {
-    "JOB":      ( "JobNo", "JOB_NUMBER" ),
-    "MARK":     ( "Mark", "PIECE_MARK" ),
-    "DRAWING":  ( "DWG_NUMBER" ),
-    "SPEC":     ( "STEELSPEC" ),
-    "GRADE":    ( "STEELGRADE" ),
-    "TEST":     ( "STEELTEST" ),
-    "PARENT":   ( "PARENT_NAME" ),
-    "CHILD1":   ( "CHILD1_NAME" ),
-    "CHILD2":   ( "CHILD2_NAME" ),
-    "CHILD3":   ( "CHILD3_NAME" ),
-    "CHILD4":   ( "CHILD4_NAME" ),
-    "CHILD5":   ( "CHILD5_NAME" )
+    "JOB":      [ "JobNo", "JOB_NUMBER" ],
+    "MARK":     [ "Mark", "PIECE_MARK" ],
+    "DRAWING":  [ "DWG_NUMBER" ],
+    "SPEC":     [ "STEELSPEC" ],
+    "GRADE":    [ "STEELGRADE" ],
+    "TEST":     [ "STEELTEST" ],
 }
 
 WHITELISTED_SKETCHES = (
