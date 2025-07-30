@@ -1,5 +1,6 @@
 
 from datetime import datetime
+import logging
 import os
 import re
 
@@ -10,6 +11,8 @@ import NXOpen
 import NXOpen.Annotations
 import NXOpen.Drawings
 
+
+logger = logging.getLogger(__name__)
 
 # method decorators (or wrappers) that hold mostly NX logic
 # this way the main process script can abstract away most of the NX functions
@@ -192,10 +195,12 @@ def part_property(func):
 
         work_part = self.work_part
         for prop in props:
+            self.logger.debug("Searching for property: {}".format(prop))
             user_attr_args = (prop, NXOpen.NXObject.AttributeType.Any, -1)
 
             if work_part.HasUserAttribute(*user_attr_args):
                 value = work_part.GetUserAttribute(*user_attr_args).StringValue
+                self.logger.info("Found property {}: {}".format(prop, value))
 
                 if EMPTY_PROPERTY_PATTERN.match(value):
                     continue
