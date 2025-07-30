@@ -37,15 +37,25 @@ parser.add_argument("-v", "--verbose", action="count", default=0, help="Increase
 # parse arguments
 args, unparsed = parser.parse_known_args()
 
+if session.GetEnvironmentVariableValue("NX_ENV") == "development":
+    args.dev = True
+
 if args.dev:
     log_file = r"C:\temp\nx_dxf_export.log"
 else:
     log_file = os.path.join( config.LOG_DIR, "{}_{}.log".format( timestamp, user ) )
 
+# Logging level
+logging_level = logging.INFO
+if args.verbose == 1 or args.dev:
+    logging_level = logging.DEBUG
+elif args.verbose > 1:
+    logging_level = TRACE
+
 logging.basicConfig(
     filename=log_file,
     format='[%(asctime)s]%(levelname)s|%(name)s:%(message)s',
-    level=logging.DEBUG
+    level=logging_level
 )
 logger = logging.getLogger(__name__)
 
@@ -58,12 +68,6 @@ nx_version = session.GetEnvironmentVariableValue("NX_FULL_VERSION")
 if not nx_version:  # NX 12 and prior
     nx_version = session.GetEnvironmentVariableValue("UGII_FULL_VERSION")
 logger.info("NX Version: {}".format(nx_version))
-
-# Logging level
-if args.verbose == 1 or args.dev:
-    logger.level = logging.DEBUG
-elif args.verbose > 1:
-    logger.level = TRACE
 
 # default -> select
 if not any( vars(args).values() ):

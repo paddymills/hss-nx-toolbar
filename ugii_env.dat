@@ -16,3 +16,5 @@
 UGII_CAM_BASE_DIR="T:\Program Files\UGS\NX${NX_COMPATIBLE_BASE_RELEASE_VERSION}\MACH\"
 
 UGII_CUSTOM_DIRECTORY_FILE=${USERPROFILE}\src\hss-nx-toolbar\custom_dirs.dat
+
+NX_ENV="devlopment"
