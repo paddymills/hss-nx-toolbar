@@ -32,14 +32,14 @@ class BodyBound:
             for vert in edge.GetVertices():
                 self.add_point(vert)
 
-    
+
     def add_point(self, point):
         _x = round(point.X, 4)
         _y = round(point.Y, 4)
         _z = round(point.Z, 4)
 
-        logger.debug("Adding point ({} , {}, {})".format(_x, _y, _z))
-        
+        logger.trace("Adding point ({} , {}, {})".format(_x, _y, _z))
+
         self._points.append( Point(_x, _y, _z) )
 
 
