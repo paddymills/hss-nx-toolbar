@@ -1,6 +1,6 @@
 {
     "python.analysis.extraPaths": [
-        "C:\\Program Files\\Siemens\\NX2007\\NXBIN\\python"
+        "C:\\Program Files\\Siemens\\NX2412\\NXBIN\\python"
     ],
     "python.analysis.diagnosticSeverityOverrides": {
         "reportMissingImports": "none"
