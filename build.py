@@ -22,7 +22,6 @@ DIRS = {
 
 RS_MODULES = [
     "filedialog",
-    # "settings-gui",
 ]
 
 TARGET_DIR = "target/site"
