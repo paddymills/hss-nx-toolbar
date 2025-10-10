@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+:root {
+  --bun-white: #fbf0df;
+  --bun-black: #242424;
+}
+
+@layer base {
+  :root {
+    @apply bg-[var(--bun-black)] font-sans;
+  }
+
+  body {
+    @apply flex flex-col min-w-[320px] min-h-screen relative m-0 text-[var(--bun-white)] ;
+  }
+
+  .bordered {
+    @apply  rounded-xl border-2 border-[var(--bun-white)] hover:bg-[var(--bun-black)] transition-colors duration-200;
+  }
+
+  .lighten {
+    @apply text-[var(--bun-white)] opacity-70 hover:opacity-100 transition-opacity duration-200;
+  }
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  opacity: 0.05;
+  background: url("@public/nx.ico");
+  background-size: 64px;
+  transform: rotate(-12deg) scale(1.35);
+  animation: slide 5s linear infinite;
+  pointer-events: none;
+}
+
+@keyframes slide {
+  from {
+    background-position: 0 0;
+  }
+  to {
+    background-position: 64px 64px;
+  }
+}
+
+@media (prefers-reduced-motion) {
+  *,
+  ::before,
+  ::after {
+    animation: none !important;
+  }
+}
