@@ -8,9 +8,9 @@
       "type": "shell",
       "command": "watchexec",
       "args": ["-e", "py", ".\\build.py"],
-      "runOptions": {
-        "runOn": "folderOpen"
-      }
+    //   "runOptions": {
+    //     "runOn": "folderOpen"
+    //   }
     }
   ]
 }
