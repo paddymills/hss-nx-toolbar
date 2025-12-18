@@ -20,6 +20,7 @@ Make sure python version matches what NX needs, otherwise NX will complain about
 NX Python versions:
 - NX 12: Python 3.6
 - NX 1953: Python 3.8
+- NX 2412: Python 3.11
 
 if multiple versions are installed, you can set an environment variable to coerce pyo3 into using the right interpreter
 ```
