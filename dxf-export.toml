@@ -1,0 +1,44 @@
+# DXF export configuration file
+# for Toml configuration format see https://toml.io/en/
+
+[logging]
+logging_level = "warning" # debug, info, warning, error, critical
+tcp_port = 5001  # port for TCP logging server, set to 0 to disable
+
+[paths]
+logs = '\\hssieng\Jobs\DXF\logs'
+output = '\\hssieng\SNDataPrd\DXF'
+part_files = '\\hssieng\Jobs'
+strip_patterns = ["_mfg", "_copy"]  # patterns to strip from export names
+
+[notes]
+size_multiplier = 0.0125
+offset = 10.0
+
+[properties]
+body_name_suffix = "_PART"
+empty_pattern = ["^[ xX-]+$"]  # regex patterns for empty property values
+job = ["JobNo", "JOB_NUMBER"]
+mark = ["Mark", "PIECE_MARK"]
+drawing = ["DWG_NUMBER"]
+spec = ["STEELSPEC"]
+grade = ["STEELGRADE"]
+test = ["STEELTEST"]
+
+[layers.body]
+layer = 1
+# if any body has this name, only that body will be exported
+single_body_name = "SN_PART"
+blacklist = ["SHIM"]
+only_solid_bodies = true
+
+[layers.marking]
+layer = 2
+sketches = ["ZINC", "HEATNUM", "MARKING"]
+
+[layers.no_cut]
+layer = 3
+sketches = ["NO[-_]?CUT"]
+
+[layers.detail]
+layer = 4
