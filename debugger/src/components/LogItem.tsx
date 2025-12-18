@@ -6,20 +6,23 @@ const TODAY = new Date(Date.now()).getDate();
 
 const levelColor = (level: string) => {
   switch (level) {
-    case "error":
+    case "CRITICAL":
+      // TODO: purple?
+      return "bg-purple-100 text-purple-800";
+    case "ERROR":
       return "bg-red-100 text-red-800";
-    case "warn":
+    case "WARNING":
       return "bg-yellow-100 text-yellow-800";
-    case "debug":
+    case "DEBUG":
       return "bg-green-100 text-green-800";
-    case "info":
+    case "INFO":
     default:
       return "bg-blue-100 text-blue-800";
   }
 };
 
 function LogLevelChip({ level, className }: { level: string, className?: string }) {
-  const defaultStyles = "uppercase px-2 py-1 w-[8ch] rounded-md font-bold text-sm text-center";
+  const defaultStyles = "uppercase py-1 w-[8ch] rounded-md font-bold text-sm text-center";
 
   return (
     <span className={twMerge(levelColor(level), defaultStyles, className)}>{level}</span>
