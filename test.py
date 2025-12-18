@@ -10,14 +10,14 @@ import NXOpen
 logging.basicConfig(level=logging.DEBUG)
 
 
-class NXLogger(logging.Logger):
+class NXLogger(logging.Handler):
     def __init__(self, name, level=logging.INFO):
         super().__init__(name, level)
         self.session = NXOpen.Session.GetSession()
 
-    def log(self, message):
+    def emit(self, record):
         # log to NX log file
-        self.session.LogFile.WriteLine(message)
+        self.session.LogFile.WriteLine(record.getMessage())
 
 
 class HttpHandler(logging.Handler):
@@ -71,9 +71,11 @@ class HttpHandler(logging.Handler):
 
 
 http_handler = HttpHandler(logging.DEBUG)
+nx_handler = NXLogger(logging.DEBUG)
 
 l = logging.getLogger(__name__)
 l.addHandler(http_handler)
+l.addHandler(nx_handler)
 
 s = NXOpen.Session.GetSession()
 
