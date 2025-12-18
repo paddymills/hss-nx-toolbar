@@ -24,6 +24,12 @@ export function LogViewer() {
 
   return (
     <div className="flex flex-col justify-center-safe items-center-safe w-full lg:w-[80%]">
+      <button
+        className="lg:mx-[20%] mb-2 p-2 bg-linear-to-r/shorter from-indigo-500 via-rose-500 to-indigo-500 text-white rounded-full"
+        onClick={() => setMessages([])}
+      >
+        Clear
+      </button>
       {messages.map((msg, index) => (
         <LogItem key={index} {...msg} />
       ))}
