@@ -4,7 +4,6 @@ import logging
 import os
 import re
 
-import config
 import dialog
 
 import NXOpen
@@ -57,6 +56,7 @@ def process_part(func):
             initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Initial State")
             self.logger.info("Processing part: {}".format(self.work_part.FullPath))
 
+            # call decorated function
             func(self, filename)
 
             self.session.UndoToMark(initial_state, None)
@@ -187,7 +187,7 @@ def dwgdxf(func):
     return _impl
 
 def part_property(func):
-    EMPTY_PROPERTY_PATTERN = re.compile(r"^[ xX]+$")
+    EMPTY_PROPERTY_PATTERN = re.compile(r"^[ xX-]+$")
 
     def _impl(self, *args):
 

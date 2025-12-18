@@ -1,58 +1,10 @@
 
-import logging
+import os
+import tomllib
 
-from enum import Enum
-import re
-regex = lambda x: re.compile(x, re.IGNORECASE)
-
-
-class Layers(Enum):
-    PROFILE = 1
-    MARKING = 2
-    NO_CUT  = 3
-    DETAIL  = 4
-
-
-# LOGGING_LEVEL = logging.INFO
-
-LOG_DIR = r"\\hssieng\Jobs\DXF\logs"
-DXF_OUTPUT_DIR = r"\\hssieng\SNDataPrd\DXF"
-NX_PART_FILES_DIR = r"\\hssieng\Jobs"
-DXF_OUTPUT_FALLBACK_DIR = r"\\hssieng\Jobs\DXF\EXPORT"
-
-NOTE_SIZE_MULTIPLIER = 0.0125
-NOTE_OFFSET = 10.0
-
-# TODO: settings gui for this option and others (logging level, etc.)
-EXPORT_ONLY_SOLID_BODIES = True
-
-SINGLE_BODY_EXPORT_NAME = "SN_PART"
-
-BODY_NAME_PROP_SUFFIX = "_NAME"
-PROPS = {
-    "JOB":      [ "JobNo", "JOB_NUMBER" ],
-    "MARK":     [ "Mark", "PIECE_MARK" ],
-    "DRAWING":  [ "DWG_NUMBER" ],
-    "SPEC":     [ "STEELSPEC" ],
-    "GRADE":    [ "STEELGRADE" ],
-    "TEST":     [ "STEELTEST" ],
-}
-
-WHITELISTED_SKETCHES = (
-    ( regex("ZINC"),        Layers.MARKING ),
-    ( regex("DOR"),         Layers.NO_CUT  ),
-    ( regex("NO[-_]?CUT"),  Layers.NO_CUT  ),
-    ( regex("HEATNUM"),     Layers.MARKING )
-)
-
-BLACKLISTED_BODIES = (
-    regex("SHIM"),
-)
-
-
-NAME_STRIP_PATTERNS = [
-    regex("_mfg"),
-    regex("_copy"),
-]
-
-HANDLED_READ_ONLY = False
+def load_config():
+    """Load configuration from config.toml file."""
+    config_path = os.path.join(os.environ['NX_SITE_DIR'], 'dxf-export.toml')
+    with open(config_path) as f:
+        config = tomllib.load(f)
+    return config

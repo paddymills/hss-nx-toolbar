@@ -9,7 +9,6 @@ import config
 import dialog
 import decorators
 
-import NXOpen
 import NXOpen.Features
 import NXOpen.Layer
 
