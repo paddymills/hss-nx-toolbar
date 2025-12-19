@@ -1,13 +1,12 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
-import logging
 
 import dialog
 from part import AlreadyOpenPart, NeedsOpenPart
 
 import NXOpen
 
-logger = logging.getLogger(__name__)
+from tracing import debug, info, warning, error
 
 
 IGNORE_OPEN_ERRORS = [
@@ -38,21 +37,26 @@ def get_processor_from_args():
 
     # parse arguments
     args, unparsed = parser.parse_known_args()
-    logger.info("Process args: {}".format(args))
-    if unparsed:
-        logger.warning("Unparsed args: {}".format(unparsed))
+    info("Process args: {}".format(args))
 
-    if args.work:
-        return WorkPartProcessor()
+    try:
+        if unparsed:
+            warning("Unparsed args: {}".format(unparsed))
 
-    if args.all_open:
-        return AllOpenPartsProcessor()
+        if args.work:
+            return WorkPartProcessor()
 
-    if args.mfg:
-        return FilenamePartsProcessor(args.mfg)
-    
-    # default (args.select or no valid args)
-    return FilenamePartsProcessor(dialog.get_files_to_process())
+        if args.all_open:
+            return AllOpenPartsProcessor()
+
+        if args.mfg:
+            return FilenamePartsProcessor(args.mfg)
+
+        # default (args.select or no valid args)
+        return FilenamePartsProcessor(dialog.get_files_to_process())
+    except Exception as e:
+        error(e)
+        dialog.error("Failed to create processor.\nSee log for details.")
 
 
 class AbstractNxFileProcessor(ABC):
@@ -98,7 +102,7 @@ class AbstractNxFileProcessor(ABC):
         # check that Display Message when Modifying Read-Only Parts is not set
         # (Customer Defaults > Assemblies > Miscellaneous > Display Message when Modifying Read-Only Parts)
         read_only_warn_mod = self.session.OptionsManager.GetIntValue("Assemblies_DisplayReadOnly")
-        logging.getLogger(__name__).debug("Assemblies Warn Read-Only state: {}".format(read_only_warn_mod))
+        debug("Assemblies Warn Read-Only state: {}".format(read_only_warn_mod))
 
         if read_only_warn_mod == 1:
             msg = READ_ONLY_WARNING.split("\n")

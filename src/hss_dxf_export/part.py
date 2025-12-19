@@ -3,7 +3,7 @@ import logging
 
 import NXOpen
 
-logger = logging.getLogger(__name__)
+from tracing import info, debug
 
 
 class NxPart(ABC):
@@ -59,7 +59,7 @@ class NxPart(ABC):
 
     def export_dxf(self):
         model_schema_version = int(self.get_property("MODEL_SCHEMA_VERSION") or 0)
-        logger.info("Model schema version: {}".format(model_schema_version))
+        info("Model schema version: {}".format(model_schema_version))
 
         self.set_work_part()
         self.orient_top_view()
@@ -101,7 +101,7 @@ class NxPart(ABC):
         )
         self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, desc)
 
-        logger.debug(desc)
+        debug(desc)
         self.part.Layers.MoveDisplayableObjects(layer, objects)
 
 
