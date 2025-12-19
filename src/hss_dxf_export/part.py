@@ -3,7 +3,8 @@ import re
 
 import NXOpen
 
-from tracing import info, debug
+from tracing import info, debug, http_handler
+from config import config
 
 
 class NxPart(ABC):
@@ -58,13 +59,15 @@ class NxPart(ABC):
         return self._properties
 
     def export_dxf(self):
+        http_handler.set_context("partFile", self.part.FullPath)
+
         initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Initial State")
         info("Processing part: {}".format(self._part.FullPath))
+        self.set_work_part()
 
         model_schema_version = int(self.get_property("MODEL_SCHEMA_VERSION") or 0)
         info("Model schema version: {}".format(model_schema_version))
 
-        self.set_work_part()
         self.orient_top_view()
         # TODO: export dxf logic
 
