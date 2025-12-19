@@ -58,12 +58,17 @@ class NxPart(ABC):
         return self._properties
 
     def export_dxf(self):
+        initial_state = self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, "Initial State")
+        info("Processing part: {}".format(self._part.FullPath))
+
         model_schema_version = int(self.get_property("MODEL_SCHEMA_VERSION") or 0)
         info("Model schema version: {}".format(model_schema_version))
 
         self.set_work_part()
         self.orient_top_view()
         # TODO: export dxf logic
+
+        self.session.UndoToMark(initial_state, None)
 
     def get_bodies_to_export(self):
         pass
@@ -91,6 +96,8 @@ class NxPart(ABC):
             self.part.ModelingViews.WorkView.Orient(
                 NXOpen.View.Canned.Top, NXOpen.View.ScaleAdjustment.Fit
             )
+
+        # self.session.ApplicationSwitchImmediate("UG_APP_MODELING")
 
     def move_to_layer(self, layer: int, *objects: NXOpen.DisplayableObject):
         # ----------------------------------------------
