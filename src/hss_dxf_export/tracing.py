@@ -7,34 +7,29 @@ import logging
 
 import NXOpen
 
-logging.basicConfig(level=logging.DEBUG)
-
 
 class NXLogger(logging.Handler):
-    def __init__(self, name, level=logging.INFO):
-        super().__init__(name, level)
+    def __init__(self, level=logging.INFO):
+        super().__init__(level)
         self.session = NXOpen.Session.GetSession()
 
     def emit(self, record):
         # log to NX log file
         self.session.LogFile.WriteLine(record.getMessage())
 
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        log_record = {
+            "timestamp": self.formatTime(record, datefmt="%Y-%m-%dT%H:%M:%S%z"),
+            "level": record.levelname,
+            "message": record.getMessage(),
+        }
+        return json.dumps(log_record)
 
 class HttpHandler(logging.Handler):
     def __init__(self, level=logging.INFO):
         super().__init__(level)
-        self.setFormatter(
-            logging.Formatter(
-                json.dumps(
-                    {
-                        "timestamp": "%(asctime)s",
-                        "level": "%(levelname)s",
-                        "message": "%(message)s",
-                    }
-                ),
-                datefmt="%Y-%m-%dT%H:%M:%S%z",
-            )
-        )
+        self.setFormatter(JsonFormatter())
 
         self.session = NXOpen.Session.GetSession()
         self.http_log_failures = 0
@@ -54,8 +49,13 @@ class HttpHandler(logging.Handler):
             return
 
         # log to http server
+        try:
+            data = json.loads(self.format(record))
+        except json.JSONDecodeError:
+            data = { "message": self.format(record) }
+
         body = {
-            **json.loads(self.format(record)),
+            **data,
             **self.context,
         }
         try:
@@ -73,6 +73,14 @@ class HttpHandler(logging.Handler):
 http_handler = HttpHandler(logging.DEBUG)
 nx_handler = NXLogger(logging.DEBUG)
 
+logging.basicConfig(level=logging.DEBUG)
 logger = logging.getLogger(__name__)
 logger.addHandler(http_handler)
 logger.addHandler(nx_handler)
+
+# logging functions for convenience
+debug = logger.debug
+info = logger.info
+warning = logger.warning
+error = logger.error
+critical = logger.critical
