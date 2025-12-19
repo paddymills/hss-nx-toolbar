@@ -76,15 +76,24 @@ class AbstractNxFileProcessor(ABC):
         pass
 
     def run(self):
+        success, total = 0, 0
         for part in self.parts_to_process:
-            # TODO: wrap in try/except and log errors
-            # TODO: store result (fail/success)
-            if part.IsReadOnly:
-                logger.warning("!!! Part is Read Only !!!")
-                if self.process_read_only == "abort":
-                    return
+            try:
+                if part.IsReadOnly:
+                    warning("!!! Part is Read Only !!!")
+                    if self.process_read_only == "abort":
+                        return
 
-            part.export_dxf()
+                info("calling exporter")
+                part.export_dxf()
+
+                success += 1
+                total += 1
+
+            except Exception as e:
+                error("Failed to process part: {}\n{}".format(part.part.FullPath, str(e)))
+        
+        dialog.info("Processed {} of {} parts successfully.".format(success, total))
 
     def infer_part_from_filename(self, filename: str) -> AlreadyOpenPart | NeedsOpenPart:
         for open_part in self.session.Parts:
@@ -145,7 +154,7 @@ class FilenamePartsProcessor(AbstractNxFileProcessor):
                     NXOpen.DisplayPartOption.AllowAdditional,
                     NXOpen.PartDisplayPartWorkPartOption.UseLast,
                 )
-                yield part
+                yield AlreadyOpenPart(part)
             except Exception as e:
                 dialog.error("Failed to open part: {}\n{}".format(filename, str(e)))
 
@@ -154,7 +163,7 @@ class FilenamePartsProcessor(AbstractNxFileProcessor):
             if open_part.FullPath.lower() == filename.lower():
                 # set part as work part
                 self.session.Parts.SetActiveDisplay(open_part, NXOpen.DisplayPartOption.AllowAdditional, NXOpen.PartDisplayPartWorkPartOption.UseLast)
-                return open_part
+                return AlreadyOpenPart(open_part)
         else:
             part, part_load_status = self.session.Parts.OpenActiveDisplay(filename, NXOpen.DisplayPartOption.AllowAdditional)
 
@@ -165,7 +174,7 @@ class FilenamePartsProcessor(AbstractNxFileProcessor):
                 if _desc not in IGNORE_OPEN_ERRORS:
                     raise Exception("{}: {}".format(_desc, _part))
             
-            return part
+            return NeedsOpenPart(part)
 
 class AllOpenPartsProcessor(AbstractNxFileProcessor):
     @property
