@@ -21,11 +21,20 @@ const levelColor = (level: string) => {
   }
 };
 
-function LogLevelChip({ level, className }: { level: string, className?: string }) {
-  const defaultStyles = "uppercase py-1 w-[8ch] rounded-md font-bold text-sm text-center";
+function LogLevelChip({
+  level,
+  className,
+}: {
+  level: string;
+  className?: string;
+}) {
+  const defaultStyles =
+    "uppercase py-1 w-[8ch] rounded-md font-bold text-sm text-center";
 
   return (
-    <span className={twMerge(levelColor(level), defaultStyles, className)}>{level}</span>
+    <span className={twMerge(levelColor(level), defaultStyles, className)}>
+      {level}
+    </span>
   );
 }
 
@@ -34,7 +43,15 @@ interface LogItemProps extends Message {
 }
 
 export function LogItem(props: LogItemProps) {
-  const { timestamp, level, message, partFile, showDate = true } = props;
+  const {
+    timestamp,
+    level,
+    message,
+    partFile,
+    filename,
+    lineno,
+    showDate = true,
+  } = props;
 
   const dateFmt = useMemo(() => {
     const date = new Date(timestamp);
@@ -51,7 +68,14 @@ export function LogItem(props: LogItemProps) {
       <LogLevelChip level={level} />
       {showDate ? <strong>{dateFmt}</strong> : null}
       <p className="grow">{message}</p>
-      <p className="text-xs text-end truncate self-end lighten">{partFile ?? "global"}</p>
+      <div>
+        <p className="text-xs text-end truncate self-end lighten">
+          {partFile ?? "global"}
+        </p>
+        <p className="text-xs text-end truncate self-end lighten">
+          {filename ?? ""}:{lineno ?? ""}
+        </p>
+      </div>
     </div>
   );
 }

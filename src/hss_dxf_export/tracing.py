@@ -23,6 +23,8 @@ class JsonFormatter(logging.Formatter):
             "timestamp": self.formatTime(record, datefmt="%Y-%m-%dT%H:%M:%S%z"),
             "level": record.levelname,
             "message": record.getMessage(),
+            "filename": record.filename,
+            "lineno": record.lineno,
         }
         return json.dumps(log_record)
 
