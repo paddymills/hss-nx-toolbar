@@ -1,20 +1,24 @@
 import os
 
 import config
+import tracing
 
 import NXOpen
 
 def error(msg, title="Error"):
+    tracing.error(msg)
     return NXOpen.UI.GetUI().NXMessageBox.Show(
         title, NXOpen.NXMessageBox.DialogType.Error, msg
     )
 
 def warn(msg, title="Warning"):
+    tracing.warning(msg)
     return NXOpen.UI.GetUI().NXMessageBox.Show(
         title, NXOpen.NXMessageBox.DialogType.Warning, msg
     )
 
 def info(msg, title="Information"):
+    tracing.info(msg)
     return NXOpen.UI.GetUI().NXMessageBox.Show(
         title, NXOpen.NXMessageBox.DialogType.Information, msg
     )
@@ -40,6 +44,7 @@ def question(msg, title="Question"):
 
 def get_files_to_process():
     import filedialog
+    info(config.load_config())
 
     # get latest load path
     session = NXOpen.Session.GetSession()
