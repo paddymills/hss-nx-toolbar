@@ -113,6 +113,11 @@ class AlreadyOpenPart(NxPart):
     This class is a marker class to differentiate from parts that need to be opened.
     """
 
+    def __init__(self, part: NXOpen.Part):
+        if not part:
+            raise ValueError("part must be supplied to AlreadyOpenPart")
+
+        super().__init__(part)
 
 class NeedsOpenPart(NxPart):
     """
