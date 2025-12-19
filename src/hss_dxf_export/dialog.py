@@ -1,6 +1,6 @@
 import os
 
-import config
+from config import config
 import tracing
 
 import NXOpen

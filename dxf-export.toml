@@ -17,7 +17,7 @@ offset = 10.0
 
 [properties]
 body_name_suffix = "_PART"
-empty_pattern = ["^[ xX-]+$"]  # regex patterns for empty property values
+empty_pattern = "^[ xX-]+$"  # regex pattern for empty property values
 job = ["JobNo", "JOB_NUMBER"]
 mark = ["Mark", "PIECE_MARK"]
 drawing = ["DWG_NUMBER"]

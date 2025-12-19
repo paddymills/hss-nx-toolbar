@@ -5,6 +5,8 @@ from types import SimpleNamespace
 
 import dialog
 
+import NXOpen
+
 def find_config_path():
     """
     Find the configuration file path.
@@ -17,12 +19,14 @@ def find_config_path():
     3) UGII_CUSTOM_DIR
     4) DWGDXF_DIR
     """
+    
+    session = NXOpen.Session.GetSession()
 
-    if os.environ.get('HSS_DXF_CONFIG_PATH'):
-        return os.environ.get('HSS_DXF_CONFIG_PATH')
+    if session.GetEnvironmentVariableValue('HSS_DXF_EXPORT_CONFIG'):
+        return session.GetEnvironmentVariableValue('HSS_DXF_EXPORT_CONFIG')
 
     def env_path(var, path=None):
-        env_var = os.environ.get(var)
+        env_var = session.GetEnvironmentVariableValue(var)
         return env_var and os.path.join(env_var, path, 'dxf-export.toml')
 
     paths = [
@@ -62,14 +66,17 @@ class DxfConfig(object):
     def __new__(cls):
         if cls._instance is None:
             cls._instance = super(DxfConfig, cls).__new__(cls)
-            cls._instance.config = None
+            cls._instance._config = None
         return cls._instance
+    
+    def __init__(self):
+        self._config = None
     
     @property
     def config(self):
-        if self._instance.config is None:
-            self._instance.config = ConfigNamespace.load_from_file()
-        return self._instance.config
+        if self._config is None:
+            self._config = ConfigNamespace.load_from_file()
+        return self._config
 
     def __getattr__(self, name):
         return getattr(self.config, name)

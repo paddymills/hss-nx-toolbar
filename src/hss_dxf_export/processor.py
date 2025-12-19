@@ -7,6 +7,7 @@ from part import AlreadyOpenPart, NeedsOpenPart
 import NXOpen
 
 from tracing import debug, info, warning, error
+from config import config
 
 
 IGNORE_OPEN_ERRORS = [
