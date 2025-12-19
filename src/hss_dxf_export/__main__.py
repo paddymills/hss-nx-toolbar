@@ -2,9 +2,9 @@
 from processor import get_processor_from_args
 
 import NXOpen
-import logging
+import tracing
 
-logger = logging.getLogger(__name__)
+logger = tracing.logger
 
 session = NXOpen.Session.GetSession()
 
