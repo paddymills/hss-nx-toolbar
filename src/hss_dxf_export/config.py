@@ -1,6 +1,7 @@
 
 import os
 import tomllib
+from types import SimpleNamespace
 
 import dialog
 
@@ -37,8 +38,41 @@ def find_config_path():
     dialog.error("Configuration file 'dxf-export.toml' not found in expected locations.")
     raise FileNotFoundError("Configuration file 'dxf-export.toml' not found.")
 
-def load_config():
-    """Load configuration from config.toml file."""
-    with open(find_config_path()) as f:
-        config = tomllib.load(f)
-    return config
+
+class ConfigNamespace(SimpleNamespace):
+    def __init__(self, config: dict):
+        for key, value in config.items():
+            if isinstance(value, dict):
+                value = ConfigNamespace(value)
+            setattr(self, key, value)
+
+    @staticmethod
+    def load_from_file():
+        """Load configuration from config.toml file."""
+        with open(find_config_path(), 'rb') as f:
+            config_dict = tomllib.load(f)
+        return ConfigNamespace(config_dict)
+
+class DxfConfig(object):
+    """Singleton class to hold DXF export configuration."""
+    # see https://www.geeksforgeeks.org/python/singleton-pattern-in-python-a-complete-guide/
+
+    _instance = None
+
+    def __new__(cls):
+        if cls._instance is None:
+            cls._instance = super(DxfConfig, cls).__new__(cls)
+            cls._instance.config = None
+        return cls._instance
+    
+    @property
+    def config(self):
+        if self._instance.config is None:
+            self._instance.config = ConfigNamespace.load_from_file()
+        return self._instance.config
+
+    def __getattr__(self, name):
+        return getattr(self.config, name)
+
+# create a single global config instance
+config = DxfConfig()
