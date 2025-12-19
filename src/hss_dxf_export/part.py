@@ -1,5 +1,5 @@
 from abc import ABC
-import logging
+import re
 
 import NXOpen
 
@@ -75,6 +75,25 @@ class NxPart(ABC):
 
     def get_annotations(self):
         pass
+
+    def get_property(self, *possible_property_names: str) -> str | None:
+        EMPTY_PROPERTY_PATTERN = re.compile(config.properties.empty_pattern)
+        # TODO: expand property with config
+
+        for prop in possible_property_names:
+            debug("Searching for property: {}".format(prop))
+            user_attr_args = (prop, NXOpen.NXObject.AttributeType.Any, -1)
+
+            if self.part.HasUserAttribute(*user_attr_args):
+                value = self.part.GetUserAttribute(*user_attr_args).StringValue
+                debug("Found property {}: {}".format(prop, value))
+
+                if EMPTY_PROPERTY_PATTERN.match(value):
+                    continue
+
+                return value
+
+        return None
 
     def __getattr__(self, attr):
         return getattr(self.part, attr)
