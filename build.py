@@ -40,7 +40,10 @@ def main():
     if args.verbose > 1:
         print("Args:", args)
 
-    clean()
+    try:
+        clean()
+    except Exception as e:
+        print("❌ failed to clean target directory ({})".format(e))
 
     print("📦 packaging...")
     shutil.copytree("icons", TARGET_BIN)
