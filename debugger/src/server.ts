@@ -9,6 +9,17 @@ const server = serve({
     // Serve index.html for all unmatched routes.
     "/*": index,
 
+    "/clear": {
+      async POST(req) {
+        messages = [];
+        console.log("Cleared log messages");
+
+        // publish to all websocket subscribers
+        server.publish("log-updates", JSON.stringify({ type: "clear" }));
+
+        return Response.json({ status: 200, message: "Cleared" });
+      },
+    },
     "/log": {
       async GET(req) {
         return Response.json(messages);

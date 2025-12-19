@@ -17,6 +17,10 @@ export function LogViewer() {
     // cleanup on unmount
     return () => ws.close();
   }, [setMessages]);
+  const clearMessages = async () => {
+    await fetch("/clear", { method: "POST" });
+    setMessages([]);
+  }
 
   if (messages.length === 0) {
     return <div>No logs yet</div>;
@@ -26,7 +30,7 @@ export function LogViewer() {
     <div className="flex flex-col justify-center-safe items-center-safe w-full lg:w-[80%]">
       <button
         className="lg:mx-[20%] mb-2 p-2 bg-linear-to-r/shorter from-indigo-500 via-rose-500 to-indigo-500 text-white rounded-full"
-        onClick={() => setMessages([])}
+        onClick={clearMessages}
       >
         Clear
       </button>
