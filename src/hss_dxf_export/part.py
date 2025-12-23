@@ -90,8 +90,7 @@ class NxPart(ABC):
 
         dxfdwg_creator = self.session.DexManager.CreateDxfdwgCreator()
         dxfdwg_creator.SettingsFile = os.path.join(
-            self.session.GetEnvironmentVariableValue("UGII_CUSTOM_DIR"),
-            "DXFDWG",
+            self.session.GetEnvironmentVariableValue("DWGDXF_DIR"),
             "dxfdwg.def",
         )
 
