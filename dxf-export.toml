@@ -25,20 +25,19 @@ grade = ["STEELGRADE"]
 test = ["STEELTEST"]
 
 [layers.body]
-layer = 1
-# if any body has this name, only that body will be exported
-single_body_name = "SN_PART"
+layer = 1 # destination layer
+single_body_name = "SN_PART" # if any body has this name, only that body will be exported
 only_solid_bodies = true
 exclude_body_names = ["SHIM"]
 
 [layers.marking]
-layer = 2
-sketches = ["ZINC", "HEATNUM", "MARKING"]
+layer = 2 # destination layer
+sketches = ["ZINC", "HEATNUM", "MARKING"] # sketch names or regex patterns
 
 [layers.no_cut]
-layer = 3
-sketches = ["NO[-_]?CUT"]
+layer = 3 # destination layer
+sketches = ["NO[-_]?CUT"] # sketch names or regex patterns
 
 [layers.detail]
-layer = 4
-sketches = ["DETAIL"]
+layer = 4 # destination layer
+sketches = ["DETAIL"] # sketch names or regex patterns
