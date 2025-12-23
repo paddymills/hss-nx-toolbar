@@ -367,6 +367,7 @@ class CadCamPart(NxPart):
             export = BodyExport(body, self.sketches, **self.base_anno)
 
             # assign export name
+            # TODO: child part mapping for parent
             if body.Name is None:
                 export.name = self.cleaned_name
             elif body.Name in self.export_names:
