@@ -1,4 +1,5 @@
 import os
+import re
 import tomllib
 from types import SimpleNamespace
 
@@ -80,10 +81,25 @@ class DxfConfig(object):
     def config(self):
         if self._config is None:
             self._config = ConfigNamespace.load_from_file()
+
+            self.sketch_mapping_regex = []
+            cfgs = [config.layers.marking, config.layers.no_cut, config.layers.detail]
+            for layer in cfgs:
+                for pattern in layer.sketches:
+                    self.sketch_mapping_regex.append((re.compile(pattern), layer.layer))
+
         return self._config
+
+    def map_sketch_to_layer(self, sketch_name: str) -> str | None:
+        """Return the layer name for the given sketch name, or None if no mapping found."""
+        for pattern, layer in self.sketch_mapping_regex:
+            if pattern.match(sketch_name):
+                return layer
+        return None
 
     def __getattr__(self, name):
         return getattr(self.config, name)
+
 
 # create a single global config instance
 config = DxfConfig()
