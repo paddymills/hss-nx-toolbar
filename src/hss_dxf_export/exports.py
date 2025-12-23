@@ -16,10 +16,6 @@ class BodyExport:
     def name(self):
         if self._name:
             return self._name
-
-        # TODO: v2 model schema body name
-        if self.body.Name and self.body.Name != config.body.single_body_name:
-            return self.body.Name
         
         raise Exception("BodyExport has no name assigned")
 
