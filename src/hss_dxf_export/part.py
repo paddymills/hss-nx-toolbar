@@ -262,13 +262,35 @@ class CadCamPart(NxPart):
     def __init__(self, part: NXOpen.Part = None):
         super().__init__(part)
         self._sketches = []
-        self.base_anno = []
 
+        # prepare part name from file name
         self.cleaned_name = self.part.Leaf.strip()
         for pattern in config.paths.name_strip_patterns:
             self.cleaned_name = re.sub(
                 pattern, "", self.cleaned_name, flags=re.IGNORECASE
             )
+
+        # prepare base annotations
+        def get_property(vals):
+            for key in vals:
+                if key in self.properties:
+                    return self.properties[key]
+            return None
+
+        self.base_anno = {
+            "JOB": get_property(config.properties.job),
+            "MARK": get_property(config.properties.mark),
+            "DRAWING": get_property(config.properties.drawing),
+            "MATERIAL": get_property(config.properties.drawing),
+        }
+
+        # material grade
+        if not self.base_anno["MATERIAL"]:
+            spec = self.get_property(config.properties.spec)
+            grade = self.get_property(config.properties.grade)
+            test = self.get_property(config.properties.test)
+            if spec and grade and test:
+                self.base_anno["MATERIAL"] = "{}-{}{}".format(spec, grade, test)
 
     @property
     def export_names(self):
