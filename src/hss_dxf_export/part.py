@@ -3,6 +3,7 @@ import re
 
 import NXOpen
 
+
 from tracing import info, debug, http_handler
 from config import config
 
@@ -148,7 +149,8 @@ class AlreadyOpenPart(NxPart):
 
         super().__init__(part)
 
-class NeedsOpenPart(NxPart):
+
+class NeedsOpenPart(CadCamPart):
     """
     Part that needs to be opened in the session.
 

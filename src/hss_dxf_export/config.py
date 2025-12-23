@@ -1,4 +1,3 @@
-
 import os
 import tomllib
 from types import SimpleNamespace
@@ -6,6 +5,7 @@ from types import SimpleNamespace
 import dialog
 
 import NXOpen
+
 
 def find_config_path():
     """
@@ -19,27 +19,29 @@ def find_config_path():
     3) UGII_CUSTOM_DIR
     4) DWGDXF_DIR
     """
-    
+
     session = NXOpen.Session.GetSession()
 
-    if session.GetEnvironmentVariableValue('HSS_DXF_EXPORT_CONFIG'):
-        return session.GetEnvironmentVariableValue('HSS_DXF_EXPORT_CONFIG')
+    if session.GetEnvironmentVariableValue("HSS_DXF_EXPORT_CONFIG"):
+        return session.GetEnvironmentVariableValue("HSS_DXF_EXPORT_CONFIG")
 
     def env_path(var, path=None):
         env_var = session.GetEnvironmentVariableValue(var)
-        return env_var and os.path.join(env_var, path, 'dxf-export.toml')
+        return env_var and os.path.join(env_var, path, "dxf-export.toml")
 
     paths = [
-        env_path('UGII_CUSTOM_UFUNC_DIR', 'application'),
-        env_path('UGII_CUSTOM_UFUNC_DIR'),
-        env_path('UGII_CUSTOM_DIR'),
-        env_path('DWGDXF_DIR'),
+        env_path("UGII_CUSTOM_UFUNC_DIR", "application"),
+        env_path("UGII_CUSTOM_UFUNC_DIR"),
+        env_path("UGII_CUSTOM_DIR"),
+        env_path("DWGDXF_DIR"),
     ]
     for p in paths:
         if p and os.path.exists(p):
             return p
-    
-    dialog.error("Configuration file 'dxf-export.toml' not found in expected locations.")
+
+    dialog.error(
+        "Configuration file 'dxf-export.toml' not found in expected locations."
+    )
     raise FileNotFoundError("Configuration file 'dxf-export.toml' not found.")
 
 
@@ -53,12 +55,14 @@ class ConfigNamespace(SimpleNamespace):
     @staticmethod
     def load_from_file():
         """Load configuration from config.toml file."""
-        with open(find_config_path(), 'rb') as f:
+        with open(find_config_path(), "rb") as f:
             config_dict = tomllib.load(f)
         return ConfigNamespace(config_dict)
 
+
 class DxfConfig(object):
     """Singleton class to hold DXF export configuration."""
+
     # see https://www.geeksforgeeks.org/python/singleton-pattern-in-python-a-complete-guide/
 
     _instance = None
@@ -68,10 +72,10 @@ class DxfConfig(object):
             cls._instance = super(DxfConfig, cls).__new__(cls)
             cls._instance._config = None
         return cls._instance
-    
+
     def __init__(self):
         self._config = None
-    
+
     @property
     def config(self):
         if self._config is None:
