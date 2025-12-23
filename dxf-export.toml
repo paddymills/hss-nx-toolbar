@@ -2,21 +2,20 @@
 # for Toml configuration format see https://toml.io/en/
 
 [logging]
-logging_level = "warning" # debug, info, warning, error, critical
-tcp_port = 5001  # port for TCP logging server, set to 0 to disable
+logging_level = "info" # debug, info, warning, error, critical
 
 [paths]
 logs = '\\hssieng\Jobs\DXF\logs'
-output = '\\hssieng\SNDataPrd\DXF'
 part_files = '\\hssieng\Jobs'
-strip_patterns = ["_mfg", "_copy"]  # patterns to strip from export names
+name_strip_patterns = ["_mfg", "_copy"]  # patterns to strip from export names
 
 [notes]
+datetime_format = "%m-%d-%Y %I:%M:%S %p"
 size_multiplier = 0.0125
 offset = 10.0
 
 [properties]
-body_name_suffix = "_PART"
+body_name_suffix = "_EXPORT_NAME"
 empty_pattern = "^[ xX-]+$"  # regex pattern for empty property values
 job = ["JobNo", "JOB_NUMBER"]
 mark = ["Mark", "PIECE_MARK"]
@@ -29,8 +28,8 @@ test = ["STEELTEST"]
 layer = 1
 # if any body has this name, only that body will be exported
 single_body_name = "SN_PART"
-blacklist = ["SHIM"]
 only_solid_bodies = true
+exclude_body_names = ["SHIM"]
 
 [layers.marking]
 layer = 2
@@ -42,3 +41,4 @@ sketches = ["NO[-_]?CUT"]
 
 [layers.detail]
 layer = 4
+sketches = ["DETAIL"]
