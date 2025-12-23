@@ -214,9 +214,6 @@ class NxPart(ABC):
 
         pass
 
-    def __getattr__(self, attr):
-        return getattr(self.part, attr)
-
     def set_work_part(self):
         if self.session.Parts.Work != self.part:
             self.session.Parts.SetActiveDisplay(
