@@ -326,21 +326,6 @@ class CadCamPart(NxPart):
 
         return self._sketches
 
-    def export_dxf(self):
-        super().export_dxf()
-
-        info("Exporting CAD/CAM part: {}".format(self.part.FullPath))
-        self.set_work_part()
-
-        model_schema_version = int(self.get_property("MODEL_SCHEMA_VERSION") or 0)
-        info("Model schema version: {}".format(model_schema_version))
-
-        for key, value in self.get_part_properties():
-            info("Property: {} = {}".format(key, value))
-        self.orient_top_view()
-
-        # return super().export_dxf()
-
     def add_annotation(self, body):
         anno = super().add_annotation(body)
         self.move_to_layer(config.layers.detail.layer, anno)
