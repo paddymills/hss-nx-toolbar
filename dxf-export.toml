@@ -1,5 +1,6 @@
 # DXF export configuration file
 # for Toml configuration format see https://toml.io/en/
+# for regex testing see https://regex101.com/
 
 [logging]
 logging_level = "info" # debug, info, warning, error, critical
