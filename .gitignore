@@ -7,5 +7,5 @@ target/
 # build
 *.zip
 
-# dev logs
-/logs/*.log
+# testing
+tests/DXF
