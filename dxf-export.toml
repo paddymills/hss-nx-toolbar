@@ -20,6 +20,7 @@ empty_pattern = "^[ xX-]+$"  # regex pattern for empty property values
 job = ["JobNo", "JOB_NUMBER"]
 mark = ["Mark", "PIECE_MARK"]
 drawing = ["DWG_NUMBER"]
+material = ["MATERIALGRADE", "MATERIAL"]
 spec = ["STEELSPEC"]
 grade = ["STEELGRADE"]
 test = ["STEELTEST"]
