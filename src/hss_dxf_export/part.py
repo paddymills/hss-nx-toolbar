@@ -333,10 +333,13 @@ class CadCamPart(NxPart):
         return anno
 
     def get_body_exports(self) -> list[BodyExport]:
+
+        blacklist_patterns = [re.compile(pattern) for pattern in config.layers.body.exclude_body_names]
+
         exports = []
         next_part_id = 1
         for body in self.part.Bodies:
-            if body.Name in config.layers.body.exclude_body_names:
+            if any(map(lambda p: p.fullmatch(body.Name), blacklist_patterns)):
                 debug("Skipping excluded body: {}".format(body.Name))
                 continue
 
