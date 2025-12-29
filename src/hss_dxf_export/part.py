@@ -64,6 +64,10 @@ class NxPart(ABC):
         self.session.ApplicationSwitchImmediate("UG_APP_NOPART")
 
     @property
+    def is_read_only(self):
+        return self.part.IsReadOnly
+
+    @property
     def properties(self):
         if self._properties is None:
             self._properties = dict()

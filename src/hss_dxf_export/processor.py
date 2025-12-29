@@ -80,19 +80,19 @@ class AbstractNxFileProcessor(ABC):
         success, total = 0, 0
         for part in self.parts_to_process:
             try:
-                if part.IsReadOnly:
+                total += 1
+
+                if part.is_read_only:
                     warning("!!! Part is Read Only !!!")
                     if self.process_read_only == "abort":
                         return
 
                 info("calling exporter")
                 part.export_dxf()
-
                 success += 1
-                total += 1
 
             except Exception as e:
-                error("Failed to process part: {}\n{}".format(part.part.FullPath, str(e)))
+                error("Failed to process part: {}".format(e), exc_info=True)
         
         dialog.info("Processed {} of {} parts successfully.".format(success, total))
 
