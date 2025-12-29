@@ -267,24 +267,24 @@ class CadCamPart(NxPart):
             )
 
         # prepare base annotations
-        def get_property(vals):
+        def get_property(*vals):
             for key in vals:
                 if key in self.properties:
                     return self.properties[key]
             return None
 
         self.base_anno = {
-            "JOB": get_property(config.properties.job),
-            "MARK": get_property(config.properties.mark),
-            "DRAWING": get_property(config.properties.drawing),
-            "MATERIAL": get_property(config.properties.drawing),
+            "JOB": get_property(*config.properties.job),
+            "MARK": get_property(*config.properties.mark),
+            "DRAWING": get_property(*config.properties.drawing),
+            "MATERIAL": get_property(*config.properties.drawing),
         }
 
         # material grade
         if not self.base_anno["MATERIAL"]:
-            spec = self.get_property(config.properties.spec)
-            grade = self.get_property(config.properties.grade)
-            test = self.get_property(config.properties.test)
+            spec = self.get_property(*config.properties.spec)
+            grade = self.get_property(*config.properties.grade)
+            test = self.get_property(*config.properties.test)
             if spec and grade and test:
                 self.base_anno["MATERIAL"] = "{}-{}{}".format(spec, grade, test)
 
