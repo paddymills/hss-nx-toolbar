@@ -29,7 +29,7 @@ test = ["STEELTEST"]
 layer = 1 # destination layer
 single_body_name = "SN_PART" # if any body has this name, only that body will be exported
 only_solid_bodies = true
-exclude_body_names = ["SHIM"]
+exclude_body_names = ["SHIM", "(?:DO_NOT|NO|SKIP)_EXPORT"] # body names to exclude from export
 
 [layers.marking]
 layer = 2 # destination layer
