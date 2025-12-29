@@ -371,7 +371,7 @@ class CadCamPart(NxPart):
             else:
                 export.name = body.Name
 
-            if body.Name == config.layers.body.single_body_name:
+            if body.Name in config.layers.body.single_body_name:
                 export.name = self.cleaned_name
                 return [export]
 
