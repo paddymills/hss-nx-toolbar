@@ -268,10 +268,12 @@ class CadCamPart(NxPart):
 
         # prepare part name from file name
         self.cleaned_name = self.part.Leaf.strip()
+        debug("Original part name: {}".format(self.cleaned_name))
         for pattern in config.paths.name_strip_patterns:
             self.cleaned_name = re.sub(
                 pattern, "", self.cleaned_name, flags=re.IGNORECASE
             )
+        debug("Stripped part name: {}".format(self.cleaned_name))
 
         # prepare base annotations
         def get_property(*vals):

@@ -1,6 +1,7 @@
 
 from datetime import datetime
 from config import config
+from tracing import debug
 
 class BodyExport:
     def __init__(self, body, sketches, name=None, **anno):
@@ -21,6 +22,7 @@ class BodyExport:
 
     @name.setter
     def name(self, value):
+        debug("Setting BodyExport name to '{}'".format(value))
         self._name = value
     
     @property
@@ -60,8 +62,10 @@ class BodyExport:
                 x_max = max(x_max, vert.X)
 
         multiplier = config.notes.size_multiplier
+        size = (x_max - x_min) * multiplier
+        debug("Annotation size for body '{}': {}".format(self.name, size))
 
-        return (x_max - x_min) * multiplier
+        return size
 
     @property
     def thickness(self):
@@ -73,5 +77,7 @@ class BodyExport:
             for vert in edge.GetVertices():
                 z_min = min(z_min, vert.Z)
                 z_max = max(z_max, vert.Z)
+
+        debug("Thickness for body '{}': {}".format(self.name, z_max - z_min))
 
         return round(z_max - z_min, 4)
