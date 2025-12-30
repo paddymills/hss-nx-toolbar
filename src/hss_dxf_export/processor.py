@@ -38,7 +38,7 @@ def get_processor_from_args():
 
     # parse arguments
     args, unparsed = parser.parse_known_args()
-    info("Process args: {}".format(args))
+    debug("Process args: {}".format(args))
 
     try:
         if unparsed:
