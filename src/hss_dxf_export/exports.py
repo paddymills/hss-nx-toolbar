@@ -69,8 +69,8 @@ class BodyExport:
 
     @property
     def thickness(self):
-        z_min = float('-inf')
-        z_max = float('inf')
+        z_min = float('inf')
+        z_max = float('-inf')
 
         # get the z maximum and minimum points of the body
         for edge in self.body.GetEdges():
