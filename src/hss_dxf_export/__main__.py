@@ -3,8 +3,6 @@ from processor import get_processor_from_args
 
 import NXOpen
 from tracing import info, error
-import os
-import dialog
 
 session = NXOpen.Session.GetSession()
 
