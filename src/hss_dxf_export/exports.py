@@ -50,8 +50,8 @@ class BodyExport:
     
     @property
     def annotation_size(self):
-        x_min = float('-inf')
-        x_max = float('inf')
+        x_min = float('inf')
+        x_max = float('-inf')
 
         # get the x maximum and minimum points of the body
         for edge in self.body.GetEdges():
