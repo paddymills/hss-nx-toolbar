@@ -248,7 +248,7 @@ class NxPart(ABC):
         self.session.SetUndoMark(NXOpen.Session.MarkVisibility.Visible, desc)
 
         debug(desc)
-        self.part.Layers.MoveDisplayableObjects(layer, objects)
+        self.part.Layers.MoveDisplayableObjects(layer, list(objects))
 
 
 class CadCamPart(NxPart):
