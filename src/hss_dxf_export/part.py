@@ -361,7 +361,7 @@ class CadCamPart(NxPart):
 
             # assign export name
             # TODO: child part mapping for parent
-            if body.Name is None:
+            if body.Name in (None, ""):
                 export.name = self.cleaned_name
             elif body.Name in self.export_names:
                 export.name = self.export_names[body.Name]
