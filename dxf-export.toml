@@ -38,7 +38,7 @@ sketches = ["ZINC", "HEATNUM", "MARKING"] # sketch names or regex patterns
 
 [layers.no_cut]
 layer = 3 # destination layer
-sketches = ["NO[-_]?CUT"] # sketch names or regex patterns
+sketches = ["NO[-_]?CUT", "DOR"] # sketch names or regex patterns
 
 [layers.detail]
 layer = 4 # destination layer
