@@ -25,6 +25,7 @@ class JsonFormatter(logging.Formatter):
             "message": record.getMessage(),
             "filename": record.filename,
             "lineno": record.lineno,
+            "traceback": self.formatException(record.exc_info) if record.exc_info else None,
         }
         return json.dumps(log_record)
 

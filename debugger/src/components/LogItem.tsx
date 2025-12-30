@@ -1,5 +1,5 @@
 import type { Message } from "@/lib/types";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { twMerge } from "tailwind-merge";
 
 const TODAY = new Date(Date.now()).getDate();
@@ -50,8 +50,11 @@ export function LogItem(props: LogItemProps) {
     partFile,
     filename,
     lineno,
-    showDate = true,
+    showDate = false,
+    traceback,
   } = props;
+
+  const [showModal, setShowModal] = useState(false);
 
   const dateFmt = useMemo(() => {
     const date = new Date(timestamp);
@@ -64,18 +67,28 @@ export function LogItem(props: LogItemProps) {
   }, [timestamp]);
 
   return (
-    <div className="flex gap-2 mb-2 p-2 font-mono bordered">
-      <LogLevelChip level={level} />
-      {showDate ? <strong>{dateFmt}</strong> : null}
-      <p className="grow">{message}</p>
-      <div>
-        <p className="text-xs text-end truncate self-end lighten">
-          {partFile ?? "global"}
-        </p>
-        <p className="text-xs text-end truncate self-end lighten">
-          {filename ?? ""}:{lineno ?? ""}
-        </p>
+    <>
+      <div className="flex gap-2 mb-2 p-2 font-mono bordered cursor-pointer hover:bg-gray-100/10">
+        <LogLevelChip level={level} />
+        {showDate ? <strong>{dateFmt}</strong> : null}
+        <div className="grow flex flex-col">
+          <p>{message}</p>
+          {traceback &&
+            traceback
+              .split("\n")
+              .map((line) => (
+                <p className="ml-4 text-sm italic lighten mt-1">{line}</p>
+              ))}
+        </div>
+        <div>
+          <p className="text-xs text-end truncate self-end lighten">
+            {partFile ? partFile.split("\\").pop() : "global"}
+          </p>
+          <p className="text-xs text-end truncate self-end lighten">
+            {filename ?? ""}:{lineno ?? ""}
+          </p>
+        </div>
       </div>
-    </div>
+    </>
   );
 }
