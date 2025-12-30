@@ -327,7 +327,6 @@ class CadCamPart(NxPart):
                     debug(f"Including sketch by `{sk.Name}` on layer {layer}")
                     self._sketches.append(sk)
                     self.move_to_layer(layer, sk)
-                    break
 
         return self._sketches
 
