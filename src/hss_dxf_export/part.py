@@ -143,9 +143,12 @@ class NxPart(ABC):
                     sk.GetAllGeometry()
                 )
 
+            # create annotation
+            anno = self.add_annotation(export)
+
             # add bodies and annotations
             dxfdwg_creator.ExportSelectionBlock.SelectionComp.Add(export.body)
-            dxfdwg_creator.ExportSelectionBlock.SelectionComp.Add(export.anno)
+            dxfdwg_creator.ExportSelectionBlock.SelectionComp.Add(anno)
 
             filename = os.path.join(directory, export.name + ".dxf")
             info("DXF Filename: {}".format(filename))
