@@ -74,11 +74,7 @@ export function LogItem(props: LogItemProps) {
         <div className="grow flex flex-col">
           <p>{message}</p>
           {traceback &&
-            traceback
-              .split("\n")
-              .map((line) => (
-                <p className="ml-4 text-sm italic lighten mt-1">{line}</p>
-              ))}
+            <pre className="ml-4 text-sm italic lighten mt-1">{traceback}</pre>}
         </div>
         <div>
           <p className="text-xs text-end truncate self-end lighten">
