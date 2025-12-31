@@ -11,6 +11,11 @@ export function LogViewer() {
       const msg = JSON.parse(event.data);
       console.debug(msg);
 
+      if (msg.type === "clear") {
+        setMessages([]);
+        return;
+      }
+
       setMessages((msgs) => [...msgs, msg]);
     };
 

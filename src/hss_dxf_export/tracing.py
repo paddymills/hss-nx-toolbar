@@ -4,6 +4,7 @@ import os
 from urllib import request
 
 import logging
+from config import config
 
 import NXOpen
 
@@ -38,6 +39,12 @@ class HttpHandler(logging.Handler):
         self.http_log_failures = 0
 
         self.reset_context()
+
+        if config.logging.clear_on_start:
+            try:
+                request.urlopen("http://localhost:3000/clear", method="POST", timeout=1)
+            except:
+                pass
 
     def reset_context(self):
         self.context = dict(user=os.getenv("USERNAME") or "unknown")

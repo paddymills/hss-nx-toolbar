@@ -4,6 +4,7 @@
 
 [logging]
 logging_level = "info" # debug, info, warning, error, critical
+clear_on_start = true
 
 [paths]
 logs = '\\hssieng\Jobs\DXF\logs'
