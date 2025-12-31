@@ -136,6 +136,7 @@ class NxPart(ABC):
         # ----------------------------------------------
         # add body
         for export in self.get_body_exports():
+            # TODO: move this to child class, in a sort of get_export_geometry method
 
             # add sketches
             for sk in export.sketches:
@@ -145,6 +146,17 @@ class NxPart(ABC):
 
             # create annotation
             anno = self.add_annotation(export.annotation_loc, export.annotation_size, export.annotation_text)
+
+            if self.heatnum_locs:
+                for loc in self.heatnum_locs:
+                    debug("Adding heat number at location: {}".format(loc))
+                    heatnum_anno = self.add_annotation(
+                        NXOpen.Point3d(loc.X, loc.Y, 0.0),
+                        1.0,
+                        ["HIGHHEATNUM"],
+                    )
+                    self.move_to_layer(config.layers.marking.layer, heatnum_anno)
+                    dxfdwg_creator.ExportSelectionBlock.SelectionComp.Add(heatnum_anno)
 
             # add bodies and annotations
             dxfdwg_creator.ExportSelectionBlock.SelectionComp.Add(export.body)
@@ -220,6 +232,11 @@ class NxPart(ABC):
 
         pass
 
+    @property
+    @abstractmethod
+    def heatnum_locs(self):
+        pass
+
     def set_work_part(self):
         if self.session.Parts.Work != self.part:
             self.session.Parts.SetActiveDisplay(
@@ -264,6 +281,7 @@ class CadCamPart(NxPart):
     def __init__(self, part: NXOpen.Part = None):
         super().__init__(part)
         self._sketches = []
+        self._heatnum_locs = []
 
         # prepare part name from file name
         self.cleaned_name = self.part.Leaf.strip()
@@ -328,8 +346,19 @@ class CadCamPart(NxPart):
                     self.move_to_layer(layer, sk)
 
         return self._sketches
+    
+    @property
+    def heatnum_locs(self):
+        if not self._heatnum_locs:
+            for sk in self.part.Sketches:
+                if sk.Name == "HEATNUM_LOC":
+                    debug("Found HEATNUM_LOC sketch {}".format(type(sk)))
+                    for x in sk.GetAllGeometry():
+                        if type(x) is NXOpen.Point:
+                            debug("Heat number point found: {} ({})".format(x.Name, x.Coordinates))
+                            self._heatnum_locs.append(x.Coordinates)
 
-    def add_annotation(self, body):
+        return self._heatnum_locs
 
     def add_annotation(self, loc: NXOpen.Point3d, size: float, text: list[str]) -> NXOpen.NXObject:
         anno = super().add_annotation(loc, size, text)
