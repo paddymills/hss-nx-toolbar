@@ -93,7 +93,7 @@ class DxfConfig(object):
     def map_sketch_to_layer(self, sketch_name: str) -> str | None:
         """Return the layer name for the given sketch name, or None if no mapping found."""
         for pattern, layer in self.sketch_mapping_regex:
-            if pattern.match(sketch_name):
+            if pattern.fullmatch(sketch_name):
                 return layer
         return None
 
