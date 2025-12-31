@@ -3,6 +3,8 @@ from datetime import datetime
 from config import config
 from tracing import debug
 
+import NXOpen
+
 class BodyExport:
     def __init__(self, body, sketches, name=None, **anno):
         self.body = body
@@ -48,7 +50,7 @@ class BodyExport:
 
         offset = config.notes.offset
 
-        return (x + offset, y - offset, 0.0)
+        return NXOpen.Point3d(x + offset, y - offset, 0.0)
     
     @property
     def annotation_size(self):

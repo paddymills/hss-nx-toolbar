@@ -5,7 +5,7 @@ import os
 import re
 
 import NXOpen
-
+import NXOpen.Annotations
 
 from tracing import info, debug, http_handler
 from config import config
@@ -144,7 +144,7 @@ class NxPart(ABC):
                 )
 
             # create annotation
-            anno = self.add_annotation(export)
+            anno = self.add_annotation(export.annotation_loc, export.annotation_size, export.annotation_text)
 
             # add bodies and annotations
             dxfdwg_creator.ExportSelectionBlock.SelectionComp.Add(export.body)
@@ -165,7 +165,7 @@ class NxPart(ABC):
 
         dxfdwg_creator.Destroy()
 
-    def add_annotation(self, body: BodyExport):
+    def add_annotation(self, loc: NXOpen.Point3d, size: float, text: list[str]) -> NXOpen.NXObject:
         # ----------------------------------------------
         #   Menu: Application->Design->Drafting
         # ----------------------------------------------
@@ -198,11 +198,10 @@ class NxPart(ABC):
             NXOpen.Annotations.TextJustification.Left
         )
 
-        note_builder.Text.TextBlock.SetText(body.annotation_text)
-        note_builder.Style.LetteringStyle.GeneralTextSize = body.annotation_size
-        note_loc = NXOpen.Point3d(*body.annotation_loc)
+        note_builder.Text.TextBlock.SetText(text)
+        note_builder.Style.LetteringStyle.GeneralTextSize = size
         note_builder.Origin.Origin.SetValue(
-            NXOpen.TaggedObject.Null, NXOpen.View.Null, note_loc
+            NXOpen.TaggedObject.Null, NXOpen.View.Null, loc
         )
 
         # create note
@@ -331,7 +330,9 @@ class CadCamPart(NxPart):
         return self._sketches
 
     def add_annotation(self, body):
-        anno = super().add_annotation(body)
+
+    def add_annotation(self, loc: NXOpen.Point3d, size: float, text: list[str]) -> NXOpen.NXObject:
+        anno = super().add_annotation(loc, size, text)
         self.move_to_layer(config.layers.detail.layer, anno)
 
         return anno
