@@ -1,4 +1,3 @@
-
 import json
 import os
 from urllib import request
@@ -18,6 +17,7 @@ class NXLogger(logging.Handler):
         # log to NX log file
         self.session.LogFile.WriteLine(record.getMessage())
 
+
 class JsonFormatter(logging.Formatter):
     def format(self, record):
         log_record = {
@@ -26,9 +26,12 @@ class JsonFormatter(logging.Formatter):
             "message": record.getMessage(),
             "filename": record.filename,
             "lineno": record.lineno,
-            "traceback": self.formatException(record.exc_info) if record.exc_info else None,
+            "traceback": (
+                self.formatException(record.exc_info) if record.exc_info else None
+            ),
         }
         return json.dumps(log_record)
+
 
 class HttpHandler(logging.Handler):
     def __init__(self, level=logging.INFO):
@@ -68,7 +71,7 @@ class HttpHandler(logging.Handler):
         try:
             data = json.loads(self.format(record))
         except json.JSONDecodeError:
-            data = { "message": self.format(record) }
+            data = {"message": self.format(record)}
 
         body = {
             **data,

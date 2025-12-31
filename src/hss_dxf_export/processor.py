@@ -26,6 +26,7 @@ File > Utilities > Customer Defaults > Assemblies > Miscellaneous > Display Mess
 Do you want to continue processing parts read-only parts?
 """
 
+
 def get_processor_from_args():
     # parse caller options
     parser = ArgumentParser()
@@ -102,7 +103,7 @@ class AbstractNxFileProcessor(ABC):
                 return AlreadyOpenPart(open_part)
         else:
             return NeedsOpenPart(filename)
-            
+
     @property
     def process_read_only(self):
 
@@ -111,20 +112,29 @@ class AbstractNxFileProcessor(ABC):
 
         # check that Display Message when Modifying Read-Only Parts is not set
         # (Customer Defaults > Assemblies > Miscellaneous > Display Message when Modifying Read-Only Parts)
-        read_only_warn_mod = self.session.OptionsManager.GetIntValue("Assemblies_DisplayReadOnly")
+        read_only_warn_mod = self.session.OptionsManager.GetIntValue(
+            "Assemblies_DisplayReadOnly"
+        )
         debug("Assemblies Warn Read-Only state: {}".format(read_only_warn_mod))
 
         if read_only_warn_mod == 1:
             msg = READ_ONLY_WARNING.split("\n")
-            abort = not dialog.question(msg, "Read-Only modifications will display warning")
+            abort = not dialog.question(
+                msg, "Read-Only modifications will display warning"
+            )
 
             if abort:
                 # user chose to abort. make sure nothing else processes
-                res = dialog.question("Do you want these warnings turned off?", "Turn off warnings")
+                res = dialog.question(
+                    "Do you want these warnings turned off?", "Turn off warnings"
+                )
 
                 # turn off warning for user
                 if res == "Yes":
-                    change_opt = self.session.OptionsManager.NewOptionsChangeList(NXOpen.Options.LevelType.User, NXOpen.Options.LevelLockedByDefault.FalseValue)
+                    change_opt = self.session.OptionsManager.NewOptionsChangeList(
+                        NXOpen.Options.LevelType.User,
+                        NXOpen.Options.LevelLockedByDefault.FalseValue,
+                    )
                     change_opt.SetValue("Assemblies_DisplayReadOnly", 0)
                     change_opt.Save()
                     change_opt.Dispose()
@@ -138,6 +148,7 @@ class AbstractNxFileProcessor(ABC):
         self.HANDLED_READ_ONLY = True
 
         return True
+
 
 class FilenamePartsProcessor(AbstractNxFileProcessor):
     def __init__(self, parts):
@@ -163,10 +174,16 @@ class FilenamePartsProcessor(AbstractNxFileProcessor):
         for open_part in self.session.Parts:
             if open_part.FullPath.lower() == filename.lower():
                 # set part as work part
-                self.session.Parts.SetActiveDisplay(open_part, NXOpen.DisplayPartOption.AllowAdditional, NXOpen.PartDisplayPartWorkPartOption.UseLast)
+                self.session.Parts.SetActiveDisplay(
+                    open_part,
+                    NXOpen.DisplayPartOption.AllowAdditional,
+                    NXOpen.PartDisplayPartWorkPartOption.UseLast,
+                )
                 return AlreadyOpenPart(open_part)
         else:
-            part, part_load_status = self.session.Parts.OpenActiveDisplay(filename, NXOpen.DisplayPartOption.AllowAdditional)
+            part, part_load_status = self.session.Parts.OpenActiveDisplay(
+                filename, NXOpen.DisplayPartOption.AllowAdditional
+            )
 
             if part_load_status.NumberUnloadedParts > 0:
                 _part = part_load_status.GetPartName(0)
@@ -174,8 +191,9 @@ class FilenamePartsProcessor(AbstractNxFileProcessor):
 
                 if _desc not in IGNORE_OPEN_ERRORS:
                     raise Exception("{}: {}".format(_desc, _part))
-            
+
             return NeedsOpenPart(part)
+
 
 class AllOpenPartsProcessor(AbstractNxFileProcessor):
     @property
