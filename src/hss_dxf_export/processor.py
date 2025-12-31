@@ -94,10 +94,19 @@ class AbstractNxFileProcessor(ABC):
 
             except Exception as e:
                 error("Failed to process part: {}".format(e), exc_info=True)
-        
-        dialog.info("Processed {} of {} parts successfully.".format(success, total))
 
-    def infer_part_from_filename(self, filename: str) -> AlreadyOpenPart | NeedsOpenPart:
+        # this is a new API added in NX 1980
+        # TODO: add this to error and warning calls
+        NXOpen.UI.GetUI().DisplayNotification(
+            "DXF Export",
+            "DXF Export complete",
+            f"{success}/{total} parts exported.",
+            "Information",
+        )
+
+    def infer_part_from_filename(
+        self, filename: str
+    ) -> AlreadyOpenPart | NeedsOpenPart:
         for open_part in self.session.Parts:
             if open_part.FullPath.lower() == filename.lower():
                 return AlreadyOpenPart(open_part)
