@@ -42,7 +42,13 @@ class HttpHandler(logging.Handler):
 
         if config.logging.clear_on_start:
             try:
-                request.urlopen("http://localhost:3000/clear", method="POST", timeout=1)
+                req = request.Request(
+                    "http://localhost:3000/clear",
+                    data=json.dumps({}).encode("utf-8"),
+                    headers={"Content-Type": "application/json"},
+                    method="POST",
+                )
+                request.urlopen(req, timeout=1)
             except:
                 pass
 
