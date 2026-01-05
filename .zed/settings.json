@@ -3,16 +3,20 @@
 // For a full list of overridable settings, and general information on folder-specific settings,
 // see the documentation: https://zed.dev/docs/configuring-zed#settings-files
 {
-  "lsp": {
-    "basedpyright": {
-      "settings": {
-        "basedpyright.analysis": {
-          "extraPaths": ["C:\\Program Files\\Siemens\\NX2412\\NXBIN\\python"],
-        },
-        "basedpyright.autoComplete": {
-          "extraPaths": ["C:\\Program Files\\Siemens\\NX2412\\NXBIN\\python"],
-        },
-      },
-    },
-  },
+    "lsp": {
+        "basedpyright": {
+            "settings": {
+                "basedpyright.analysis": {
+                    "extraPaths": [
+                        "C:\\Program Files\\Siemens\\NX2412\\NXBIN\\python"
+                    ]
+                },
+                "basedpyright.autoComplete": {
+                    "extraPaths": [
+                        "C:\\Program Files\\Siemens\\NX2412\\NXBIN\\python"
+                    ]
+                }
+            }
+        }
+    }
 }

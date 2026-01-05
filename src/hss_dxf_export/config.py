@@ -82,7 +82,11 @@ class DxfConfig(object):
             self._config = ConfigNamespace.load_from_file()
 
             self.sketch_mapping_regex = []
-            cfgs = [config.layers.marking, config.layers.no_cut, config.layers.detail]
+            cfgs = [
+                config.layers.marking,
+                config.layers.no_cut,
+                config.layers.detail,
+            ]
             for layer in cfgs:
                 for pattern in layer.sketches:
                     self.sketch_mapping_regex.append((re.compile(pattern), layer.layer))
