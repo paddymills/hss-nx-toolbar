@@ -155,9 +155,9 @@ class NxPart(ABC):
                     heatnum_anno = self.add_annotation(
                         NXOpen.Point3d(loc.X, loc.Y, 0.0),
                         1.0,
-                        [config.layers.marking.heatnum_keyword],
+                        [config.layers.heatnum.keyword],
                     )
-                    self.move_to_layer(config.layers.marking.layer, heatnum_anno)
+                    self.move_to_layer(config.layers.heatnum.layer, heatnum_anno)
                     dxfdwg_creator.ExportSelectionBlock.SelectionComp.Add(heatnum_anno)
 
             # add bodies and annotations
@@ -354,8 +354,8 @@ class CadCamPart(NxPart):
     def heatnum_locs(self):
         if not self._heatnum_locs:
             for sk in self.part.Sketches:
-                if sk.Name == "HEATNUM_LOC":
-                    debug("Found HEATNUM_LOC sketch {}".format(type(sk)))
+                if config.is_heatnum_sketch(sk.Name):
+                    debug("Found HEATNUM sketch {}".format(type(sk)))
                     for x in sk.GetAllGeometry():
                         if type(x) is NXOpen.Point:
                             debug(

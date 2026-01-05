@@ -96,6 +96,12 @@ class DxfConfig(object):
                 return layer
         return None
 
+    def is_heatnum_sketch(self, sketch_name: str) -> bool:
+        for sk in self.config.layers.heatnum.sketches:
+            if re.match(sk, sketch_name):
+                return True
+        return False
+
     def __getattr__(self, name):
         return getattr(self.config, name)
 
