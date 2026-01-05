@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
 from argparse import ArgumentParser
+from typing import Iterator
 
 import dialog
 import NXOpen
@@ -13,7 +14,7 @@ IGNORE_OPEN_ERRORS = [
 READ_ONLY_WARNING = """
 Display of modification warning for Read-Only parts is turned on.
 
-This means that for every Read-Only part being processed, 
+This means that for every Read-Only part being processed,
 \tyou will get a warning that the part was modified during processing.
 
 To suppress this, you need to turn the following option off and restart NX for the change to take affect.
@@ -21,40 +22,6 @@ File > Utilities > Customer Defaults > Assemblies > Miscellaneous > Display Mess
 
 Do you want to continue processing parts read-only parts?
 """
-
-
-def get_processor_from_args():
-    # parse caller options
-    parser = ArgumentParser()
-    parser.add_argument("--select", action="store_true", help="Export selected parts")
-    parser.add_argument("--work", action="store_true", help="Export work part only")
-    parser.add_argument("--all-open", action="store_true", help="Export all open parts")
-    parser.add_argument(
-        "--mfg", action="store", nargs="*", help="Export supplied part files"
-    )
-
-    # parse arguments
-    args, unparsed = parser.parse_known_args()
-    debug("Process args: {}".format(args))
-
-    try:
-        if unparsed:
-            warning("Unparsed args: {}".format(unparsed))
-
-        if args.work:
-            return WorkPartProcessor()
-
-        if args.all_open:
-            return AllOpenPartsProcessor()
-
-        if args.mfg:
-            return FilenamePartsProcessor(args.mfg)
-
-        # default (args.select or no valid args)
-        return FilenamePartsProcessor(dialog.get_files_to_process())
-    except Exception as e:
-        error(e)
-        dialog.error("Failed to create processor.\nSee log for details.")
 
 
 class AbstractNxFileProcessor(ABC):
@@ -70,7 +37,7 @@ class AbstractNxFileProcessor(ABC):
 
     @property
     @abstractmethod
-    def parts_to_process(self):
+    def parts_to_process(self) -> Iterator[NxPart]:
         pass
 
     def run(self):
@@ -161,7 +128,7 @@ class FilenamePartsProcessor(AbstractNxFileProcessor):
         self._parts = parts
 
     @property
-    def parts_to_process(self):
+    def parts_to_process(self) -> Iterator[NxPart]:
         for filename in self._parts:
             try:
                 part = self.session.Parts.OpenBaseDisplay(filename)
@@ -201,15 +168,50 @@ class FilenamePartsProcessor(AbstractNxFileProcessor):
 
 class AllOpenPartsProcessor(AbstractNxFileProcessor):
     @property
-    def parts_to_process(self):
+    def parts_to_process(self) -> Iterator[NxPart]:
         for part in self.session.Parts.GetDisplayedParts():
             yield AlreadyOpenPart(part)
 
 
 class WorkPartProcessor(AbstractNxFileProcessor):
     @property
-    def parts_to_process(self):
+    def parts_to_process(self) -> Iterator[NxPart]:
         try:
             yield AlreadyOpenPart(self.session.Parts.Work)
-        except:
-            dialog.error("Session does not have a work part")
+        except Exception as e:
+            dialog.error(f"Session does not have a work part ({e})")
+
+
+def get_processor_from_args() -> AbstractNxFileProcessor:
+    # parse caller options
+    parser = ArgumentParser()
+    parser.add_argument("--select", action="store_true", help="Export selected parts")
+    parser.add_argument("--work", action="store_true", help="Export work part only")
+    parser.add_argument("--all-open", action="store_true", help="Export all open parts")
+    parser.add_argument(
+        "--mfg", action="store", nargs="*", help="Export supplied part files"
+    )
+
+    # parse arguments
+    args, unparsed = parser.parse_known_args()
+    debug("Process args: {}".format(args))
+
+    try:
+        if unparsed:
+            warning("Unparsed args: {}".format(unparsed))
+
+        if args.work:
+            return WorkPartProcessor()
+
+        if args.all_open:
+            return AllOpenPartsProcessor()
+
+        if args.mfg:
+            return FilenamePartsProcessor(args.mfg)
+
+        # default (args.select or no valid args)
+        return FilenamePartsProcessor(dialog.get_files_to_process())
+    except Exception as e:
+        error(e)
+        dialog.error("Failed to create processor.\nSee log for details.")
+        raise (e)

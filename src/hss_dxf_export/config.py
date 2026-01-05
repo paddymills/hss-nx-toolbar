@@ -25,9 +25,9 @@ def find_config_path():
     if session.GetEnvironmentVariableValue("HSS_DXF_EXPORT_CONFIG"):
         return session.GetEnvironmentVariableValue("HSS_DXF_EXPORT_CONFIG")
 
-    def env_path(var, path=None):
+    def env_path(var, *path):
         env_var = session.GetEnvironmentVariableValue(var)
-        return env_var and os.path.join(env_var, path, "dxf-export.toml")
+        return env_var and os.path.join(env_var, *path, "dxf-export.toml")
 
     paths = [
         env_path("UGII_CUSTOM_UFUNC_DIR", "application"),
@@ -89,7 +89,7 @@ class DxfConfig(object):
 
         return self._config
 
-    def map_sketch_to_layer(self, sketch_name: str) -> str | None:
+    def map_sketch_to_layer(self, sketch_name: str) -> int | None:
         """Return the layer name for the given sketch name, or None if no mapping found."""
         for pattern, layer in self.sketch_mapping_regex:
             if pattern.fullmatch(sketch_name):

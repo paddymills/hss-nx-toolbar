@@ -29,7 +29,9 @@ class NxPart(ABC):
         http_handler.reset_context()
 
     @property
-    def part(self):
+    def part(self) -> NXOpen.Part:
+        assert self._part is not None, "Part is not initialized"
+
         return self._part
 
     def open_part(self, filename: str) -> NXOpen.Part:
@@ -47,7 +49,7 @@ class NxPart(ABC):
         self._part = part
 
     def close_part(self):
-        debug("Closing part: {}".format(self._part.FullPath))
+        debug("Closing part: {}".format(self.part.FullPath))
         if self._part:
             part_close_responses = self.session.Parts.NewPartCloseResponses()
             self._part.Close(
@@ -195,7 +197,7 @@ class NxPart(ABC):
         # turn off sheet display
         self.part.Drafting.SetDrawingLayout(False)
 
-        assocOrigin1 = NXOpen.Annotations.Annotation.AssociativeOriginData()
+        NXOpen.Annotations.Annotation.AssociativeOriginData()
 
         # create note builder
         note_builder = self.part.Annotations.CreateDraftingNoteBuilder(
@@ -237,7 +239,7 @@ class NxPart(ABC):
     @property
     @abstractmethod
     def heatnum_locs(self):
-        pass
+        return []
 
     def set_work_part(self):
         if self.session.Parts.Work != self.part:
@@ -309,9 +311,9 @@ class CadCamPart(NxPart):
 
         # material grade
         if not self.base_anno["MATERIAL"]:
-            spec = self.get_property(*config.properties.spec)
-            grade = self.get_property(*config.properties.grade)
-            test = self.get_property(*config.properties.test)
+            spec = get_property(*config.properties.spec)
+            grade = get_property(*config.properties.grade)
+            test = get_property(*config.properties.test)
             if spec and grade and test:
                 self.base_anno["MATERIAL"] = "{}-{}{}".format(spec, grade, test)
 
@@ -333,9 +335,9 @@ class CadCamPart(NxPart):
                     if sk.Feature.Suppressed:
                         debug(f"Skipping suppressed sketch: {sk.Name}")
                         continue
-                except:
+                except Exception as e:
                     warning(
-                        f"Skipping sketch: {sk.Name}. (error when querying sketch suppression)"
+                        f"Skipping sketch: {sk.Name}. (error when querying sketch suppression [{e}])"
                     )
                     continue
 
