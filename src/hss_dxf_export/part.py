@@ -306,7 +306,7 @@ class CadCamPart(NxPart):
             "JOB": get_property(*config.properties.job),
             "MARK": get_property(*config.properties.mark),
             "DRAWING": get_property(*config.properties.drawing),
-            "MATERIAL": get_property(*config.properties.drawing),
+            "MATERIAL": get_property(*config.properties.material),
         }
 
         # material grade
