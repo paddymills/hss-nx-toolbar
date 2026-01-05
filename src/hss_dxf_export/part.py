@@ -1,14 +1,12 @@
-from abc import ABC, abstractmethod
-from tracing import warning, error
-from exports import BodyExport
 import os
 import re
+from abc import ABC, abstractmethod
 
 import NXOpen
 import NXOpen.Annotations
-
-from tracing import info, debug, http_handler
 from config import config
+from exports import BodyExport
+from tracing import debug, error, http_handler, info, warning
 
 
 class NxPart(ABC):
@@ -145,7 +143,9 @@ class NxPart(ABC):
                 )
 
             # create annotation
-            anno = self.add_annotation(export.annotation_loc, export.annotation_size, export.annotation_text)
+            anno = self.add_annotation(
+                export.annotation_loc, export.annotation_size, export.annotation_text
+            )
 
             if self.heatnum_locs:
                 for loc in self.heatnum_locs:
@@ -177,7 +177,9 @@ class NxPart(ABC):
 
         dxfdwg_creator.Destroy()
 
-    def add_annotation(self, loc: NXOpen.Point3d, size: float, text: list[str]) -> NXOpen.NXObject:
+    def add_annotation(
+        self, loc: NXOpen.Point3d, size: float, text: list[str]
+    ) -> NXOpen.NXObject:
         # ----------------------------------------------
         #   Menu: Application->Design->Drafting
         # ----------------------------------------------
@@ -246,7 +248,6 @@ class NxPart(ABC):
             )
 
     def orient_top_view(self):
-
         if not self.session.IsBatch:
             # ----------------------------------------------
             #   Menu: Orient View->Top
@@ -346,7 +347,7 @@ class CadCamPart(NxPart):
                     self.move_to_layer(layer, sk)
 
         return self._sketches
-    
+
     @property
     def heatnum_locs(self):
         if not self._heatnum_locs:
@@ -355,20 +356,27 @@ class CadCamPart(NxPart):
                     debug("Found HEATNUM_LOC sketch {}".format(type(sk)))
                     for x in sk.GetAllGeometry():
                         if type(x) is NXOpen.Point:
-                            debug("Heat number point found: {} ({})".format(x.Name, x.Coordinates))
+                            debug(
+                                "Heat number point found: {} ({})".format(
+                                    x.Name, x.Coordinates
+                                )
+                            )
                             self._heatnum_locs.append(x.Coordinates)
 
         return self._heatnum_locs
 
-    def add_annotation(self, loc: NXOpen.Point3d, size: float, text: list[str]) -> NXOpen.NXObject:
+    def add_annotation(
+        self, loc: NXOpen.Point3d, size: float, text: list[str]
+    ) -> NXOpen.NXObject:
         anno = super().add_annotation(loc, size, text)
         self.move_to_layer(config.layers.detail.layer, anno)
 
         return anno
 
     def get_body_exports(self) -> list[BodyExport]:
-
-        blacklist_patterns = [re.compile(pattern) for pattern in config.layers.body.exclude_body_names]
+        blacklist_patterns = [
+            re.compile(pattern) for pattern in config.layers.body.exclude_body_names
+        ]
 
         exports = []
         next_part_id = 1

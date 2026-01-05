@@ -1,11 +1,10 @@
 import os
 import re
-import tomllib
 from types import SimpleNamespace
 
 import dialog
-
 import NXOpen
+import tomllib
 
 
 def find_config_path():

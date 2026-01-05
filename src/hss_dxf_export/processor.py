@@ -2,13 +2,9 @@ from abc import ABC, abstractmethod
 from argparse import ArgumentParser
 
 import dialog
-from part import AlreadyOpenPart, NeedsOpenPart
-
 import NXOpen
-
-from tracing import debug, info, warning, error
-from config import config
-
+from part import AlreadyOpenPart, NeedsOpenPart, NxPart
+from tracing import debug, error, info, warning
 
 IGNORE_OPEN_ERRORS = [
     "Failed to find file using current search options, part left unloaded",
@@ -115,7 +111,6 @@ class AbstractNxFileProcessor(ABC):
 
     @property
     def process_read_only(self):
-
         if self.HANDLED_READ_ONLY:
             return True
 
