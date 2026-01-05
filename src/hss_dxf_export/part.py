@@ -153,7 +153,7 @@ class NxPart(ABC):
                     heatnum_anno = self.add_annotation(
                         NXOpen.Point3d(loc.X, loc.Y, 0.0),
                         1.0,
-                        ["HIGHHEATNUM"],
+                        [config.layers.marking.heatnum_keyword],
                     )
                     self.move_to_layer(config.layers.marking.layer, heatnum_anno)
                     dxfdwg_creator.ExportSelectionBlock.SelectionComp.Add(heatnum_anno)

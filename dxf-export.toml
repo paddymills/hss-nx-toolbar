@@ -36,6 +36,7 @@ exclude_body_names = ["SHIM", "(?:DO_NOT|NO|SKIP)_EXPORT"] # body names to exclu
 [layers.marking]
 layer = 2 # destination layer
 sketches = ["ZINC", "HEATNUM", "MARKING"] # sketch names or regex patterns
+heatnum_keyword = "HIGHHEATNUM" # heat number placeholder for Sigmanest
 
 [layers.no_cut]
 layer = 3 # destination layer
