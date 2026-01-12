@@ -1,0 +1,18 @@
+- [ ] Toml configuration
+  - [x] new items
+    - [x] heat number keyword
+  - [x] example file
+  - [x] parsing of file in python
+  - [ ] where does this file reside?
+  - [ ] are there local (per user versions)
+  - [ ] do we need a UI to edit this?
+- [x] remove or reduce use of decorators
+- [ ] remove rust recompilation requirement (dependency on python version)
+- new features
+  - [ ] heat number keyword per body
+  - [x] part name export
+  - [ ] child part mapping for parent body
+- [x] Logging framework
+  - [x] implement [python's Logging framework](https://docs.python.org/3/library/logging.html)
+  - [x] optional app to open a TCP stream to log to
+  - [x] log to NX
